@@ -4,6 +4,8 @@ permissions:
   contents: read
   packages: write
   id-token: write
+  attestations: write
+  artifact-metadata: write
 
 on:
   pull_request:
@@ -29,3 +31,4 @@ jobs:
       flavor: dx
       rechunk: ${{ github.event_name != 'pull_request' }}
       publish: ${{ (github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/lts' || github.ref == 'refs/heads/main')) || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+      sign: false

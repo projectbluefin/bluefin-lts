@@ -13,6 +13,8 @@ permissions:
   contents: read
   packages: write
   id-token: write
+  attestations: write
+  artifact-metadata: write
 
 on:
   workflow_dispatch:
@@ -34,6 +36,7 @@ jobs:
       gnome-version: "50"
       rechunk: ${{ github.event_name != 'pull_request' }}
       publish: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+      sign: false
 
   build-hwe:
     uses: ./.github/workflows/reusable-build-image.yml
@@ -45,6 +48,7 @@ jobs:
       hwe: true
       rechunk: ${{ github.event_name != 'pull_request' }}
       publish: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+      sign: false
 
   build-dx:
     uses: ./.github/workflows/reusable-build-image.yml
@@ -56,6 +60,7 @@ jobs:
       gnome-version: "50"
       rechunk: ${{ github.event_name != 'pull_request' }}
       publish: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+      sign: false
 
   build-dx-hwe:
     uses: ./.github/workflows/reusable-build-image.yml
@@ -68,3 +73,4 @@ jobs:
       hwe: true
       rechunk: ${{ github.event_name != 'pull_request' }}
       publish: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+      sign: false
