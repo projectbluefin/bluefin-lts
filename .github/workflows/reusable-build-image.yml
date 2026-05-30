@@ -63,10 +63,6 @@ on:
         required: false
         type: string
         default: "49"
-    secrets:
-      SIGNING_SECRET:
-        description: "The private key used to sign the image"
-        required: false
 
 env:
   IMAGE_NAME: ${{ inputs.image-name }}
@@ -203,29 +199,32 @@ jobs:
 
       - name: Run Rechunker
         if: ${{ inputs.rechunk && inputs.publish }}
-        id: rechunk
-        uses: ublue-os/legacy-rechunk@a925083d9af7cb04b3e2a6e8c01bfa495f38b710 # v1.0.0
-        with:
-          rechunk: ghcr.io/ublue-os/legacy-rechunk:v1.0.1
-          ref: localhost/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
-          prev-ref: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
-          skip_compression: true
-          version: ${{ env.CENTOS_VERSION }}
+        env:
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          DEFAULT_TAG: ${{ env.DEFAULT_TAG }}
+        run: |
+          IMG="localhost/${IMAGE_NAME}:${DEFAULT_TAG}"
+          # chunkah v0.5.0 — content-based layer splitting for bootc images
+          # Uses Containerfile.splitter: re-chunks the already-built image in place.
+          # --prune /sysroot/  strips OSTree data (not needed in OCI transport)
+          # --max-layers 128   better granularity for large bootc desktop images
+          # --label KEY-       strips stale OSTree commit/diffid annotations
+          # CHUNKAH_CONFIG_STR preserves containers.bootc=1 and other OCI labels
+          CHUNKAH_REF="quay.io/coreos/chunkah:v0.5.0@sha256:352097f3d32186ac11082f8b74cd544678b00388b50c96ba5c8e79503a454fe3"
+          sudo buildah build \
+            --skip-unused-stages=false \
+            --from "${IMG}" \
+            --build-arg "CHUNKAH=${CHUNKAH_REF}" \
+            --build-arg "CHUNKAH_CONFIG_STR=$(sudo podman inspect "${IMG}")" \
+            --build-arg "CHUNKAH_ARGS=--max-layers 128 --prune /sysroot/ --label ostree.commit- --label ostree.final-diffid-" \
+            -t "${IMG}" \
+            https://github.com/coreos/chunkah/releases/download/v0.5.0/Containerfile.splitter
 
       - name: Load Image
         if: ${{ inputs.publish }}
         id: load
-        env:
-          RECHUNK_RAN: ${{ inputs.rechunk }}
-          RECHUNK_REF: ${{ steps.rechunk.outputs.ref }}
-          RECHUNK_LOCATION: ${{ steps.rechunk.outputs.location }}
         run: |
-          if [ "${RECHUNK_RAN}" == "true" ] ; then
-            IMAGE="$(podman pull "${RECHUNK_REF}")"
-            sudo rm -rf "${RECHUNK_LOCATION}"
-          else
-            IMAGE="localhost/${IMAGE_NAME}:${DEFAULT_TAG}"
-          fi
+          IMAGE="localhost/${IMAGE_NAME}:${DEFAULT_TAG}"
           podman image tag "${IMAGE}" "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
 
           IMAGE="${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
@@ -255,7 +254,7 @@ jobs:
           set -x
           podman tag "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}" "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}-${PLATFORM}"
           for i in $(seq "${MAX_RETRIES}"); do
-            podman push --digestfile=/tmp/digestfile "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}-${PLATFORM}" && break || sleep $((5 * i));
+            podman push --compression-format zstd:chunked --force-compression --digestfile=/tmp/digestfile "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}-${PLATFORM}" && break || sleep $((5 * i));
           done
           REMOTE_IMAGE_DIGEST=$(cat /tmp/digestfile)
           echo "remote_image_digest=${REMOTE_IMAGE_DIGEST}" >> $GITHUB_OUTPUT
@@ -268,11 +267,9 @@ jobs:
         if: ${{ inputs.publish }}
         run: |
           IMAGE_FULL="${IMAGE_REGISTRY}/${IMAGE_NAME}"
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${IMAGE_FULL}@${{ steps.push.outputs.remote_image_digest }}
+          cosign sign -y ${IMAGE_FULL}@${{ steps.push.outputs.remote_image_digest }}
         env:
           TAGS: ${{ steps.push.outputs.digest }}
-          COSIGN_EXPERIMENTAL: false
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
       - name: Install ORAS
         if: ${{ github.ref == 'refs/heads/lts' && inputs.publish }}
@@ -308,13 +305,11 @@ jobs:
       - name: Sign SBOM OCI Artifact
         if: ${{ github.ref == 'refs/heads/lts' && inputs.publish }}
         env:
-          COSIGN_EXPERIMENTAL: false
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           SBOM_DIGEST: ${{ steps.upload-sbom.outputs.sbom_digest }}
         run: |
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY "${IMAGE_REGISTRY}/${IMAGE_NAME}@${SBOM_DIGEST}"
+          cosign sign -y "${IMAGE_REGISTRY}/${IMAGE_NAME}@${SBOM_DIGEST}"
 
       - name: Attestation
         if: ${{ github.ref == 'refs/heads/lts' && inputs.publish }}
@@ -353,7 +348,7 @@ jobs:
       - generate_matrix
       - build_push
     container:
-      image:  cgr.dev/chainguard/wolfi-base:latest@sha256:4ac37aff83b3f67e96674ddf86d878f8c2a8f16ef1420b02611600bbe94ea8c9
+      image:  cgr.dev/chainguard/wolfi-base:latest@sha256:441d6709305552a3411e585ad98aacb9dadda00c80f3267483c38ac6f86f49d4
       options: --privileged --security-opt seccomp=unconfined
     permissions:
       contents: read
@@ -427,7 +422,7 @@ jobs:
           echo "CENTOS_VERSION_NUMBER=${numbers_only}" >> "${GITHUB_ENV}"
 
       - name: Image Metadata
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
         id: metadata
         with:
           tags: |
@@ -567,7 +562,5 @@ jobs:
         env:
           DIGEST: ${{ needs.manifest.outputs.digest }}
           IMAGE: ${{ needs.manifest.outputs.image }}
-          COSIGN_EXPERIMENTAL: false
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
         run: |
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY "${IMAGE}@${DIGEST}"
+          cosign sign -y "${IMAGE}@${DIGEST}"
