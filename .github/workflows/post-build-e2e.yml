@@ -1,0 +1,32 @@
+name: Post-Build E2E
+
+# Runs e2e smoke tests after every successful push build on main.
+# Mirrors the post-testing-e2e.yml pattern from projectbluefin/bluefin.
+# Gates main continuously so untested code never silently accumulates.
+
+on:
+  workflow_run:
+    workflows: ["Build Bluefin LTS"]
+    types: [completed]
+    branches: [main]
+
+permissions: read-all
+
+concurrency:
+  group: post-build-e2e-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    # Only run for push events (not PRs or workflow_dispatch)
+    # and only when the build succeeded.
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+    permissions:
+      packages: write
+      contents: read
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@969d471323a5aed586ba19371a4d2c74c4fa6823 # main
+    with:
+      image: ghcr.io/${{ github.repository_owner }}/bluefin:lts-testing
+      suites: smoke,common
