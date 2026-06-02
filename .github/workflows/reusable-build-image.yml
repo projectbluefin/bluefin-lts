@@ -251,7 +251,7 @@ jobs:
       - name: Sign and publish image
         if: ${{ inputs.publish }}
         id: sign
-        uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
+        uses: projectbluefin/actions/bootc-build/sign-and-publish@ce836f960f83a3cda6b790448509516bac44b35b # fix/retry-cosign-signing
         with:
           image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
           digest: ${{ steps.push.outputs.digest }}
@@ -444,7 +444,7 @@ jobs:
       id-token: write
     steps:
       - name: Sign manifest
-        uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
+        uses: projectbluefin/actions/bootc-build/sign-and-publish@ce836f960f83a3cda6b790448509516bac44b35b # fix/retry-cosign-signing
         with:
           image: ${{ needs.manifest.outputs.image }}
           digest: ${{ needs.manifest.outputs.digest }}
