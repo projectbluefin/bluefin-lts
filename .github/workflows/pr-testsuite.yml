@@ -25,7 +25,7 @@ jobs:
         uses: projectbluefin/actions/bootc-build/validate-pr@v1
         with:
           hadolint-config: ""
-          shellcheck-glob: "build_files/**/*.sh"
+          shellcheck-glob: "build_scripts/**/*.sh"
 
   testsuite:
     name: E2E smoke
