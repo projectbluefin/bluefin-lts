@@ -278,9 +278,14 @@ jobs:
 
       - name: Sign Image
         if: ${{ inputs.publish }}
-        run: |
-          IMAGE_FULL="${IMAGE_REGISTRY}/${IMAGE_NAME}"
-          cosign sign -y ${IMAGE_FULL}@${{ steps.push.outputs.remote_image_digest }}
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            IMAGE_FULL="${IMAGE_REGISTRY}/${IMAGE_NAME}"
+            cosign sign -y ${IMAGE_FULL}@${{ steps.push.outputs.remote_image_digest }}
         env:
           TAGS: ${{ steps.push.outputs.digest }}
 
@@ -319,12 +324,17 @@ jobs:
 
       - name: Sign SBOM OCI Artifact
         if: ${{ github.ref == 'refs/heads/lts' && inputs.publish }}
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            cosign sign -y "${IMAGE_REGISTRY}/${IMAGE_NAME}@${SBOM_DIGEST}"
         env:
           IMAGE_REGISTRY: ${{ env.IMAGE_REGISTRY }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           SBOM_DIGEST: ${{ steps.upload-sbom.outputs.sbom_digest }}
-        run: |
-          cosign sign -y "${IMAGE_REGISTRY}/${IMAGE_NAME}@${SBOM_DIGEST}"
 
       - name: Attestation
         if: ${{ github.ref == 'refs/heads/lts' && inputs.publish }}
@@ -576,8 +586,13 @@ jobs:
 
       - name: Sign Manifest
         if: ${{ inputs.publish }}
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            cosign sign -y "${IMAGE}@${DIGEST}"
         env:
           DIGEST: ${{ needs.manifest.outputs.digest }}
           IMAGE: ${{ needs.manifest.outputs.image }}
-        run: |
-          cosign sign -y "${IMAGE}@${DIGEST}"
