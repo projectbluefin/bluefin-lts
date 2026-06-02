@@ -18,7 +18,38 @@ Larger, more lethal [Bluefin](https://projectbluefin.io). Built on CentOS Stream
 
 ## Images
 
-Browse available streams, versions, and `bootc switch` commands on the **[Images page →](https://docs.projectbluefin.io/images/)**
+Full catalog at [docs.projectbluefin.io/images →](https://docs.projectbluefin.io/images/)
+
+### Bluefin LTS
+
+Long-term support Bluefin stream built on CentOS Stream 10.
+
+```bash
+# LTS — recommended
+sudo bootc switch ghcr.io/ublue-os/bluefin:lts --enforce-container-sigpolicy
+# LTS — NVIDIA
+sudo bootc switch ghcr.io/ublue-os/bluefin-nvidia-open:latest --enforce-container-sigpolicy
+```
+
+### Bluefin DX LTS
+
+Long-term support developer image with cloud-native tooling pre-installed.
+
+```bash
+# LTS — recommended
+sudo bootc switch ghcr.io/ublue-os/bluefin-dx:lts --enforce-container-sigpolicy
+# LTS — NVIDIA
+sudo bootc switch ghcr.io/ublue-os/bluefin-dx-nvidia-open:latest --enforce-container-sigpolicy
+```
+
+### Bluefin GDX
+
+AI-focused track with LTS roots.
+
+```bash
+# LTS
+sudo bootc switch ghcr.io/ublue-os/bluefin-gdx:lts --enforce-container-sigpolicy
+```
 
 ## Getting Started
 
