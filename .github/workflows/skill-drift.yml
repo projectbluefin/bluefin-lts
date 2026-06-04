@@ -12,5 +12,5 @@ jobs:
   skill-drift:
     uses: projectbluefin/actions/.github/workflows/skill-drift-check.yml@v1
     with:
-      code-paths: '[".github/workflows/**", "build_files/**", "Justfile"]'
+      code-paths: '[".github/workflows/**", "build_scripts/**", "system_files/**", "Containerfile", "Justfile"]'
       skill-paths: '["docs/skills/**", "docs/*.md", "AGENTS.md"]'

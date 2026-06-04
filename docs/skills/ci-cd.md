@@ -14,7 +14,9 @@
 | `generate-release.yml` | creates GitHub Release — only after e2e smoke passes |
 | `pr-testsuite.yml` | runs **`validate-pr@v1`** (just check, shellcheck, hadolint, pre-commit) + **e2e smoke** on every PR; only `Lint & syntax` is a required check |
 | `renovate-automerge.yml` | auto-merges Renovate PRs when pr-testsuite passes |
-| `skill-drift.yml` | warns on PRs that change CI/build files without updating docs/skills |
+| `skill-drift.yml` | warns on PRs that change CI/build/system files without updating docs/skills; watches `.github/workflows/**`, `build_scripts/**`, `system_files/**`, `Containerfile`, `Justfile` |
+| `hive-progress-sync.yml` | posts queue stats (agent-ready, claimed, p0, p1 counts) + CI status to the projectbluefin org project board hourly and on push to `main`; requires `PROJECT_TOKEN` secret |
+| `validate-renovate.yaml` | validates `.github/renovate.json5` on PRs and pushes to `main` that touch the Renovate config |
 | ~~`build-gnome50.yml`~~ | **deleted 2026-05-30** — GNOME 50 is now the default; `lts-testing-50` tags are no longer produced |
 
 ## Branches and tags
@@ -163,11 +165,13 @@ If nothing is pushed, nothing should sign.
 
 `scheduled-lts-release.yml` is the **only** owner of Tuesday `0 6 * * 2` production runs. Do **not** add `schedule:` to the 5 build callers; scheduled caller runs on `main`, evaluates `publish=false`, and wastes runners.
 
-## Renovate auto-merge pipeline (added 2026-05-30)
+## Renovate auto-merge pipeline
 
-Renovate PRs are fully automated — no human needed:
+**Current status: broken due to issue #34.** `renovate-automerge.yml` triggers on `workflow_run: completed: "PR Validation — testsuite"` and only proceeds when `conclusion == 'success'`. Because the `testsuite` (E2E smoke) job always fails, the whole pr-testsuite workflow conclusion is `failure` — so auto-merge never fires. Renovate PRs require manual `gh pr merge --auto` until issue #34 is resolved.
 
-1. Renovate opens PR → `pr-testsuite.yml` runs `just check` + `just lint` + e2e smoke (~15 min)
+When E2E is fixed, the flow will be:
+
+1. Renovate (or `mergeraptor[bot]`) opens PR → `pr-testsuite.yml` runs `just check` + `just lint` + e2e smoke (~15 min)
 2. `renovate-automerge.yml` triggers on `workflow_run` success → calls `gh pr merge --auto --merge`
 3. Merge queue merges with `MERGE` commit (not squash)
 
@@ -178,15 +182,23 @@ The weekly release e2e is the real quality gate for build correctness.
 ## Weekly release pipeline (updated 2026-06-04)
 
 `scheduled-lts-release.yml` job chain:
-1. `trigger-lts-builds` — **gated by `environment: production` (2 required human approvals)**; triggers 5 builds on `lts`, waits for regular + dx + gdx to complete
+1. `trigger-lts-builds` — **gated by `environment: production` (2 required human approvals)**; triggers all 5 build workflows on `lts`, then sequentially waits for regular, DX, and GDX to complete (HWE builds run in parallel but are not waited for)
 2. `run-upgrade-test` — lifecycle upgrade test on `ghcr.io/projectbluefin/bluefin:lts` via `projectbluefin/actions/.github/workflows/upgrade-test.yml@v1`; `suites: lifecycle`, `chunked_enabled: false`
-3. `generate-release` (needs: [trigger-lts-builds, run-upgrade-test]) — only fires if upgrade-test passes; dispatches `generate-release.yml`
+3. `generate-release` (needs: [trigger-lts-builds, run-upgrade-test]) — only fires if upgrade-test passes; dispatches `generate-release.yml --ref main -f target=lts`
 
 If the upgrade test fails, no GitHub Release is created. Fix-forward, investigate, re-run manually.
 
 The old `testsuite` job (calling `projectbluefin/testsuite/e2e.yml`) was removed in PR #46 — that workflow is no longer maintained.
 
-**Production gate:** before Tuesday builds run, two distinct maintainers must approve the deployment in the GitHub Environments UI. The gate is on `trigger-lts-builds`, so all downstream jobs (testsuite, generate-release) only run after approval. See `projectbluefin/actions/docs/skills/factory-operations.md` → "Production Gate" for configuration details.
+**Production gate:** before Tuesday builds run, two distinct maintainers must approve the deployment in the GitHub Environments UI. The gate is on `trigger-lts-builds`, so all downstream jobs (upgrade-test, generate-release) only run after approval.
+
+## `generate-release.yml` trigger logic
+
+`generate-release.yml` fires in two ways:
+1. **`workflow_dispatch`** (from `scheduled-lts-release.yml`): always creates a release; this is the normal production path.
+2. **`workflow_run: Build Bluefin LTS GDX`** on `lts` branch with `event == 'workflow_dispatch'` and `conclusion == 'success'`: this catches the case where GDX is dispatched independently. A release is only created when the GDX workflow was itself triggered by `workflow_dispatch` (not by a push-to-lts validation build).
+
+Do not rely on the `workflow_run` path for routine releases — always use `scheduled-lts-release.yml`.
 
 ## Release-generation pitfalls
 
