@@ -194,9 +194,12 @@ jobs:
       - name: Load Image
         if: ${{ inputs.publish }}
         id: load
+        env:
+          RECHUNK: ${{ inputs.rechunk }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
           # chunka@v1 outputs to user (rootless) storage; transfer to rootful for push-image@v1
-          if [[ "${{ inputs.rechunk }}" == "true" ]]; then
+          if [[ "${RECHUNK}" == "true" ]]; then
             podman save "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" | sudo podman load
           fi
           # Tag with per-arch suffix in rootful storage as expected by push-image@v1
