@@ -26,6 +26,7 @@ echo "Installing kernel from mounted kernel-rpms..."
 find /tmp/kernel-rpms
 
 # Extract version from the first kernel rpm filename (handles both .el10 and .fc42 dist tags)
+# shellcheck disable=SC2012
 CACHED_VERSION=$(cd /tmp/kernel-rpms && ls kernel-[0-9]*.rpm 2>/dev/null | head -1 | sed -E 's/^kernel-//;s/\.rpm$//')
 
 if [[ -z "$CACHED_VERSION" ]]; then
