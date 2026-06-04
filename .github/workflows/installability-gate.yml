@@ -64,8 +64,8 @@ jobs:
 
       - name: Generate SSH keypair
         run: |
-          ssh-keygen -t ed25519 -f /tmp/vm_key -N "" -C "installer@gha"
-          echo "VM_PUBKEY=$(cat /tmp/vm_key.pub)" >> "$GITHUB_ENV"
+          ssh-keygen -t ed25519 -f "${GITHUB_WORKSPACE}/vm_key" -N "" -C "installer@gha"
+          echo "VM_PUBKEY=$(cat "${GITHUB_WORKSPACE}/vm_key.pub")" >> "$GITHUB_ENV"
 
       - name: Boot installer and run anaconda
         timeout-minutes: 60
@@ -183,7 +183,7 @@ jobs:
           # Wait for SSH
           sleep 30
           for i in {1..120}; do
-            if ssh -i /tmp/vm_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            if ssh -i "${GITHUB_WORKSPACE}/vm_key" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
                  -p 2222 root@127.0.0.1 true 2>/dev/null; then
               echo "✅ SSH connected successfully"
               break
@@ -197,7 +197,7 @@ jobs:
       - name: Validate installed system
         run: |
           # Run smoke checks to verify installation
-          ssh -i /tmp/vm_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+          ssh -i "${GITHUB_WORKSPACE}/vm_key" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
             -p 2222 root@127.0.0.1 << 'EOF'
           set -euo pipefail
 
@@ -231,14 +231,14 @@ jobs:
       - name: Test live app launch (GUI-agnostic)
         run: |
           # Test that key applications can be invoked (not necessarily GUI)
-          ssh -i /tmp/vm_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+          ssh -i "${GITHUB_WORKSPACE}/vm_key" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
             -p 2222 root@127.0.0.1 << 'EOF'
           set -euo pipefail
 
           # Test GNOME-related apps without requiring display
           for app in gnome-control-center gnome-terminal nautilus; do
-            if command -v ${app} &> /dev/null || \
-               which ${app} &> /dev/null; then
+            if command -v "${app}" &> /dev/null || \
+               which "${app}" &> /dev/null; then
               echo "✅ ${app} is available"
             else
               echo "⚠️  ${app} not found (may be variant-specific)"
@@ -251,23 +251,16 @@ jobs:
       - name: Report installation validation
         if: always()
         run: |
-          if [[ $? -eq 0 ]]; then
-            echo "✅ INSTALLABILITY GATE PASSED"
-            echo "Full installation, boot, and system validation successful"
-            exit 0
-          else
-            echo "❌ INSTALLABILITY GATE FAILED"
-            echo "Review boot.log and installer.log for details"
-            exit 1
-          fi
+          echo "✅ INSTALLABILITY GATE COMPLETE"
+          echo "Review boot.log and installer.log for the captured run details"
 
       - name: Cleanup
         if: always()
         run: |
           # Kill running VMs
           for pid in ${INSTALLER_PID:-} ${BOOT_PID:-}; do
-            if [[ -n "${pid}" ]] && ps -p ${pid} > /dev/null 2>&1; then
-              kill ${pid} 2>/dev/null || true
+            if [[ -n "${pid}" ]] && ps -p "${pid}" > /dev/null 2>&1; then
+              /bin/kill "${pid}" 2>/dev/null || true
             fi
           done
           sleep 2
