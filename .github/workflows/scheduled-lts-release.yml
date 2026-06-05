@@ -284,3 +284,42 @@ jobs:
             -R ${{ github.repository }}
           echo "✅ Triggered release generation (e2e smoke passed)"
           echo "View workflow runs at: ${{ github.server_url }}/${{ github.repository }}/actions"
+
+  report-failure:
+    needs: [trigger-lts-builds, verify-signatures, run-upgrade-test, generate-release]
+    if: always() && failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update failure issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = 'ci: weekly LTS release failure';
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'area/testing,kind/bug',
+              state: 'open',
+            });
+            const dup = existing.data.find(i => i.title === title);
+            if (dup) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: dup.number,
+                body: `Failure recurred in run ${runUrl}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body: `## Weekly LTS Release Failure\n\n**Run:** ${runUrl}\n\n_Automatically opened by scheduled-lts-release.yml_`,
+                labels: ['area/testing', 'kind/bug'],
+              });
+            }
