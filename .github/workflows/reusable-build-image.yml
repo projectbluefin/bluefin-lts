@@ -392,7 +392,7 @@ jobs:
       - name: Create and push manifest
         if: ${{ inputs.publish }}
         id: push_manifest
-        uses: projectbluefin/actions/bootc-build/create-manifest@v1
+        uses: projectbluefin/actions/bootc-build/create-manifest@6234f774a3502711027cf1cf522e0acb6091b6aa # PR #72 consumer test
         with:
           image-name: ${{ env.IMAGE_NAME }}
           registry: ghcr.io
