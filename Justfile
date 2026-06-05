@@ -453,7 +453,7 @@ build-ghcr base="bluefin-lts" stream="lts" flavor="main" kernel_pin="":
     GDX=0
     [[ "{{ base }}" == *"-hwe"* ]] && HWE=1
     [[ "{{ base }}" == *"gdx"* ]] && GDX=1
-    just build "{{ base }}" "{{ stream }}" "0" "${GDX}" "${HWE}" "{{ kernel_pin }}"
+    {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${GDX}" "${HWE}" "{{ kernel_pin }}"
 
 # Rechunk image using chunkah (OCI-native, no rpm-ostree).
 # Called with sudo by reusable-build.yml for non-testing, non-PR builds.
@@ -462,8 +462,8 @@ build-ghcr base="bluefin-lts" stream="lts" flavor="main" kernel_pin="":
 rechunk base="bluefin-lts" stream="lts" flavor="main" ghcr="0" pipeline="0" previous_build="0":
     #!/usr/bin/bash
     set -eoux pipefail
-    IMAGE_NAME="$(just image_name {{ base }} {{ stream }} {{ flavor }})"
-    DEFAULT_TAG="$(just generate-default-tag {{ stream }} {{ ghcr }})"
+    IMAGE_NAME="$({{ just_executable() }} image_name {{ base }} {{ stream }} {{ flavor }})"
+    DEFAULT_TAG="$({{ just_executable() }} generate-default-tag {{ stream }} {{ ghcr }})"
     IMAGE_REF="localhost/${IMAGE_NAME}:${DEFAULT_TAG}"
     CHUNKAH_VERSION="v0.5.0"
     CHUNKAH_SHA="sha256:352097f3d32186ac11082f8b74cd544678b00388b50c96ba5c8e79503a454fe3"
@@ -522,8 +522,8 @@ tag-images image_name="" default_tag="" tags="":
 gen-sbom base="bluefin-lts" stream="lts" flavor="main" syft_cmd="syft":
     #!/usr/bin/bash
     set -eou pipefail
-    IMAGE_NAME="$(just image_name {{ base }} {{ stream }} {{ flavor }})"
-    DEFAULT_TAG="$(just generate-default-tag {{ stream }} 1)"
+    IMAGE_NAME="$({{ just_executable() }} image_name {{ base }} {{ stream }} {{ flavor }})"
+    DEFAULT_TAG="$({{ just_executable() }} generate-default-tag {{ stream }} 1)"
     mkdir -p "sbom_out/${IMAGE_NAME}"
     {{ syft_cmd }} "localhost/${IMAGE_NAME}:${DEFAULT_TAG}" \
         -o syft-json="sbom_out/${IMAGE_NAME}/sbom.json"
