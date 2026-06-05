@@ -6,7 +6,6 @@ permissions:
   id-token: write
   attestations: write
   security-events: write
-  artifact-metadata: write
 
 on:
   pull_request:
@@ -66,7 +65,6 @@ jobs:
       id-token: write
       attestations: write
       security-events: write
-      artifact-metadata: write
     secrets: inherit
     with:
       brand_name: bluefin-gdx
