@@ -208,7 +208,7 @@ jobs:
       - name: Push image
         if: ${{ inputs.publish }}
         id: push
-        uses: projectbluefin/actions/bootc-build/push-image@v1
+        uses: projectbluefin/actions/bootc-build/push-image@c67f652d0451dbf70bef8b46cef2e156f400c118 # PR #74 consumer test
         with:
           image-name: ${{ env.IMAGE_NAME }}
           tags: "${{ env.DEFAULT_TAG }}-${{ matrix.platform }}"
