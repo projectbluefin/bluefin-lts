@@ -82,8 +82,9 @@ jobs:
       - name: Log in to GHCR
         env:
           GH_ACTOR: ${{ github.actor }}
-          GH_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
-        run: echo "$GH_TOKEN" | sudo podman login ghcr.io --username "$GH_ACTOR" --password-stdin
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "$GH_TOKEN" | skopeo login ghcr.io --username "$GH_ACTOR" --password-stdin
 
       - name: Resolve bluefin-lts :testing digest
         id: resolve-base
@@ -226,8 +227,9 @@ jobs:
       - name: Log in to GHCR
         env:
           GH_ACTOR: ${{ github.actor }}
-          GH_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
-        run: echo "$GH_TOKEN" | sudo podman login ghcr.io --username "$GH_ACTOR" --password-stdin
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "$GH_TOKEN" | skopeo login ghcr.io --username "$GH_ACTOR" --password-stdin
 
       - name: Verify source SHA has not advanced
         env:
@@ -248,7 +250,7 @@ jobs:
           BASE_DIGEST: ${{ needs.resolve.outputs.base_digest }}
           HWE_DIGEST: ${{ needs.resolve.outputs.hwe_digest }}
           GDX_DIGEST: ${{ needs.resolve.outputs.gdx_digest }}
-          GH_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
@@ -298,20 +300,48 @@ jobs:
     name: Generate release
     needs: [update-lts-branch]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       contents: read
       actions: write
     steps:
-      - name: Trigger release generation
+      - name: Dispatch and wait for release generation
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+
+          DISPATCH_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           gh workflow run generate-release.yml --ref main -f target=lts \
             -R ${{ github.repository }}
-          echo "✅ Triggered release generation"
-          echo "View workflow runs at: ${{ github.server_url }}/${{ github.repository }}/actions"
+          echo "Dispatched generate-release.yml at $DISPATCH_TIME"
+
+          sleep 30
+
+          RUN_ID=""
+          for i in $(seq 1 20); do
+            RUN_ID=$(gh run list \
+              --workflow generate-release.yml \
+              --branch main \
+              --event workflow_dispatch \
+              --repo ${{ github.repository }} \
+              --limit 5 \
+              --json databaseId,createdAt \
+              --jq ".[] | select(.createdAt >= \"$DISPATCH_TIME\") | .databaseId" \
+              | head -1)
+            [ -n "$RUN_ID" ] && break
+            echo "Waiting for generate-release.yml run to appear (attempt $i/20)..."
+            sleep 15
+          done
+
+          if [ -z "$RUN_ID" ]; then
+            echo "ERROR: Could not locate generate-release.yml run dispatched at $DISPATCH_TIME"
+            exit 1
+          fi
+
+          echo "Watching generate-release.yml run $RUN_ID..."
+          gh run watch "$RUN_ID" --exit-status --repo ${{ github.repository }}
+          echo "✅ Release generated successfully"
 
   close-failure-issue:
     name: Close stale failure issue on success
