@@ -58,7 +58,7 @@ jobs:
       always() &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@463259c95513eadc034d3d533f67ee97e3fac42a # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@1c60f20d89dacc5b35f93f8d63e949316fc7a0ba # v1
     permissions:
       contents: read
       packages: write
