@@ -17,7 +17,7 @@ else
     NVIDIA_ARCH="$ARCH"
 fi
 
-FEDORA_VERSION=43 # FIXME: Figure out a way of fetching this information with coreos akmods as well.
+FEDORA_VERSION=$(echo "${AKMODS_VERSION:-}" | sed -n 's/^coreos-stable-\([0-9]*\).*/\1/p')
 
 curl -fsSLo - "https://negativo17.org/repos/fedora-nvidia.repo" | sed "s/\$releasever/${FEDORA_VERSION}/g" | tee "/etc/yum.repos.d/fedora-nvidia.repo"
 dnf config-manager --set-disabled "fedora-nvidia"

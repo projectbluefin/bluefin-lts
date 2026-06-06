@@ -57,6 +57,33 @@ Always reference these instructions first and fallback to search or bash command
 - **GDX**: GPU Developer Experience with CUDA, AI tools (`just build bluefin lts 0 1 0`)  
 - **HWE**: Hardware Enablement for newer hardware (`just build bluefin lts 0 0 1`)
 
+### HWE and GDX Kernel Source
+
+HWE and GDX variants use a Fedora CoreOS stable kernel (from `ghcr.io/ublue-os/akmods-zfs` and `akmods-nvidia-open`) instead of the CentOS Stream 10 kernel. The Fedora version is controlled by `coreos_stable_version` in `Justfile` and must track the current [Fedora CoreOS stable](https://coreos.fedoraproject.org/release-notes) release.
+
+**Three files must stay in sync** when Fedora CoreOS stable advances:
+
+| File | What to update |
+|---|---|
+| `Justfile` | `coreos_stable_version` default (e.g. `"44"`) |
+| `build_scripts/scripts/kernel-swap.sh` | `FEDORA_VERSION` — derive from `AKMODS_VERSION`, do NOT hardcode |
+| `build_scripts/overrides/gdx/20-nvidia.sh` | `FEDORA_VERSION` — same, derive dynamically |
+
+**Correct pattern** for `kernel-swap.sh` and `20-nvidia.sh`:
+```bash
+FEDORA_VERSION=$(echo "${AKMODS_VERSION:-}" | sed -n 's/^coreos-stable-\([0-9]*\).*/\1/p')
+```
+This handles both `coreos-stable-44` and kernel-pinned forms like `coreos-stable-44-6.19.14-101.fc44`.
+
+**Never hardcode** a Fedora version number in these scripts — it will silently lag behind when `Justfile` is updated.
+
+**Check current available tags:**
+```bash
+skopeo list-tags --no-creds docker://ghcr.io/ublue-os/akmods-zfs | python3 -c "
+import sys, json; tags = json.load(sys.stdin)['Tags']
+print('\n'.join(sorted([t for t in tags if 'coreos-stable' in t and t.count('-') == 2], reverse=True)[:5]))"
+```
+
 ### Core Build Process
 1. **Container Build**: Uses Containerfile with CentOS Stream 10 base
 2. **Build Scripts**: Located in `build_scripts/` directory
