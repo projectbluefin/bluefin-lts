@@ -14,10 +14,16 @@ ARCH="$(uname -m)"
 if [ "$ARCH" = "aarch64" ]; then
     NVIDIA_ARCH="sbsa"
 else
+    # shellcheck disable=SC2034
     NVIDIA_ARCH="$ARCH"
 fi
 
-FEDORA_VERSION=43 # FIXME: Figure out a way of fetching this information with coreos akmods as well.
+FEDORA_VERSION="${FEDORA_AKMODS_VERSION:-43}"
+# CentOS akmods currently expose .el10 RPMs, but future images may include Fedora NVRs.
+AKMODS_FEDORA_VERSION="$(find /tmp/akmods-nvidia-open-rpms -name "*.rpm" -print | grep -oPm1 '(?<=\.fc)\d+' || true)"
+if [[ -n "${AKMODS_FEDORA_VERSION}" ]]; then
+    FEDORA_VERSION="${AKMODS_FEDORA_VERSION}"
+fi
 
 curl -fsSLo - "https://negativo17.org/repos/fedora-nvidia.repo" | sed "s/\$releasever/${FEDORA_VERSION}/g" | tee "/etc/yum.repos.d/fedora-nvidia.repo"
 dnf config-manager --set-disabled "fedora-nvidia"
@@ -35,7 +41,6 @@ NVIDIA_PKG_VERSION="3:${KMOD_VERSION}"
 
 dnf install -y --enablerepo="fedora-nvidia" \
     "libnvidia-fbc-${NVIDIA_PKG_VERSION}" \
-    "libnvidia-ml-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-cuda-${NVIDIA_PKG_VERSION}" \
     "nvidia-settings-${NVIDIA_PKG_VERSION}" \

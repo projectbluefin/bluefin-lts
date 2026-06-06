@@ -17,6 +17,9 @@ concurrency:
 jobs:
   trigger-lts-builds:
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://ghcr.io/projectbluefin/bluefin-lts:lts
     # Allow up to 3 hours for builds to complete before timing out.
     timeout-minutes: 180
     steps:
@@ -27,15 +30,13 @@ jobs:
           set -euo pipefail
 
           # Record time just before dispatch so we can find the run IDs afterward.
-          echo "DISPATCH_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
+          echo "DISPATCH_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
           gh workflow run build-regular.yml --ref lts -R ${{ github.repository }}
-          gh workflow run build-dx.yml --ref lts -R ${{ github.repository }}
           gh workflow run build-gdx.yml --ref lts -R ${{ github.repository }}
           gh workflow run build-regular-hwe.yml --ref lts -R ${{ github.repository }}
-          gh workflow run build-dx-hwe.yml --ref lts -R ${{ github.repository }}
 
-          echo "✅ Triggered all 5 LTS build workflows on lts branch"
+          echo "✅ Triggered all 3 LTS build workflows on lts branch"
 
       - name: Wait for regular LTS build to complete
         env:
@@ -80,35 +81,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-
-          # generate-release.yml inspects bluefin-dx:lts.YYYYMMDD in addition to bluefin:lts.YYYYMMDD.
-          # build-dx.yml runs in parallel with build-regular.yml and can finish slightly later.
-          # We must wait for it to complete before triggering release generation, otherwise
-          # generate-release.yml will fail with "manifest unknown" on the bluefin-dx tag.
-          RUN_ID=""
-          for i in $(seq 1 20); do
-            RUN_ID=$(gh run list \
-              --workflow build-dx.yml \
-              --branch lts \
-              --event workflow_dispatch \
-              --repo ${{ github.repository }} \
-              --limit 10 \
-              --json databaseId,createdAt \
-              --jq ".[] | select(.createdAt >= \"$DISPATCH_TIME\") | .databaseId" \
-              | head -1)
-            [ -n "$RUN_ID" ] && break
-            echo "Waiting for build-dx.yml run to appear in API (attempt $i/20)..."
-            sleep 30
-          done
-
-          if [ -z "$RUN_ID" ]; then
-            echo "ERROR: Could not locate build-dx.yml run dispatched at $DISPATCH_TIME"
-            exit 1
-          fi
-
-          echo "Watching build-dx.yml run $RUN_ID..."
-          gh run watch "$RUN_ID" --exit-status --repo ${{ github.repository }}
-          echo "✅ DX LTS build completed successfully"
+          # No DX variant in LTS — this step intentionally skipped.
+          echo "DX variant removed from LTS. Skipping."
 
       - name: Wait for GDX LTS build to complete
         env:
@@ -144,20 +118,104 @@ jobs:
           gh run watch "$RUN_ID" --exit-status --repo ${{ github.repository }}
           echo "✅ GDX LTS build completed successfully"
 
-  testsuite:
-    name: Testsuite — post-release smoke
+      - name: Wait for regular HWE LTS build to complete
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          RUN_ID=""
+          for i in $(seq 1 20); do
+            RUN_ID=$(gh run list \
+              --workflow build-regular-hwe.yml \
+              --branch lts \
+              --event workflow_dispatch \
+              --repo ${{ github.repository }} \
+              --limit 10 \
+              --json databaseId,createdAt \
+              --jq ".[] | select(.createdAt >= \"$DISPATCH_TIME\") | .databaseId" \
+              | head -1)
+            [ -n "$RUN_ID" ] && break
+            echo "Waiting for build-regular-hwe.yml run to appear in API (attempt $i/20)..."
+            sleep 30
+          done
+
+          if [ -z "$RUN_ID" ]; then
+            echo "ERROR: Could not locate build-regular-hwe.yml run dispatched at $DISPATCH_TIME"
+            exit 1
+          fi
+
+          echo "Watching build-regular-hwe.yml run $RUN_ID..."
+          gh run watch "$RUN_ID" --exit-status --repo ${{ github.repository }}
+          echo "✅ Regular HWE LTS build completed successfully"
+
+      - name: Wait for DX HWE LTS build to complete
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # No DX HWE variant in LTS — this step intentionally skipped.
+          echo "DX HWE variant removed from LTS. Skipping."
+
+  verify-signatures:
+    name: Verify cosign signatures
     needs: trigger-lts-builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
-      packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@main
+      packages: read
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install cosign
+        run: |
+          set -euo pipefail
+          COSIGN_VERSION="v2.5.0"
+          sudo curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
+            -o /usr/local/bin/cosign
+          sudo chmod +x /usr/local/bin/cosign
+
+      - name: Verify published LTS image signatures
+        run: |
+          set -euo pipefail
+
+          IMAGE_REFS=(
+            ghcr.io/projectbluefin/bluefin-lts:lts
+            ghcr.io/projectbluefin/bluefin-gdx:lts
+            ghcr.io/projectbluefin/bluefin-lts-hwe:lts
+          )
+
+          for image in "${IMAGE_REFS[@]}"; do
+            echo "Verifying signature: ${image}"
+            cosign verify \
+              --certificate-identity-regexp "https://github.com/projectbluefin/bluefin-lts/.github/workflows/" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              "${image}"
+            echo "✅ Signature verified: ${image}"
+          done
+
+  run-upgrade-test:
+    name: Upgrade test (lifecycle)
+    needs: [trigger-lts-builds, verify-signatures]
+    permissions:
+      packages: write
+      contents: read
+      id-token: write
+    uses: projectbluefin/actions/.github/workflows/upgrade-test.yml@v1
     with:
-      image: ghcr.io/projectbluefin/bluefin:lts
-      suites: smoke
+      image: ghcr.io/projectbluefin/bluefin-lts:lts
+      suites: lifecycle
+      chunked_enabled: false
 
   generate-release:
     name: Generate release
-    needs: testsuite
+    needs: [trigger-lts-builds, run-upgrade-test]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -170,5 +228,44 @@ jobs:
           set -euo pipefail
           gh workflow run generate-release.yml --ref main -f target=lts \
             -R ${{ github.repository }}
-          echo "✅ Triggered release generation (e2e smoke passed)"
+          echo "✅ Triggered release generation (all builds + upgrade test passed)"
           echo "View workflow runs at: ${{ github.server_url }}/${{ github.repository }}/actions"
+
+  report-failure:
+    needs: [trigger-lts-builds, verify-signatures, run-upgrade-test, generate-release]
+    if: always() && failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update failure issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = 'ci: weekly LTS release failure';
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'area/testing,kind/bug',
+              state: 'open',
+            });
+            const dup = existing.data.find(i => i.title === title);
+            if (dup) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: dup.number,
+                body: `Failure recurred in run ${runUrl}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body: `## Weekly LTS Release Failure\n\n**Run:** ${runUrl}\n\n_Automatically opened by scheduled-lts-release.yml_`,
+                labels: ['area/testing', 'kind/bug'],
+              });
+            }

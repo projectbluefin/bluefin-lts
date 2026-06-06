@@ -24,9 +24,14 @@ just check && just lint
 | Goal | Command | Typical time |
 |---|---|---|
 | Regular | `just build bluefin lts 0 0 0` | 45-90 min |
-| DX | `just build bluefin lts 1 0 0` | 45-90 min |
 | GDX | `just build bluefin lts 0 1 0` | 45-90 min |
 | HWE | `just build bluefin lts 0 0 1` | 45-90 min |
+
+The `gnome_version` parameter defaults to `"50"`. Override only if testing a future GNOME version. For GDX builds, `fedora_akmods_version` (default `"43"`) controls the negativo17 Fedora repo version used for NVIDIA drivers:
+
+```bash
+just build bluefin lts 0 1 0 "" 50 43   # GDX with explicit GNOME 50, Fedora 43 akmods
+```
 
 **Never cancel builds.** Use 120+ minute timeouts.
 
@@ -35,8 +40,7 @@ just check && just lint
 | Variant | What changes |
 |---|---|
 | Regular | base LTS image |
-| DX | developer tools, VS Code, Docker |
-| GDX | GPU / AI tooling |
+| GDX | GPU / AI tooling (NVIDIA) |
 | HWE | newer hardware enablement |
 
 ## VM / disk artifacts
@@ -62,6 +66,8 @@ Never run VMs in CI; KVM/graphics are required.
 | `Containerfile` | main image definition |
 | `image.toml`, `iso.toml` | BIB configs |
 
+Workflow guardrails key off these exact names. When copying from bluefin, replace `build_files/` with `build_scripts/` and `image-versions.yml` with `image-versions.yaml`.
+
 ## Debugging checklist
 
 | Symptom | Check |
@@ -71,6 +77,7 @@ Never run VMs in CI; KVM/graphics are required.
 | package pulls fail | repo/network timeout; retry after failure completes naturally |
 | storage errors | run `just clean`, verify free disk |
 | permission issues | some build paths require sudo/root |
+| NVIDIA driver version mismatch in GDX | Pass explicit `fedora_akmods_version=NN` to `just build` |
 
 Recovery loop:
 

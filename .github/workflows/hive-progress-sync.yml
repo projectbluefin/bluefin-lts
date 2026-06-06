@@ -1,8 +1,8 @@
 # hive-progress-sync — posts Bluefin LTS queue stats to the projectbluefin org
-# project board (todo.projectbluefin.io) hourly and on every push to testing.
+# project board (todo.projectbluefin.io) hourly and on every push to main.
 #
-# Tracks: queue/agent-ready, queue/claimed, hive/p0, hive/p1 counts
-# CI status: build-regular.yml
+# Tracks: status/queued, status/claimed, hive/p0, hive/p1 counts
+# CI status: build-regular.yml (bluefin-lts' primary image build workflow)
 #
 # Requires: PROJECT_TOKEN secret with project + read:project OAuth scopes
 # Project board: PVT_kwDOCCE0ds4BLZBC (todo.projectbluefin.io, #2)
@@ -11,9 +11,9 @@ name: Hive Progress Sync
 
 on:
   push:
-    branches: [testing]
+    branches: [main]
   schedule:
-    - cron: '45 * * * *'  # :45 offset — staggers with bluefin (:15), common (:20), dakota (:00), knuckle (:30)
+    - cron: '45 * * * *'  # offset from knuckle's :30 sync to avoid races
   workflow_dispatch:
 
 jobs:
@@ -21,9 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read
+      issues: read
 
     steps:
-      - name: Post Bluefin LTS queue status to org project board
+      - name: Post bluefin-lts queue status to project board
         env:
           GH_TOKEN: ${{ github.token }}
           PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
@@ -35,7 +37,7 @@ jobs:
           PROJECT_ID    = "PVT_kwDOCCE0ds4BLZBC"
           REPO          = "projectbluefin/bluefin-lts"
           ISSUES_URL    = f"https://github.com/{REPO}/issues"
-          CI_WORKFLOW   = "build-regular.yml"
+          DASHBOARD_URL = "https://github.com/orgs/projectbluefin/projects/2"
 
           def gh(*args):
               result = subprocess.run(
@@ -48,42 +50,37 @@ jobs:
               return result.stdout.strip()
 
           # CI status: latest completed build-regular.yml run
-          ci_raw  = gh("run", "list", "--repo", REPO, "--workflow", CI_WORKFLOW,
-                       "--limit", "1", "--json", "conclusion,url")
+          ci_raw  = gh("run", "list", "--repo", REPO, "--workflow", "build-regular.yml",
+                       "--branch", "main", "--status", "completed",
+                       "--limit", "1", "--json", "conclusion")
           ci_runs = json.loads(ci_raw)
-          if ci_runs:
-              run = ci_runs[0]
-              conclusion = run.get("conclusion", "")
-              url        = run.get("url", "")
-              if conclusion == "success":
-                  ci = f"[✅ CI passing]({url})"
-              elif conclusion in ("failure", "startup_failure"):
-                  ci = f"[❌ CI failing]({url})"
-              else:
-                  ci = "CI ⏳"
+          if ci_runs and ci_runs[0].get("conclusion") == "success":
+              ci = "CI ✅"
+          elif ci_runs and ci_runs[0].get("conclusion") in ("failure", "startup_failure"):
+              ci = "CI ❌"
           else:
               ci = "CI ⏳"
 
           # Queue counts
           def count_label(label):
               raw = gh("issue", "list", "--repo", REPO,
-                       "--label", label, "--state", "open", "--json", "number")
+                       "--label", label, "--state", "open", "--limit", "1000",
+                       "--json", "number")
               return len(json.loads(raw))
 
-          n_ready   = count_label("queue/agent-ready")
-          n_claimed = count_label("queue/claimed")
+          n_ready   = count_label("status/queued")
+          n_claimed = count_label("status/claimed")
           n_p0      = count_label("hive/p0")
           n_p1      = count_label("hive/p1")
 
           now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-          # Status body
           p0_fragment = f" · ▲ {n_p0} P0" if n_p0 > 0 else ""
           p1_fragment = f" · {n_p1} P1" if n_p1 > 0 else ""
-          status_line = f"{ci} · {n_ready} ready · {n_claimed} claimed{p0_fragment}{p1_fragment}"
+          status_line = f"`{ci}` · {n_ready} ready · {n_claimed} claimed{p0_fragment}{p1_fragment}"
 
           body = "\n".join([
-              "### Bluefin LTS 🦴",
+              f"### Bluefin LTS 🧊",
               "",
               status_line,
               "",
@@ -92,7 +89,6 @@ jobs:
 
           print(f"Status body:\n{body}")
 
-          # Determine project status
           if n_p0 > 0:
               status = "OFF_TRACK"
           elif n_claimed > 0:
@@ -100,10 +96,9 @@ jobs:
           else:
               status = "AT_RISK"
 
-          # Skip posting if PROJECT_TOKEN is not configured
           project_token = os.environ.get("PROJECT_TOKEN", "")
           if not project_token:
-              print("WARNING: PROJECT_TOKEN secret not set — skipping project board post", file=sys.stderr)
+              print("WARNING: PROJECT_TOKEN not set — skipping project board post", file=sys.stderr)
               sys.exit(0)
 
           mutation = """

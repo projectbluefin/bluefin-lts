@@ -1,0 +1,17 @@
+name: Skill Drift
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  skill-drift:
+    uses: projectbluefin/actions/.github/workflows/skill-drift-check.yml@v1
+    with:
+      # LTS build/layout files differ from bluefin; keep skills/docs updates coupled to these paths.
+      code-paths: '[".github/workflows/**", "build_scripts/**", "system_files/**", "system_files_overrides/**", "Containerfile", "image-versions.yaml", "Justfile"]'
+      skill-paths: '["docs/skills/**", "docs/*.md", "AGENTS.md"]'
