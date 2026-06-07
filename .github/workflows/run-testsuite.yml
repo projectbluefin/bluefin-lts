@@ -1,0 +1,27 @@
+name: Run Testsuite
+
+# Canonical wrapper — always call this, never call projectbluefin/testsuite e2e.yml directly.
+# Pin the testsuite SHA here; all callers inherit it automatically.
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "Full image reference to test (e.g. ghcr.io/projectbluefin/bluefin-lts:testing)"
+        required: true
+        type: string
+      suites:
+        description: "Comma-separated list of test suites to run"
+        required: true
+        type: string
+
+jobs:
+  e2e:
+    name: ${{ inputs.suites }}
+    permissions:
+      contents: read
+      packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@f71d58d592b18d2722f7903e77dea8a3aa9d687f # main — includes fix for ghcr.io/ prefix (PR #412)
+    with:
+      image: ${{ inputs.image }}
+      suites: ${{ inputs.suites }}
+    secrets: inherit
