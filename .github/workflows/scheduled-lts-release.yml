@@ -241,7 +241,7 @@ jobs:
       needs.resolve.result == 'success' &&
       needs.verify-signatures.result == 'success' &&
       (needs.run-upgrade-test.result == 'success' || needs.run-upgrade-test.result == 'failure')
-    # TODO(#94): Re-add environment: production gate once reviewer assignments confirmed.
+    environment: production
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:

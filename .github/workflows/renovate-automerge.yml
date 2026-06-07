@@ -23,6 +23,7 @@ jobs:
         run: |
           PR_NUMBER=$(gh pr list \
             --repo ${{ github.repository }} \
+            --base main \
             --state open \
             --json number,headRefOid,author \
             --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | select(.author.login == \"renovate[bot]\" or .author.login == \"app/mergeraptor\") | .number" \
