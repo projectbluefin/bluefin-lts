@@ -1,0 +1,34 @@
+name: PR E2E Smoke (informational)
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - Containerfile
+      - build_scripts/**
+      - system_files/**
+      - system_files_overrides/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+# This workflow is informational only — it never blocks merge.
+# The E2E smoke test always fails due to a registry prefix mismatch in the
+# upstream testsuite (ghcr.io/ublue-os/ vs ghcr.io/projectbluefin/).
+# Tracked in: issue #34, testsuite#412.
+# Do NOT add this workflow to branch protection required checks.
+
+jobs:
+  testsuite:
+    name: E2E smoke
+    # continue-on-error is not valid on reusable workflow jobs (uses:).
+    permissions:
+      contents: read
+      packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
+    uses: ./.github/workflows/run-testsuite.yml
+    with:
+      image: ghcr.io/projectbluefin/bluefin-lts-hwe:testing
+      suites: smoke
+    secrets: inherit

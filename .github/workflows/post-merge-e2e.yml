@@ -29,10 +29,11 @@ jobs:
     permissions:
       contents: read
       packages: write
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@e7f9c65095a0cbf62689a8cd64a471ee4824630c # main
+    uses: ./.github/workflows/run-testsuite.yml
     with:
-      image: ghcr.io/projectbluefin/bluefin-lts:testing
+      image: ghcr.io/projectbluefin/bluefin-lts-hwe:testing
       suites: smoke,common
+    secrets: inherit
 
   report-failure:
     needs: [e2e-smoke]

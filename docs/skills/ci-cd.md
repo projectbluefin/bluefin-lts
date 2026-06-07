@@ -1,4 +1,32 @@
+---
+name: bluefin-lts-ci-cd
+description: >-
+  CI/CD workflow map, publish logic, tag namespaces, and release pipeline for
+  projectbluefin/bluefin-lts. Use when debugging build triggers, understanding stream_name tag
+  routing, fixing the release pipeline, authoring new workflows, or investigating why images
+  were not published. Contains critical pitfalls for cosign, GitHub Actions propagation, and
+  lts branch management.
+metadata:
+  type: reference
+---
+
 # CI/CD
+
+## Contents
+- [Workflow map](#workflow-map)
+- [Branches and tags](#branches-and-tags)
+- [Promotion flow](#promotion-flow-mainlts)
+- [stream_name routing](#stream_name--how-tags-are-determined)
+- [Event truth table](#event-truth-table)
+- [Centralized CI — projectbluefin/actions](#centralized-ci--projectbluefinaactions)
+- [Schedule ownership](#schedule-ownership)
+- [Renovate auto-merge pipeline](#renovate-auto-merge-pipeline)
+- [Weekly release pipeline](#weekly-release-pipeline)
+- [Release pipeline pitfalls](#release-pipeline-pitfalls)
+- [generate-release.yml trigger logic](#generate-releaseyml-trigger-logic)
+- [GHCR Package Access](#ghcr-package-access--always-use-githubtoken-never-custom-pats)
+- [SBOM rules](#sbom-rules)
+- [Condition quick reference](#condition-quick-reference)
 
 ## Workflow map
 
@@ -7,20 +35,24 @@
 | `build-regular.yml` | caller for `bluefin-lts` |
 | `build-regular-hwe.yml` | caller for `bluefin-lts-hwe` (HWE kernel) |
 | `build-gdx.yml` | caller for `bluefin-gdx` (NVIDIA/AI) |
-| `scheduled-lts-release.yml` | only Tuesday production dispatcher; gated by `environment: production` (2-human approval); dispatches 3 build workflows on `lts` |
+| `sync-main-to-lts.yml` | auto-merges `main → lts` on every push to `main`; thin caller to `projectbluefin/actions/reusable-sync-branches.yml@v1` |
+| `scheduled-lts-release.yml` | Tuesday production dispatcher; dispatches 3 build workflows on `lts`; production environment gate **currently disabled** (TODO #94) |
 | `generate-release.yml` | creates GitHub Release — only after e2e smoke passes |
 | `pr-testsuite.yml` | runs **`validate-pr@v1`** (just check, shellcheck, hadolint, pre-commit) + **e2e smoke** on every PR; only `Lint & syntax` is a required check |
+| `pr-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
+| `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
+| `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; pin the testsuite SHA here |
 | `renovate-automerge.yml` | auto-merges Renovate/mergeraptor PRs when pr-testsuite passes |
 | `post-merge-e2e.yml` | runs E2E smoke+common suites after a successful build on `main`; informational only |
+| `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
 | `skill-drift.yml` | warns on PRs that change CI/build/system files without updating docs/skills |
 | `hive-progress-sync.yml` | posts queue stats + CI status to the projectbluefin org project board |
 | `validate-renovate.yaml` | validates `.github/renovate.json5` on relevant PRs and pushes |
-| `bonedigger.yml` | issue lifecycle automation (via `projectbluefin/common`) |
 | ~~`build-dx.yml`~~ | **deleted** — no DX variant in LTS; GDX is the NVIDIA product |
 | ~~`build-dx-hwe.yml`~~ | **deleted** — no DX HWE variant |
 | ~~`build-gnome50.yml`~~ | **deleted 2026-05-30** — GNOME 50 is now the default |
 | ~~`reusable-build-image.yml`~~ | **deleted** — replaced by `projectbluefin/actions/.github/workflows/reusable-build.yml@v1` |
-| ~~`create-lts-pr.yml`~~ | **deleted** — promotion is now via manually-reviewed PR gate (not auto-created) |
+| ~~`create-lts-pr.yml`~~ | **deleted 2026-05-30** — replaced by `sync-main-to-lts.yml` |
 
 ## Branches and tags
 
@@ -33,19 +65,19 @@
 | `lts` | `bluefin-lts-hwe` | `lts`, `lts-YYYYMMDD` | `workflow_dispatch` on `lts` only |
 | `lts` | `bluefin-gdx` | `lts`, `lts-YYYYMMDD` | `workflow_dispatch` on `lts` only |
 
-`push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only bonedigger and `hive-progress-sync.yml`.
+`push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only `lifecycle-caller.yml` and `hive-progress-sync.yml`.
 
 ## Promotion flow (`main→lts`)
 
-Promotion from `main` to `lts` is **fully automated** by GitHub Actions. `create-lts-pr.yml` was deleted.
+`sync-main-to-lts.yml` auto-merges `main → lts` on every push to `main` via direct `git push` (uses `projectbluefin/actions/reusable-sync-branches.yml@v1`). No manual PR needed.
 
-1. PRs merge to `main` via the merge queue using a **regular merge commit**.
-2. GitHub Actions automatically promotes `main → lts` after each merge.
+1. PRs merge to `main` via the merge queue using **squash merge**.
+2. `sync-main-to-lts.yml` fires immediately after and merges `main → lts` via regular `git merge`.
 3. `push` to `lts` does **not** publish images — it only validates.
-4. `scheduled-lts-release.yml` (or manual dispatch on `lts`) publishes production images.
+4. `scheduled-lts-release.yml` (manual dispatch on `lts`) publishes production images.
 
-**Never squash-merge promotion PRs.** It breaks the merge base and bloats every future PR diff.
-**Never merge `lts→main`; never commit directly to `lts`.**
+**Never squash-merge `main→lts` directly.** The sync workflow uses regular merge — this is intentional to preserve merge base.
+**Never merge `lts→main`.**
 
 ## `stream_name` — how tags are determined
 
@@ -87,6 +119,19 @@ Inputs used by each caller:
 - `image_flavors` — `'["main"]'`
 - `architecture` — `'["x86_64"]'`
 
+### HWE and GDX kernel selection
+
+HWE (`bluefin-lts-hwe`) and GDX (`bluefin-gdx`) use the **Fedora CoreOS stable** kernel, not the CentOS kernel. The Justfile resolves the current Fedora CoreOS stable version at build time:
+
+```bash
+skopeo inspect docker://quay.io/fedora/fedora-coreos:stable
+# → derives Fedora version (e.g., 44) → selects coreos-stable-44 akmods
+```
+
+This means HWE/GDX kernels automatically track upstream as CoreOS advances Fedora versions — no manual pin bumps needed. Set `COREOS_STABLE_VERSION=NN` to override for testing.
+
+Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kernel.
+
 ### Shared composite actions in bluefin-lts
 
 | Action | Where used | LTS-specific override |
@@ -112,15 +157,36 @@ When E2E is fixed, the flow will be:
 
 ## Weekly release pipeline
 
-`scheduled-lts-release.yml` job chain (updated 2026-06-06 — PR #73):
-1. `trigger-lts-builds` — **gated by `environment: production` (2 required human approvals)**; triggers all 3 build workflows on `lts` (`build-regular.yml`, `build-gdx.yml`, `build-regular-hwe.yml`), then sequentially waits for all 3 to complete
-2. `verify-signatures` (needs: trigger-lts-builds) — verifies cosign signatures on all 3 published images
-3. `run-upgrade-test` (needs: [trigger-lts-builds, verify-signatures]) — lifecycle upgrade test on `ghcr.io/projectbluefin/bluefin-lts:lts` via `projectbluefin/actions/.github/workflows/upgrade-test.yml@v1`; `suites: lifecycle`, `chunked_enabled: false`
-4. `generate-release` (needs: [trigger-lts-builds, run-upgrade-test]) — only fires if upgrade-test passes; dispatches `generate-release.yml --ref main -f target=lts`
+`scheduled-lts-release.yml` dispatches manually or on a Tuesday `0 6 * * 2` schedule. Job chain:
 
-If the upgrade test fails, no GitHub Release is created. Fix-forward, investigate, re-run manually.
+1. `check-promotion-floor` — 7-day minimum; bypassed by `workflow_dispatch`
+2. `resolve` — pulls `:testing` digests for all 3 variants; verifies all 3 share the same `org.opencontainers.image.revision` (CentOS bootc base SHA — see pitfalls below); locks current `main` SHA as `locked_main_sha` via the GitHub API
+3. `verify-signatures` — cosign-verifies all 3 `:testing` digests; cert-identity-regexp must be `projectbluefin/(bluefin-lts|actions)/.github/workflows/` (signing happens inside `projectbluefin/actions` reusable workflow, not the caller)
+4. `run-upgrade-test` — lifecycle test via `upgrade-test.yml@v1`; **non-blocking** (known false positive — testsuite hardcodes `ghcr.io/ublue-os/` prefix; tracked in testsuite#412 / issue #102)
+5. `promote` (`if: always() && resolve.success && verify-signatures.success && run-upgrade-test in [success,failure]`) — skopeo-copies `:testing` → `:lts` by digest; SHA guard checks `locked_main_sha` vs current `main` (fails if main advanced during e2e — re-run)
+6. `update-lts-branch` (`if: always() && promote.success`) — fast-forwards `lts` to `locked_main_sha`; no-ops if `sync-main-to-lts.yml` already created a merge commit containing the target
+7. `generate-release` (`if: always() && update-lts-branch.success`) — dispatches `generate-release.yml --ref main -f target=lts`
+8. `close-failure-issue` (`if: always() && promote.success`) — closes any open `ci: weekly LTS release failure` issue
+9. `report-failure` (`if: always() && failure()`) — opens/updates failure issue
 
-**Production gate:** two distinct maintainers must approve in the GitHub Environments UI before any Tuesday builds run.
+## Release pipeline pitfalls
+
+**`org.opencontainers.image.revision` is the CentOS base SHA, not the LTS repo SHA.**
+The label is inherited from `quay.io/centos-bootc/centos-bootc:c10s`. Never compare it to a `projectbluefin/bluefin-lts` commit SHA. The `resolve` job captures `locked_main_sha` from the GitHub API separately for the SHA guard and `update-lts-branch`.
+
+**GitHub Actions transitive failure propagation.**
+When a transitive ancestor fails (e.g. `run-upgrade-test`), GitHub skips all downstream jobs — even ones that only `needs:` a job that succeeded. Jobs after `promote` must use `if: always() && needs.X.result == 'success'`, not just `if: needs.X.result == 'success'`.
+
+**`lts` branch is always "ahead" of `main`.**
+`sync-main-to-lts.yml` creates a regular merge commit on `lts` for every push to `main`. The fast-forward PATCH will fail with `Update is not a fast forward`. The `update-lts-branch` step checks with the compare API and no-ops if `lts` already contains the target SHA.
+
+**`continue-on-error: true` is not valid on `uses:` jobs.**
+actionlint rejects it. Make a job non-blocking by using `if: always() && ...` conditions on the jobs that depend on it.
+
+**SHA guard fires if `main` advances during the upgrade-test window (~10 min).**
+Just re-dispatch `scheduled-lts-release.yml` once main is quiet.
+
+**Branch protection on `main`:** Required check `Lint & syntax` + linear history enforced. Matches `projectbluefin/bluefin`.
 
 ## `generate-release.yml` trigger logic
 
@@ -198,23 +264,33 @@ Rechunking is handled internally by `projectbluefin/actions/.github/workflows/re
 
 **Do not reproduce the inline buildah invocation.** All details live in `projectbluefin/actions/bootc-build/chunka/action.yml`. If a flag needs changing, update the shared action.
 
-## GHCR Package Access — PACKAGES_TOKEN
+## GHCR Package Access — always use `github.token`, never custom PATs
 
-`ghcr.io/projectbluefin/bluefin` is linked to `projectbluefin/bluefin` (the main Bluefin repo),
-not to `projectbluefin/bluefin-lts`. `GITHUB_TOKEN` from `bluefin-lts` is denied `write_package`.
+**Policy: Custom tokens (PATs, `PACKAGES_TOKEN`, etc.) are an antipattern in this project.**
+When a workflow can't access a package, fix the package permissions — do not create a token.
 
-**Workaround:** All `podman login`/`docker login`/`oras login` steps use:
-```yaml
-PUSH_TOKEN: ${{ secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
-```
+All CI steps use only `github.token` (or `secrets.GITHUB_TOKEN`) for GHCR access.
+If you see a `PACKAGES_TOKEN` or any other secret used for registry login, that is a bug.
 
-`PACKAGES_TOKEN` is a classic OAuth token (castrojo) with `write:packages` stored as a repo secret.
+### Required package configuration (org admin, one-time setup)
 
-**To remove the workaround** (preferred long-term):
-1. Go to https://github.com/orgs/projectbluefin/packages/container/bluefin-lts/settings
-2. Under "Manage Actions access" → "Add repository" → `projectbluefin/bluefin-lts` → Write
-3. Repeat for `bluefin-lts-hwe` and `bluefin-gdx` packages
-4. Delete the `PACKAGES_TOKEN` secret; revert login steps to `secrets.GITHUB_TOKEN`
+Three GHCR packages must be linked to `projectbluefin/bluefin-lts` and grant Actions write access:
+
+| Package | Settings URL |
+|---|---|
+| `bluefin-lts` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts/settings |
+| `bluefin-lts-hwe` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-hwe/settings |
+| `bluefin-gdx` | https://github.com/orgs/projectbluefin/packages/container/bluefin-gdx/settings |
+
+On each settings page:
+1. **Connected repository** → set to `projectbluefin/bluefin-lts`
+2. **Manage Actions access** → "Add repository" → `projectbluefin/bluefin-lts` → **Write**
+
+Once done, `github.token` from any `bluefin-lts` workflow has full package read/write — no PAT needed.
+
+> **Note:** `bluefin-lts` is currently (incorrectly) linked to `projectbluefin/bluefin` and `bluefin-gdx`
+> has no linked repo. Until an org admin fixes this, GHCR pushes from `bluefin-lts` workflows will fail
+> with `DENIED`. The fix is the two-step UI action above — not a new secret.
 
 ## SBOM rules
 
@@ -222,6 +298,18 @@ PUSH_TOKEN: ${{ secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
 - All SBOM steps must keep `continue-on-error: true`.
 - Failed SBOM attestation must never block image publishing.
 - LTS uses SPDX JSON artifacts on the amd64 manifest digest; signing uses keyless cosign (Sigstore OIDC).
+
+### SBOM permission gotcha
+
+`reusable-build.yml` calls `sudo -E just gen-sbom` which creates `sbom_out/` **owned by root**.
+The subsequent `sign-and-publish` step runs without `sudo` and fails with `permission denied` on `sbom_out/$IMAGE/sbom.json`.
+
+**Fix is in the Justfile `gen-sbom` recipe:** after syft writes the file, ownership is returned to the invoking user:
+```bash
+chown -R "${SUDO_UID:-$(id -u)}:${SUDO_GID:-$(id -g)}" "sbom_out/" 2>/dev/null || true
+```
+
+If you ever touch `gen-sbom` in the Justfile, preserve this line.
 
 ## Condition quick reference
 

@@ -37,18 +37,8 @@ jobs:
           echo "No COPR usage found."
 
       - name: Validate PR
-        uses: projectbluefin/actions/bootc-build/validate-pr@v1
+        uses: projectbluefin/actions/bootc-build/validate-pr@1b6ae6a57f589db7175c3748ff93337ba63457ce # v1
         with:
           hadolint-config: ""
           # LTS shell lives under build_scripts/, not bluefin's build_files/.
           shellcheck-glob: "build_scripts/**/*.sh"
-
-  testsuite:
-    name: E2E smoke
-    permissions:
-      contents: read
-      packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@e7f9c65095a0cbf62689a8cd64a471ee4824630c # main
-    with:
-      image: ghcr.io/projectbluefin/bluefin-lts:testing
-      suites: smoke

@@ -1,21 +1,33 @@
+---
+name: bluefin-lts-release
+description: >-
+  Production release pipeline, branch promotion, registry rollback, and ISO status for
+  projectbluefin/bluefin-lts. Use when dispatching scheduled-lts-release.yml, performing
+  an emergency rollback via skopeo, syncing the castrojo fork, or checking ISO status.
+metadata:
+  type: runbook
+---
+
 # Release
 
 ## Production release flow
 
-1. Promotion lands via PR from `main` to `lts`.
-2. Merge must be a **regular merge commit**.
-3. `push` to `lts` only validates; it does **not** publish.
-4. `scheduled-lts-release.yml` owns the Tuesday `0 6 * * 2` production run.
-5. **upgrade-test must pass** before GitHub Release is created.
-6. For urgent publishes, manually dispatch `scheduled-lts-release.yml` on `lts`.
+1. `sync-main-to-lts.yml` auto-promotes `main → lts` on every push via regular merge — no manual PR needed.
+2. `push` to `lts` validates only; it does **not** publish images.
+3. Dispatch manually to publish:
+   ```bash
+   gh workflow run scheduled-lts-release.yml --repo projectbluefin/bluefin-lts
+   ```
+4. `promote` skopeo-copies `:testing` → `:lts` by digest after cosign verify passes. The upgrade-test is **non-blocking** (known false positive on `ghcr.io/ublue-os/` prefix; tracked in testsuite#412 / issue #102).
+5. `generate-release` fires after `update-lts-branch` succeeds.
 
 ## Promotion / branch safety
 
-- Never squash-merge promotion PRs.
+- `main→lts` is automated via `sync-main-to-lts.yml` (regular merge, direct git push).
+- Never squash-merge `main→lts` directly — the sync workflow does regular merge intentionally.
 - Never merge `lts→main`.
-- Never commit directly to `lts`; land in `main` first.
-- `main` uses a merge queue with **MERGE** method (not squash): `gh pr merge --auto` enqueues; do not promise immediate merge.
-- Required check on `main` is `Lint & syntax` (pr-testsuite) only — builds are informational.
+- `main` uses a merge queue with **squash** method. Required check: `Lint & syntax`. Linear history enforced.
+- `gh pr merge --auto` enqueues — do not promise immediate merge.
 
 ## Fork sync pattern (`castrojo` fork)
 
