@@ -119,7 +119,7 @@ jobs:
 
       - name: Create release
         if: steps.check.outputs.skip != 'true'
-        uses: projectbluefin/actions/bootc-build/create-release@v1
+        uses: projectbluefin/actions/bootc-build/create-release@1b6ae6a57f589db7175c3748ff93337ba63457ce # v1
         with:
           sbom-path: sbom_out/${{ steps.meta.outputs.image_name }}.sbom.json
           tag: ${{ steps.meta.outputs.tag }}
