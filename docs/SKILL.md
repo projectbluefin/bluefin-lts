@@ -17,6 +17,7 @@ Load only the skill for the task at hand. Skill files live in `docs/skills/`.
 | Local builds, validation, `just` recipes, variant map | [`skills/build.md`](skills/build.md) |
 | CI/CD workflows, publish logic, tag namespaces, pitfalls | [`skills/ci-cd.md`](skills/ci-cd.md) |
 | CentOS vs Fedora: packages, COPR, akmods, EPEL | [`skills/centos-vs-fedora.md`](skills/centos-vs-fedora.md) |
+| GNOME Shell extensions: add, remove, build patterns | [`skills/gnome-extensions.md`](skills/gnome-extensions.md) |
 | Ghost homelab testing on `titan-lts` | [`skills/testlab.md`](skills/testlab.md) |
 | Release pipeline, rollback, registry, ISO status | [`skills/release.md`](skills/release.md) |
 

@@ -156,6 +156,7 @@ See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task
 | Local build, validation, packages | `docs/skills/build.md` |
 | CI/CD workflows, publish logic, tag namespaces | `docs/skills/ci-cd.md` |
 | CentOS-vs-Fedora package/repo decisions | `docs/skills/centos-vs-fedora.md` |
+| GNOME Shell extensions (add/remove/build) | `docs/skills/gnome-extensions.md` |
 | Testing PRs on ghost homelab (titan-lts) | `docs/skills/testlab.md` |
 | Release, rollback, registry, ISO status | `docs/skills/release.md` |
 
