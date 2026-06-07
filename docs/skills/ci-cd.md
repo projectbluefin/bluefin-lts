@@ -1,3 +1,15 @@
+---
+name: bluefin-lts-ci-cd
+description: >-
+  CI/CD workflow map, publish logic, tag namespaces, and release pipeline for
+  projectbluefin/bluefin-lts. Use when debugging build triggers, understanding stream_name tag
+  routing, fixing the release pipeline, authoring new workflows, or investigating why images
+  were not published. Contains critical pitfalls for cosign, GitHub Actions propagation, and
+  lts branch management.
+metadata:
+  type: reference
+---
+
 # CI/CD
 
 ## Workflow map
@@ -8,20 +20,23 @@
 | `build-regular-hwe.yml` | caller for `bluefin-lts-hwe` (HWE kernel) |
 | `build-gdx.yml` | caller for `bluefin-gdx` (NVIDIA/AI) |
 | `sync-main-to-lts.yml` | auto-merges `main → lts` on every push to `main`; thin caller to `projectbluefin/actions/reusable-sync-branches.yml@v1` |
-| `scheduled-lts-release.yml` | Tuesday production dispatcher; dispatches 3 build workflows on `lts`; production environment gate **removed** (TODO #94 to restore once factory confirmed operational) |
+| `scheduled-lts-release.yml` | Tuesday production dispatcher; dispatches 3 build workflows on `lts`; production environment gate **currently disabled** (TODO #94) |
 | `generate-release.yml` | creates GitHub Release — only after e2e smoke passes |
 | `pr-testsuite.yml` | runs **`validate-pr@v1`** (just check, shellcheck, hadolint, pre-commit) + **e2e smoke** on every PR; only `Lint & syntax` is a required check |
+| `pr-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
+| `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
+| `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; pin the testsuite SHA here |
 | `renovate-automerge.yml` | auto-merges Renovate/mergeraptor PRs when pr-testsuite passes |
 | `post-merge-e2e.yml` | runs E2E smoke+common suites after a successful build on `main`; informational only |
+| `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
 | `skill-drift.yml` | warns on PRs that change CI/build/system files without updating docs/skills |
 | `hive-progress-sync.yml` | posts queue stats + CI status to the projectbluefin org project board |
 | `validate-renovate.yaml` | validates `.github/renovate.json5` on relevant PRs and pushes |
-| `bonedigger.yml` | issue lifecycle automation (via `projectbluefin/common`) |
 | ~~`build-dx.yml`~~ | **deleted** — no DX variant in LTS; GDX is the NVIDIA product |
 | ~~`build-dx-hwe.yml`~~ | **deleted** — no DX HWE variant |
 | ~~`build-gnome50.yml`~~ | **deleted 2026-05-30** — GNOME 50 is now the default |
 | ~~`reusable-build-image.yml`~~ | **deleted** — replaced by `projectbluefin/actions/.github/workflows/reusable-build.yml@v1` |
-| ~~`create-lts-pr.yml`~~ | **deleted 2026-05-30** (commit `82e2b67`) — replaced by `sync-main-to-lts.yml` (PR #97, merged 2026-06-06) |
+| ~~`create-lts-pr.yml`~~ | **deleted 2026-05-30** — replaced by `sync-main-to-lts.yml` |
 
 ## Branches and tags
 
@@ -34,7 +49,7 @@
 | `lts` | `bluefin-lts-hwe` | `lts`, `lts-YYYYMMDD` | `workflow_dispatch` on `lts` only |
 | `lts` | `bluefin-gdx` | `lts`, `lts-YYYYMMDD` | `workflow_dispatch` on `lts` only |
 
-`push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only bonedigger and `hive-progress-sync.yml`.
+`push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only `lifecycle-caller.yml` and `hive-progress-sync.yml`.
 
 ## Promotion flow (`main→lts`)
 

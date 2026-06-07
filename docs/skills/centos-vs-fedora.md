@@ -1,3 +1,13 @@
+---
+name: bluefin-lts-centos-vs-fedora
+description: >-
+  CentOS Stream 10 vs Fedora package and repo differences for projectbluefin/bluefin-lts builds.
+  Use when adding packages, enabling repos, choosing akmods tags, or resolving COPR chroot names.
+  Contains the COPR-is-blocked guard explanation and the epel-10 vs centos-stream-10 naming rule.
+metadata:
+  type: reference
+---
+
 # CentOS vs Fedora — bluefin-lts Build Context
 
 bluefin-lts is built on **CentOS Stream 10**, not Fedora. This has critical implications for agents and contributors.

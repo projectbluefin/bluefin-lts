@@ -3,6 +3,73 @@
 **Bluefin LTS** is the long-term support variant of Bluefin, built on CentOS Stream with bootc.
 Home repo: [projectbluefin/bluefin-lts](https://github.com/projectbluefin/bluefin-lts)
 
+> This repo is part of an agentic operating system built by agentic workflows. Agents implement.
+> Humans approve design, security-sensitive changes, and merge. See also the
+> [org-wide AGENTS.md](https://github.com/projectbluefin/.github/blob/main/AGENTS.md).
+
+## The Self-Improvement Loop
+
+Every agent session produces two outputs:
+1. **The work** — the PR, fix, or improvement.
+2. **The learning** — what you discovered that a future agent should know.
+
+Output 1 without Output 2 leaves the system no smarter. **The loop only compounds if agents write back.**
+
+```
+Agent works on task
+  └─ discovers pattern / workaround / convention
+       └─ writes it to the relevant skill file in docs/skills/
+            └─ commits in the same PR
+                 └─ next agent starts smarter
+                      └─ loop
+```
+
+**Before marking your work complete, verify:**
+- [ ] Did I discover a workaround, non-obvious pattern, or convention?
+- [ ] Is there a skill file for the area I worked in (`docs/skills/`)?
+- [ ] If yes — did I update it?
+- [ ] If no — did I create one and add it to `docs/SKILL.md`?
+- [ ] Is the skill file committed in the **same PR** as the change?
+
+See [`docs/SKILL.md`](docs/SKILL.md) for the skill index.
+For skill file format, see
+[`projectbluefin/actions/.github/skills/skill-improvement/SKILL.md`](https://github.com/projectbluefin/actions/blob/main/.github/skills/skill-improvement/SKILL.md).
+
+---
+
+## Human Decision Points — Stop and Ask
+
+Agents implement autonomously **except** at these gates:
+
+| Gate | When |
+|---|---|
+| **Design Gate** | Architecture changes, new subsystem design, behavioral changes visible to users |
+| **Security Gate** | Auth, signing, supply chain, secrets handling, COPR/third-party sources |
+| **Breakage Gate** | Cross-repo breaking changes — removing/renaming inputs, changing defaults that affect consuming repos |
+| **Merge Gate** | Final PR approval and merge — always human |
+
+When in doubt, open a draft PR with your implementation and ask explicitly.
+
+---
+
+## Verification — Implement and Verify; Humans Approve and Merge
+
+Do not request review without evidence. Before opening a PR for review:
+- Link to a CI run, workflow run, or test output that exercises your change
+- If no automated test exists, describe how you manually verified the change
+- Skill file update must be committed in the **same PR** (not a follow-up)
+
+---
+
+## 🚫 Absolute Prohibition — ublue-os org
+
+**NEVER create issues, pull requests, comments, forks, webhook calls, API writes, automated
+reports, or any other programmatic action targeting any `ublue-os/*` repository.**
+
+If a task requires touching upstream `ublue-os` repos → **stop and tell the human to report it manually.**
+
+---
+
 ## Org pipeline — projectbluefin
 
 ### Repo map
@@ -53,13 +120,13 @@ When in doubt, post nothing.
 - No WIP PRs
 - **Agents MUST NOT push directly to `main`.** All changes via PR. Branch protection enforces this.
 - **Agents MUST NOT push directly to `lts`.** Land in `main` first; promotion to `lts` is handled automatically by GitHub Actions.
-- **Production builds** (`scheduled-lts-release.yml`) require 2 distinct human approvals in the GitHub `production` Environment. No agent may trigger, approve, or bypass this gate. Admin bypasses are permanently logged in Environment deployment history.
+- **Production builds** (`scheduled-lts-release.yml`) run on the `lts` branch. The `production` Environment gate is currently disabled (TODO #94 — will be restored once the factory is confirmed stable and reviewer assignments are in place). No agent may add, bypass, or remove the Environment gate without explicit human approval.
 - **bluefin-lts workflow path overrides are intentional:** use `build_scripts/` and `image-versions.yaml`, not bluefin's `build_files/` and `image-versions.yml`.
 - **`.github/workflows/`, `Justfile`, and `build_scripts/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
 
 ## Skills
 
-Load only what the task needs:
+See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task needs:
 
 | Task | Load |
 |---|---|
@@ -81,6 +148,33 @@ Load only what the task needs:
 - **NEVER re-enable LTS ISO builds** — Anaconda is broken on CentOS Stream base
 - **NEVER commit directly to `lts` branch** — land in `main` first
 - **NEVER merge `lts→main`** — flow is one-way: `main→lts` only
+
+## Commit standards
+
+### Format (required)
+
+[Conventional Commits](https://www.conventionalcommits.org/): `<type>(<scope>): <description>`
+
+Common types: `feat` `fix` `docs` `ci` `refactor` `chore` `build`
+
+### AI attribution (required on every AI-authored commit)
+
+```
+feat(ci): add container build optimization
+
+Optimize multi-stage build to reduce image size.
+
+Assisted-by: Claude Sonnet 4.6 via GitHub Copilot
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+```
+
+### SHA pinning (third-party actions)
+
+All `uses:` references to **external** actions must be pinned to a full commit SHA with a version
+comment. Never use floating `@main` or `@vN` tags for third-party actions.
+`projectbluefin/` refs (`@v1`, `@main`) are intentional managed tags and are exempt.
+
+---
 
 ## Quick commands
 

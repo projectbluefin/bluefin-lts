@@ -1,3 +1,13 @@
+---
+name: bluefin-lts-testlab
+description: >-
+  Ghost homelab testing for projectbluefin/bluefin-lts PRs on titan-lts (KubeVirt VM on ghost,
+  192.168.1.102). Use when running PR validation via BIB disk builds, generating lab strike
+  reports, or understanding the CI-vs-homelab testing split.
+metadata:
+  type: runbook
+---
+
 # Testlab
 
 ## Target
@@ -7,7 +17,7 @@
 | Host | `ghost` (`192.168.1.102`) |
 | VM | `titan-lts` |
 | Access | NodePort `30220` |
-| Base image | `ghcr.io/projectbluefin/bluefin:lts-hwe` |
+| Base image | `ghcr.io/projectbluefin/bluefin-lts-hwe:lts` |
 
 ## PR test loop
 
@@ -50,7 +60,7 @@ Use BIB disk rebuilds for test images; this is the supported path.
 |---|---|
 | Target | `bluefin-lts` |
 | VM/Host | `titan-lts` / NodePort `30220` |
-| Image | `ghcr.io/projectbluefin/bluefin:{tag}` + short digest |
+| Image | `ghcr.io/projectbluefin/bluefin-lts-hwe:{tag}` + short digest |
 | Verdict | `🟢 GO — ...` or `🔴 NOGO — ...` |
 | Trailer | `<!-- status:{PASS|FAIL} target:lts label:{label} digest:{digest} -->` |
 

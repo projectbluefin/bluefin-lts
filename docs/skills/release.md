@@ -1,3 +1,13 @@
+---
+name: bluefin-lts-release
+description: >-
+  Production release pipeline, branch promotion, registry rollback, and ISO status for
+  projectbluefin/bluefin-lts. Use when dispatching scheduled-lts-release.yml, performing
+  an emergency rollback via skopeo, syncing the castrojo fork, or checking ISO status.
+metadata:
+  type: runbook
+---
+
 # Release
 
 ## Production release flow

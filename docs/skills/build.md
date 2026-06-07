@@ -1,3 +1,13 @@
+---
+name: bluefin-lts-build
+description: >-
+  Local build, validation, and variant guide for projectbluefin/bluefin-lts. Use when running
+  just build, just check, or just lint; understanding the Regular/HWE/GDX variant map; debugging
+  build failures; or building QCOW2/raw disk images for VM testing.
+metadata:
+  type: procedure
+---
+
 # Build
 
 ## Prereqs
