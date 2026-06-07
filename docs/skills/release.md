@@ -4,8 +4,12 @@
 
 1. `sync-main-to-lts.yml` auto-promotes `main → lts` on every push via `projectbluefin/actions/reusable-sync-branches.yml@v1` — no manual PR needed.
 2. `push` to `lts` only validates; it does **not** publish.
-3. `scheduled-lts-release.yml` owns the Tuesday `0 6 * * 2` production run — or dispatch manually on `lts`.
-4. **upgrade-test must pass** before GitHub Release is created.
+3. `scheduled-lts-release.yml` owns the Tuesday `0 6 * * 2` production run — or dispatch manually:
+   ```bash
+   gh workflow run scheduled-lts-release.yml --repo projectbluefin/bluefin-lts
+   ```
+4. `promote` (skopeo-copy `:testing` → `:lts`) runs after cosign verify. The upgrade-test is **non-blocking** — a known false positive exists (testsuite hardcodes `ghcr.io/ublue-os/` prefix; tracked in testsuite#412 / issue #102).
+5. `generate-release` fires after `update-lts-branch` succeeds.
 
 ## Promotion / branch safety
 

@@ -124,13 +124,34 @@ When E2E is fixed, the flow will be:
 
 ## Weekly release pipeline
 
-`scheduled-lts-release.yml` job chain (updated 2026-06-06):
-1. `trigger-lts-builds` — ~~gated by `environment: production`~~ gate removed (TODO #94); triggers all 3 build workflows on `lts` (`build-regular.yml`, `build-gdx.yml`, `build-regular-hwe.yml`), then sequentially waits for all 3 to complete
-2. `verify-signatures` (needs: trigger-lts-builds) — verifies cosign signatures on all 3 published images
-3. `run-upgrade-test` (needs: [trigger-lts-builds, verify-signatures]) — lifecycle upgrade test on `ghcr.io/projectbluefin/bluefin-lts:lts` via `projectbluefin/actions/.github/workflows/upgrade-test.yml@v1`; `suites: lifecycle`, `chunked_enabled: false`
-4. `generate-release` (needs: [trigger-lts-builds, run-upgrade-test]) — only fires if upgrade-test passes; dispatches `generate-release.yml --ref main -f target=lts`
+`scheduled-lts-release.yml` job chain (updated 2026-06-07):
 
-If the upgrade test fails, no GitHub Release is created. Fix-forward, investigate, re-run manually.
+1. `check-promotion-floor` — 7-day minimum between releases; bypassed by `workflow_dispatch`
+2. `resolve` — pulls `:testing` digests for all 3 variants; reads `org.opencontainers.image.revision` from each (this is the CentOS bootc upstream SHA, **not** the LTS repo SHA); verifies all 3 share the same base revision; locks current `main` SHA as `locked_main_sha`
+3. `verify-signatures` — cosign-verifies all 3 `:testing` digests; cert-identity-regexp **must** be `projectbluefin/(bluefin-lts|actions)/.github/workflows/` (signing happens in `projectbluefin/actions` reusable workflow, not the caller)
+4. `run-upgrade-test` — lifecycle test via `upgrade-test.yml@v1`; **non-blocking** — a false positive exists because the testsuite hardcodes `ghcr.io/ublue-os/` prefix (tracked in testsuite#412 / issue #102); promote runs regardless of result
+5. `promote` (`if: always() && resolve.success && verify-signatures.success && run-upgrade-test in [success,failure]`) — skopeo-copies `:testing` → `:lts` by digest; SHA guard checks `locked_main_sha` matches current `main` (fails if main advanced during e2e — just re-run)
+6. `update-lts-branch` (`if: always() && promote.success`) — fast-forwards `lts` to `locked_main_sha`; no-ops if `sync-main-to-lts.yml` already created a merge commit that includes the target (compare API check)
+7. `generate-release` (`if: always() && update-lts-branch.success`) — dispatches `generate-release.yml --ref main -f target=lts`
+8. `close-failure-issue` (`if: always() && promote.success`) — closes any open `ci: weekly LTS release failure` issue
+9. `report-failure` (`if: always() && failure()`) — opens or updates failure issue
+
+### Key pitfalls in scheduled-lts-release.yml
+
+**`org.opencontainers.image.revision` is the CentOS base SHA, not the LTS repo SHA.**
+The label is inherited from `quay.io/centos-bootc/centos-bootc:c10s`. Never compare it to a `projectbluefin/bluefin-lts` commit. Use `locked_main_sha` (captured from the GitHub API in the `resolve` job) for the SHA guard and `update-lts-branch`.
+
+**GitHub Actions transitive failure propagation.**
+When `run-upgrade-test` fails, GitHub propagates failure through the entire dependency chain. Jobs that come after `promote` (which uses `if: always()`) must also use `if: always() && needs.X.result == 'success'` — just `if: needs.X.result == 'success'` alone is not enough; GitHub silently skips the job.
+
+**`lts` branch is always "ahead" of `main`.**
+`sync-main-to-lts.yml` creates a merge commit on `lts` for every push to `main`, making `lts` ahead of the squash-merge SHA on `main`. The fast-forward PATCH will fail with `Update is not a fast forward`. The `update-lts-branch` job handles this by comparing with the GitHub compare API and no-opping if `lts` already contains the target.
+
+**`continue-on-error: true` is not valid on `uses:` jobs.**
+actionlint rejects it. Use `if: always() && ...` on the downstream jobs instead.
+
+**SHA guard fires if `main` advances during e2e.**
+The `promote` job compares `locked_main_sha` (captured at `resolve` time) with current `main`. If any PR merges to `main` during the ~10 min upgrade test window, the guard fails. Solution: just re-run `scheduled-lts-release.yml` when main is quiet.
 
 **Branch protection on `main`:** Required check `Lint & syntax` + linear history enforced. Matches `projectbluefin/bluefin`.
 
