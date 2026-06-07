@@ -4,8 +4,9 @@
   // Enable GitHub's native automerge; merging is handled by GitHub and remains subject to branch protection/bypass settings
   "platformAutomerge": true,
 
-  // Only target main branch - lts is production and only updated via promotion
-  "baseBranchPatterns": ["main"],
+  // Only target testing branch — testing is the staging area for Renovate updates.
+  // PRs are auto-merged to testing, then promoted to main via weekly promotion.
+  "baseBranchPatterns": ["testing"],
 
   "extends": [
     "github>projectbluefin/renovate-config",
