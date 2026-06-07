@@ -31,6 +31,29 @@ Agent works on task
 - [ ] If no — did I create one and add it to `docs/SKILL.md`?
 - [ ] Is the skill file committed in the **same PR** as the change?
 
+### What counts as a learning worth writing back
+
+**Write it:**
+- A workaround for an upstream bug (include component + issue link if open)
+- A non-obvious pattern required for correctness
+- A convention that isn't obvious from the code
+- Something you had to discover by trial and error
+
+**Don't write it:**
+- One-off task notes ("use commit message X for this PR")
+- Obvious things any developer would know
+- Ephemeral state ("currently broken, fix pending")
+- Specific SHAs, PR numbers, or point-in-time deployment state — these become misleading after the next commit
+
+### Where learnings live
+
+| You are working in... | Write to |
+|---|---|
+| `projectbluefin/bluefin-lts` | `docs/skills/` in this repo (create if absent) |
+| `projectbluefin/actions` | `docs/skills/` AND `.github/skills/` in that repo |
+| Cross-cutting (affects multiple repos) | Local first, then open propagation issue in `projectbluefin/actions` |
+| `ublue-os/*` repos | **NEVER** — see the prohibition below |
+
 See [`docs/SKILL.md`](docs/SKILL.md) for the skill index.
 For skill file format, see
 [`projectbluefin/actions/.github/skills/skill-improvement/SKILL.md`](https://github.com/projectbluefin/actions/blob/main/.github/skills/skill-improvement/SKILL.md).

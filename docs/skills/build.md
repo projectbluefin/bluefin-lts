@@ -10,6 +10,15 @@ metadata:
 
 # Build
 
+## Contents
+- [Prereqs](#prereqs)
+- [Fast validation](#fast-validation)
+- [Core builds](#core-builds)
+- [Variant map](#variant-map)
+- [VM / disk artifacts](#vm--disk-artifacts)
+- [Repo layout](#repo-layout-for-build-work)
+- [Debugging checklist](#debugging-checklist)
+
 ## Prereqs
 
 | Tool | Check | Install / note |
@@ -27,7 +36,6 @@ just check && just lint
 - Run before every commit.
 - `just check` validates Just syntax (<30s).
 - `just lint` runs shellcheck (<10s).
-- `just format` exists for shfmt when editing shell.
 
 ## Core builds
 
@@ -62,12 +70,16 @@ Regular builds continue to use `centos-10` akmods and the `fedora_akmods_version
 
 | Command | Purpose | Time |
 |---|---|---|
-| `just build-qcow2` | convert existing container image to QCOW2 | 45-90 min |
-| `just rebuild-qcow2` | build image, then QCOW2 | 90-180 min |
-| `just build-raw` | raw disk image | 45-90 min |
-| `just build-iso` | installer image; **LTS ISO remains disabled for release/promote work** | 45-90 min |
-| `just run-vm-qcow2` | boot QCOW2; web console on `http://localhost:8006` | runtime |
-| `just run-vm-iso` / `just spawn-vm` | local VM helpers | runtime |
+| `just build-qcow2` | QCOW2 disk from existing local image | 45-90 min |
+| `just rebuild-qcow2` | Build image then QCOW2 | 90-180 min |
+| `just build-raw` | Raw disk image from existing local image | 45-90 min |
+| `just rebuild-raw` | Build image then raw disk | 90-180 min |
+| `just build-iso` | Installer ISO (delegates to `projectbluefin/iso`); **LTS ISO is disabled for release/promote** | 45-90 min |
+| `just run-vm-qcow2` | Boot QCOW2; web console on `http://localhost:8006` | runtime |
+| `just run-vm-raw` | Boot raw disk image | runtime |
+| `just run-vm-iso` | Boot ISO | runtime |
+| `just create-test-vm [name] [tag] [ssh-key]` | Create Lima VM with SSH for debugging | runtime |
+| `just run-test-vm [name] [tag]` | Create and start Lima VM immediately | runtime |
 
 Never run VMs in CI; KVM/graphics are required.
 

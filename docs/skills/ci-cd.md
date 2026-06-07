@@ -12,6 +12,22 @@ metadata:
 
 # CI/CD
 
+## Contents
+- [Workflow map](#workflow-map)
+- [Branches and tags](#branches-and-tags)
+- [Promotion flow](#promotion-flow-mainlts)
+- [stream_name routing](#stream_name--how-tags-are-determined)
+- [Event truth table](#event-truth-table)
+- [Centralized CI — projectbluefin/actions](#centralized-ci--projectbluefinaactions)
+- [Schedule ownership](#schedule-ownership)
+- [Renovate auto-merge pipeline](#renovate-auto-merge-pipeline)
+- [Weekly release pipeline](#weekly-release-pipeline)
+- [Release pipeline pitfalls](#release-pipeline-pitfalls)
+- [generate-release.yml trigger logic](#generate-releaseyml-trigger-logic)
+- [GHCR Package Access](#ghcr-package-access--always-use-githubtoken-never-custom-pats)
+- [SBOM rules](#sbom-rules)
+- [Condition quick reference](#condition-quick-reference)
+
 ## Workflow map
 
 | File | Role |
@@ -116,7 +132,9 @@ This means HWE/GDX kernels automatically track upstream as CoreOS advances Fedor
 
 Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kernel.
 
-### Shared composite actions in bluefin-lts| Action | Where used | LTS-specific override |
+### Shared composite actions in bluefin-lts
+
+| Action | Where used | LTS-specific override |
 |---|---|---|
 | `bootc-build/validate-pr` | `pr-testsuite.yml` | `shellcheck-glob: "build_scripts/**/*.sh"` (lts uses `build_scripts/`, not `build_files/`) |
 | `bootc-build/detect-changes` | `build-regular.yml`, `build-gdx.yml`, `build-regular-hwe.yml` | filters for `build_scripts/**` and `image-versions.yaml` |
@@ -281,7 +299,7 @@ Once done, `github.token` from any `bluefin-lts` workflow has full package read/
 - Failed SBOM attestation must never block image publishing.
 - LTS uses SPDX JSON artifacts on the amd64 manifest digest; signing uses keyless cosign (Sigstore OIDC).
 
-### SBOM permission gotcha (fixed 2026-06-06 — PR #90)
+### SBOM permission gotcha
 
 `reusable-build.yml` calls `sudo -E just gen-sbom` which creates `sbom_out/` **owned by root**.
 The subsequent `sign-and-publish` step runs without `sudo` and fails with `permission denied` on `sbom_out/$IMAGE/sbom.json`.
