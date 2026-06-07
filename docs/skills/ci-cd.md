@@ -46,7 +46,6 @@ metadata:
 | `post-merge-e2e.yml` | runs E2E smoke+common suites after a successful build on `main`; informational only |
 | `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
 | `skill-drift.yml` | warns on PRs that change CI/build/system files without updating docs/skills |
-| `hive-progress-sync.yml` | posts queue stats + CI status to the projectbluefin org project board |
 | `validate-renovate.yaml` | validates `.github/renovate.json5` on relevant PRs and pushes |
 | ~~`build-dx.yml`~~ | **deleted** — no DX variant in LTS; GDX is the NVIDIA product |
 | ~~`build-dx-hwe.yml`~~ | **deleted** — no DX HWE variant |
@@ -65,7 +64,7 @@ metadata:
 | `lts` | `bluefin-lts-hwe` | `lts`, `lts-YYYYMMDD` | `workflow_dispatch` on `lts` only |
 | `lts` | `bluefin-gdx` | `lts`, `lts-YYYYMMDD` | `workflow_dispatch` on `lts` only |
 
-`push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only `lifecycle-caller.yml` and `hive-progress-sync.yml`.
+`push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only `lifecycle-caller.yml`.
 
 ## Promotion flow (`main→lts`)
 
