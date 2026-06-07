@@ -314,8 +314,7 @@ jobs:
           REPO="${{ github.repository }}"
           LTS_SHA=$(gh api "repos/${REPO}/git/ref/heads/lts" --jq '.object.sha')
 
-          # Check if lts already contains SOURCE_SHA (sync-main-to-lts.yml may
-          # have already merged it as a merge commit, making lts "ahead").
+          # Check if lts already contains SOURCE_SHA
           COMPARE=$(gh api "repos/${REPO}/compare/${SOURCE_SHA}...${LTS_SHA}" --jq '.status')
           if [[ "$COMPARE" == "identical" || "$COMPARE" == "ahead" ]]; then
             echo "✅ lts already contains ${SOURCE_SHA} (lts is ${COMPARE}) — no-op"
@@ -337,49 +336,26 @@ jobs:
     name: Generate release
     needs: [update-lts-branch]
     if: always() && needs.update-lts-branch.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      actions: write
-    steps:
-      - name: Dispatch and wait for release generation
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          DISPATCH_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          gh workflow run generate-release.yml --ref main -f target=lts \
-            -R ${{ github.repository }}
-          echo "Dispatched generate-release.yml at $DISPATCH_TIME"
-
-          sleep 30
-
-          RUN_ID=""
-          for i in $(seq 1 20); do
-            RUN_ID=$(gh run list \
-              --workflow generate-release.yml \
-              --branch main \
-              --event workflow_dispatch \
-              --repo ${{ github.repository }} \
-              --limit 5 \
-              --json databaseId,createdAt \
-              --jq ".[] | select(.createdAt >= \"$DISPATCH_TIME\") | .databaseId" \
-              | head -1)
-            [ -n "$RUN_ID" ] && break
-            echo "Waiting for generate-release.yml run to appear (attempt $i/20)..."
-            sleep 15
-          done
-
-          if [ -z "$RUN_ID" ]; then
-            echo "ERROR: Could not locate generate-release.yml run dispatched at $DISPATCH_TIME"
-            exit 1
-          fi
-
-          echo "Watching generate-release.yml run $RUN_ID..."
-          gh run watch "$RUN_ID" --exit-status --repo ${{ github.repository }}
-          echo "✅ Release generated successfully"
+    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@fcd2a6bac15f2037df2e62572eef7a70fd25759f # v1
+    with:
+      stream_name: lts
+      image: ghcr.io/projectbluefin/bluefin-lts
+      generate_sbom_inline: true
+      checkout_ref: lts
+      project_name: Bluefin LTS
+      badge_label: LTS
+      accent_color: "#0ea5e9"
+      cert_identity_regexp: >-
+        ^https://github\.com/projectbluefin/bluefin-lts/\.github/workflows/
+      notable_packages: >-
+        [
+          {"sbom_name": "kernel", "label": "Kernel"},
+          {"sbom_name": "gnome-shell", "label": "GNOME Shell"},
+          {"sbom_name": "flatpak", "label": "Flatpak"},
+          {"sbom_name": "bootc", "label": "bootc"}
+        ]
+      docs_url: https://docs.projectbluefin.io/changelogs
+    secrets: inherit
 
   close-failure-issue:
     name: Close stale failure issue on success
