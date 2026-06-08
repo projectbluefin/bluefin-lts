@@ -29,13 +29,29 @@
       ],
       datasourceTemplate: 'docker',
     },
+    {
+      // Discover container image digests from image-versions.yaml.
+      // Matches the  image: / tag: / digest:  block for each entry so Renovate
+      // can track and pin all three images (centos-bootc, common, brew) automatically.
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^image-versions\\.yaml$/',
+      ],
+      matchStrings: [
+        'image: (?<packageName>[^\\s]+)\\n\\s+tag: (?<currentValue>[^\\s]+)\\n\\s+digest: (?<currentDigest>sha256:[a-f0-9]+)',
+      ],
+      datasourceTemplate: 'docker',
+      versioningTemplate: 'docker',
+    },
     ],
 
   "packageRules": [
     {
-      // Pin common image at current digest — no automatic updates
+      // common is a first-party trusted image; automerge digest updates immediately.
+      // No schedule — critical fixes (e.g. rechunker-group-fix) must land without delay.
       "matchPackageNames": ["ghcr.io/projectbluefin/common"],
-      "enabled": false
+      "automerge": true,
+      "schedule": ["at any time"]
     },
     {
       // testsuite tracks main by digest with no tags; updates are merged weekly to prevent commit-level spam
