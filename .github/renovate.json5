@@ -43,6 +43,19 @@
       datasourceTemplate: 'docker',
       versioningTemplate: 'docker',
     },
+    {
+      // Track pinned binary download versions in image-versions.yaml.
+      // Each pinned entry is preceded by a:
+      //   # renovate: datasource=github-releases depName=owner/repo
+      // comment so Renovate can discover and update the version string.
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^image-versions\\.yaml$/',
+      ],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)\\n\\s+\\w+: "(?<currentValue>[^"]+)"',
+      ],
+    },
     ],
 
   "packageRules": [
