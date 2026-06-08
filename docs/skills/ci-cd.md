@@ -154,6 +154,36 @@ When E2E is fixed, the flow will be:
 
 **Required status check** (ruleset 4940669): `Lint & syntax` only. Builds are informational.
 
+### Renovate common image tracking — critical pattern
+
+`ghcr.io/projectbluefin/common` delivers first-party fixes (e.g. `rechunker-group-fix`, boot services) that are **safety-critical** for users. These must land in `:testing` automatically without human intervention.
+
+**The right configuration (`renovate.json5`):**
+
+1. **Custom manager for `image-versions.yaml`** — Renovate needs a regex manager to discover the `image: / tag: / digest:` block. Without it, common is invisible to Renovate:
+```json5
+{
+  customType: 'regex',
+  managerFilePatterns: ['/^image-versions\\.yaml$/'],
+  matchStrings: [
+    'image: (?<packageName>[^\\s]+)\\n\\s+tag: (?<currentValue>[^\\s]+)\\n\\s+digest: (?<currentDigest>sha256:[a-f0-9]+)',
+  ],
+  datasourceTemplate: 'docker',
+  versioningTemplate: 'docker',
+},
+```
+
+2. **`automerge: true` + `schedule: "at any time"`** for common — removes the default weekly delay from `config:best-practices`:
+```json5
+{
+  "matchPackageNames": ["ghcr.io/projectbluefin/common"],
+  "automerge": true,
+  "schedule": ["at any time"]
+},
+```
+
+**Never use `"enabled": false` for common** — this silently drops all critical fixes without any PR. The rechunker-group-fix was stuck in common for >2 days before manual intervention (issue ublue-os/bluefin-lts#918).
+
 ## Weekly release pipeline
 
 `scheduled-lts-release.yml` dispatches manually or on a Tuesday `0 6 * * 2` schedule. Job chain:
