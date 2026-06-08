@@ -52,9 +52,13 @@ dnf config-manager --set-disabled "tailscale-stable"
 dnf -y --enablerepo "tailscale-stable" install \
 	tailscale
 
-dnf config-manager --add-repo "https://copr.fedorainfracloud.org/coprs/ublue-os/packages/repo/epel-${MAJOR_VERSION_NUMBER}/ublue-os-packages-epel-${MAJOR_VERSION_NUMBER}.repo"
-dnf config-manager --set-disabled "copr:copr.fedorainfracloud.org:ublue-os:packages"
-dnf -y --enablerepo "copr:copr.fedorainfracloud.org:ublue-os:packages" install uupd
+# Install uupd from GitHub release tarball.
+# The ublue-os/packages COPR no longer has an epel-10 chroot (removed ~2026-06-08).
+# Version is pinned in image-versions.yaml and tracked by Renovate.
+UUPD_VERSION=$(yq -r '.downloads.uupd' /run/context/image-versions.yaml)
+curl -fsSL "https://github.com/ublue-os/uupd/releases/download/${UUPD_VERSION}/uupd_Linux_x86_64.tar.gz" \
+    | tar -xzf - -C /usr/bin uupd
+chmod 0755 /usr/bin/uupd
 
 # This is required so homebrew works indefinitely.
 # Symlinking it makes it so whenever another GCC version gets released it will break if the user has updated it without-
