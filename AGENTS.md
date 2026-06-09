@@ -103,11 +103,16 @@ common ────────────────────────�
                                  ▼
 bluefin  (main→stable)       ←── images ──→ testsuite (e2e gate)
 bluefin-lts (main→lts)       ←── images ──→ testsuite (e2e gate)
-dakota  (main→:latest)       ←── images ──→ testsuite (e2e gate)
+dakota  (main→stable)        ←── images ──→ testsuite (e2e gate)
                                  │
                                  ▼
                                 iso (installation media)
 ```
+
+**Release model (as of 2026-06-09):** All three repos use a PR-as-gate promotion model.
+`promote-testing-to-main.yml` maintains an always-open `auto/promote-testing-to-main` PR.
+Merging it (requires 2 `projectbluefin/maintainers` approvals) cuts a release.
+`execute-release.yml` fires on merge, re-verifies cosign, copies `:testing` → target tag.
 
 ### Issue lifecycle
 
@@ -141,9 +146,9 @@ When in doubt, post nothing.
 - Attribution on every AI-authored commit: `Assisted-by: <Model> via <Tool>`
 - Max 4 open PRs at a time per agent
 - No WIP PRs
-- **Agents MUST NOT push directly to `main`.** All changes via PR. Branch protection enforces this.
-- **Agents MUST NOT push directly to `lts`.** Land in `main` first; promotion to `lts` is handled automatically by GitHub Actions.
-- **Production builds** (`scheduled-lts-release.yml`) run on the `lts` branch. The `production` Environment gate is currently disabled (TODO #94 — will be restored once the factory is confirmed stable and reviewer assignments are in place). No agent may add, bypass, or remove the Environment gate without explicit human approval.
+- **Agents MUST NOT push directly to `main`.** All changes via PR. Branch protection enforces this (requires 2 `projectbluefin/maintainers` approvals).
+- **Agents MUST NOT push directly to `lts`.** Land in `main` first; `execute-release.yml` fast-forwards `lts` on promotion PR merge.
+- **Releases** are cut by merging the `auto/promote-testing-to-main` PR. `scheduled-lts-release.yml` has been deleted — do not reference it.
 - **bluefin-lts workflow path overrides are intentional:** use `build_scripts/` and `image-versions.yaml`, not bluefin's `build_files/` and `image-versions.yml`.
 - **`.github/workflows/`, `Justfile`, and `build_scripts/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
 
