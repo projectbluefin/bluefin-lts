@@ -59,7 +59,7 @@ jobs:
       always() &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@fcd2a6bac15f2037df2e62572eef7a70fd25759f # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@a522a36807cab68339ac7709cfc42f0709da5247 # feat/centralize-chunka
     permissions:
       contents: read
       packages: write
