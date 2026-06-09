@@ -350,3 +350,35 @@ If you ever touch `gen-sbom` in the Justfile, preserve this line.
 | manifest signing (inline in manifest job) | `inputs.publish` |
 
 If nothing is pushed, nothing should sign.
+
+---
+
+## uupd install — COPR removed, use GitHub releases (added 2026-06-09)
+
+**Context:** The `ublue-os/packages` COPR **epel-10 chroot was removed ~2026-06-08**. Any build that does:
+```bash
+dnf config-manager --add-repo "https://copr.fedorainfracloud.org/coprs/ublue-os/packages/repo/epel-10/..."
+```
+will get a **404** and fail. Do not restore this pattern.
+
+**Fix:** Install `uupd` from its GitHub release tarball. Version is pinned in `image-versions.yaml` under `downloads.uupd`:
+```yaml
+downloads:
+  # renovate: datasource=github-releases depName=ublue-os/uupd
+  uupd: "v1.4.0"
+```
+
+In `build_scripts/20-packages.sh`:
+```bash
+# yq is NOT available in the CentOS build container — use grep/sed
+UUPD_VERSION=$(grep '^\s*uupd:' /run/context/image-versions.yaml | sed 's/.*"\(.*\)".*/\1/')
+curl -fsSL "https://github.com/ublue-os/uupd/releases/download/${UUPD_VERSION}/uupd_Linux_x86_64.tar.gz" \
+    | tar -xzf - -C /usr/bin uupd
+chmod 0755 /usr/bin/uupd
+```
+
+### Three lessons from this failure chain
+
+1. **`yq` is not in the CentOS Stream build container.** Never call `yq` in build_scripts — use `grep`/`sed`/`awk` for YAML parsing.
+2. **`image-versions.yaml` must be in the context stage.** The build container RUN step mounts `context` at `/run/context`. Only files explicitly `COPY`-ed into the `AS context` stage are available there. `image-versions.yaml` is now in the context stage via `COPY image-versions.yaml /image-versions.yaml` in the Containerfile.
+3. **Renovate tracks `downloads.uupd` version.** The `# renovate: datasource=github-releases depName=ublue-os/uupd` comment above the pinned version in `image-versions.yaml` triggers automatic version bump PRs.
