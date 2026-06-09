@@ -55,7 +55,8 @@ dnf -y --enablerepo "tailscale-stable" install \
 # Install uupd from GitHub release tarball.
 # The ublue-os/packages COPR no longer has an epel-10 chroot (removed ~2026-06-08).
 # Version is pinned in image-versions.yaml and tracked by Renovate.
-UUPD_VERSION=$(yq -r '.downloads.uupd' /run/context/image-versions.yaml)
+# yq is not available in the CentOS build container — parse with grep/sed
+UUPD_VERSION=$(grep '^\s*uupd:' /run/context/image-versions.yaml | sed 's/.*"\(.*\)".*/\1/')
 curl -fsSL "https://github.com/ublue-os/uupd/releases/download/${UUPD_VERSION}/uupd_Linux_x86_64.tar.gz" \
     | tar -xzf - -C /usr/bin uupd
 chmod 0755 /usr/bin/uupd
