@@ -462,39 +462,6 @@ build-ghcr base="bluefin-lts" stream="lts" flavor="main" kernel_pin="":
     [[ "{{ base }}" == *"gdx"* ]] && GDX=1
     {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${GDX}" "${HWE}" "{{ kernel_pin }}"
 
-# Rechunk image using chunkah (OCI-native, no rpm-ostree).
-# Called with sudo by reusable-build.yml for non-testing, non-PR builds.
-[group('Image')]
-[private]
-rechunk base="bluefin-lts" stream="lts" flavor="main" ghcr="0" pipeline="0" previous_build="0":
-    #!/usr/bin/bash
-    set -eoux pipefail
-    IMAGE_NAME="$({{ just_executable() }} image_name {{ base }} {{ stream }} {{ flavor }})"
-    DEFAULT_TAG="$({{ just_executable() }} generate-default-tag {{ stream }} {{ ghcr }})"
-    IMAGE_REF="localhost/${IMAGE_NAME}:${DEFAULT_TAG}"
-    CHUNKAH_VERSION="v0.5.0"
-    CHUNKAH_SHA="sha256:352097f3d32186ac11082f8b74cd544678b00388b50c96ba5c8e79503a454fe3"
-    CHUNKAH_REF="quay.io/coreos/chunkah:${CHUNKAH_VERSION}@${CHUNKAH_SHA}"
-    CONTAINERFILE="build_scripts/Containerfile.splitter"
-    CHUNKAH_CONFIG_STR="$(podman inspect "${IMAGE_REF}")"
-    buildah build \
-        --skip-unused-stages=false \
-        --from "${IMAGE_REF}" \
-        --build-arg "CHUNKAH=${CHUNKAH_REF}" \
-        --build-arg "CHUNKAH_CONFIG_STR=${CHUNKAH_CONFIG_STR}" \
-        --build-arg "CHUNKAH_ARGS=--max-layers 128 --prune /sysroot/ --label ostree.commit- --label ostree.final-diffid-" \
-        -t "${IMAGE_REF}" \
-        -v "$(pwd):/run/src" \
-        --security-opt=label=disable \
-        "${CONTAINERFILE}"
-    rm -f out.ociarchive
-
-# No-op: chunkah rechunk outputs directly to the source tag — no retag needed.
-[group('Image')]
-[private]
-load-rechunk base="bluefin-lts" default_tag="lts" flavor="main":
-    echo "LTS: chunkah rechunk is in-place — no retag needed"
-
 # Generate space-separated alias tags (dated + CentOS version aliases for production).
 [group('Utility')]
 generate-build-tags base="bluefin-lts" tag="lts" flavor="main" kernel_pin="" ghcr="0" version="" github_event="" github_number="":
