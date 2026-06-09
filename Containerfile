@@ -17,6 +17,7 @@ COPY --from=common /system_files/shared /files
 COPY --from=common /system_files/bluefin /files
 COPY system_files_overrides /overrides
 COPY build_scripts /build_scripts
+COPY image-versions.yaml /image-versions.yaml
 
 ARG MAJOR_VERSION="${MAJOR_VERSION:-c10s}"
 FROM quay.io/centos-bootc/centos-bootc:$MAJOR_VERSION
