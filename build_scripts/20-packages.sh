@@ -60,6 +60,10 @@ UUPD_VERSION=$(grep '^\s*uupd:' /run/context/image-versions.yaml | sed 's/.*"\(.
 curl -fsSL "https://github.com/ublue-os/uupd/releases/download/${UUPD_VERSION}/uupd_Linux_x86_64.tar.gz" \
     | tar -xzf - -C /usr/bin uupd
 chmod 0755 /usr/bin/uupd
+# The tarball only ships the binary; download the systemd units from source too.
+UUPD_RAW="https://raw.githubusercontent.com/ublue-os/uupd/${UUPD_VERSION}"
+curl -fsSL "${UUPD_RAW}/uupd.service" -o /usr/lib/systemd/system/uupd.service
+curl -fsSL "${UUPD_RAW}/uupd.timer"   -o /usr/lib/systemd/system/uupd.timer
 
 # This is required so homebrew works indefinitely.
 # Symlinking it makes it so whenever another GCC version gets released it will break if the user has updated it without-
