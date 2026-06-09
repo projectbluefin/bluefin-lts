@@ -394,3 +394,39 @@ curl -fsSL "${UUPD_RAW}/uupd.timer"   -o /usr/lib/systemd/system/uupd.timer
 ```
 
 `build_scripts/40-services.sh` patches and enables these files — they must exist before that script runs.
+
+---
+
+### PR-based release gate model (added 2026-06-09)
+
+**Design:** The always-open `auto/promote-testing-to-main` PR is the release gate. Merge it (requires 2 maintainers) to cut a release. Gate checks run automatically after each promotion update.
+
+**Key GITHUB_TOKEN limitations (both apply here):**
+1. `GITHUB_TOKEN` pushes to a branch do NOT fire `pull_request: synchronize` events — GitHub blocks this to prevent loops.
+2. `GITHUB_TOKEN` cannot trigger `workflow_dispatch` events via the API (HTTP 403).
+
+**Solution:** Inline the gate as a `gate` job inside `promote-testing-to-main.yml` rather than dispatching separately:
+```yaml
+jobs:
+  promote:
+    outputs:
+      sync_needed: ${{ steps.compare.outputs.sync_needed }}
+      pr_number: ${{ steps.upsert.outputs.pr_number }}
+      testing_sha: ${{ steps.compare.outputs.testing_sha }}
+    ...
+
+  gate:
+    needs: [promote]
+    if: needs.promote.outputs.sync_needed == 'true'
+    uses: projectbluefin/actions/.github/workflows/reusable-release-gate.yml@main
+    with:
+      pr_number: ${{ needs.promote.outputs.pr_number }}
+      head_sha: ${{ needs.promote.outputs.testing_sha }}
+      ...
+```
+
+**reusable-release-gate.yml inputs:** `pr_number` and `head_sha` are optional overrides. When provided, they replace `context.payload.pull_request?.number` and `github.event.pull_request.head.sha` respectively — enabling the gate to run outside a pull_request event context.
+
+**Gate output on PR #125:** Sticky comment with `<!-- release-status-marker -->` is posted/updated on the promotion PR. Labels `release/ready` or `release/blocked` are auto-applied.
+
+**E2E gate:** The gate checks for a `post-testing-e2e` workflow run on the PR's head SHA. When there is none (fresh image builds), the e2e check fails and the PR is labeled `release/blocked`. This is expected — maintainers can review and merge anyway via admin bypass.
