@@ -91,6 +91,46 @@ Rollback every affected floating tag, then verify digest/created time for each.
 - Do not run `build-iso-all.yml` for LTS promotion.
 - Existing production ISOs remain safe; new LTS ISO builds must stay blocked because Anaconda is broken on the CentOS Stream LTS base.
 
+## Emergency promotion for production-bricking bugs
+
+When production images are bricking machines, skip the normal release gate and promote directly.
+
+**Pattern (used 2026-06-09 for rechunker-group-fix):**
+
+1. Push fix to `testing` branch directly — builds trigger automatically on both `main` and `testing`:
+   ```bash
+   git cherry-pick <fix-sha>
+   git push projectbluefin HEAD:testing
+   ```
+2. Open a PR to `main` in parallel for the formal merge path.
+3. Wait for builds to complete (~45-90 min). Do NOT promote until builds finish — promoting before completion copies the old broken image.
+4. Skopeo-copy `:testing` → `:lts` by digest for all 3 variants:
+   ```bash
+   GHCR_TOKEN=$(gh auth token)
+   for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
+     DIGEST=$(skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:testing | python3 -c "import json,sys; print(json.load(sys.stdin)['Digest'])")
+     echo "Copying ${IMAGE}@${DIGEST} -> :lts"
+     skopeo copy \
+       --src-creds "castrojo:${GHCR_TOKEN}" \
+       --dest-creds "castrojo:${GHCR_TOKEN}" \
+       docker://ghcr.io/projectbluefin/${IMAGE}@${DIGEST} \
+       docker://ghcr.io/projectbluefin/${IMAGE}:lts
+   done
+   ```
+5. Verify digests match:
+   ```bash
+   for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
+     skopeo inspect --no-creds docker://ghcr.io/projectbluefin/${IMAGE}:lts \
+       | python3 -c "import json,sys; d=json.load(sys.stdin); print('${IMAGE}:lts', d['Digest'], d['Created'])"
+   done
+   ```
+6. Merge the PR to `main` after the emergency is resolved (no rush).
+
+**Key rules:**
+- Copy by digest, not tag — prevents races with concurrent pushes.
+- E2E red is acceptable for emergency merges — use `--admin` bypass if needed.
+- Do not use the auto/promote-testing-to-main PR for emergencies — it may be BEHIND and requires approvals. Manual skopeo is faster and safer.
+
 ## PR-as-gate release model (as of 2026-06-09)
 
 **How releases work now:**

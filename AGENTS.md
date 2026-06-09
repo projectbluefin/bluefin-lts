@@ -176,6 +176,29 @@ See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task
 - **NEVER re-enable LTS ISO builds** — Anaconda is broken on CentOS Stream base
 - **NEVER commit directly to `lts` branch** — land in `main` first
 - **NEVER merge `lts→main`** — flow is one-way: `main→lts` only
+- **ALWAYS explicitly enable services from common** — systemd presets shipped from `projectbluefin/common` are NOT auto-applied in Containerfile builds. Every service must have `systemctl enable <service>` in `build_scripts/40-services.sh`. Missing this causes silent failures or unbootable images (e.g. `rechunker-group-fix.service`).
+
+## Emergency production promotion
+
+When production is bricking machines, skip the release gate:
+
+1. Push fix to `testing` branch → builds trigger automatically
+2. Open PR to `main` in parallel
+3. Wait for builds to finish, then skopeo-copy by digest:
+   ```bash
+   GHCR_TOKEN=$(gh auth token)
+   for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
+     DIGEST=$(skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:testing | python3 -c "import json,sys; print(json.load(sys.stdin)['Digest'])")
+     skopeo copy \
+       --src-creds "castrojo:${GHCR_TOKEN}" \
+       --dest-creds "castrojo:${GHCR_TOKEN}" \
+       docker://ghcr.io/projectbluefin/${IMAGE}@${DIGEST} \
+       docker://ghcr.io/projectbluefin/${IMAGE}:lts
+   done
+   ```
+4. Merge PR to `main` after the emergency resolves
+
+Full runbook: `docs/skills/release.md` — "Emergency promotion for production-bricking bugs"
 
 ## Commit standards
 
