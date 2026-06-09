@@ -382,3 +382,15 @@ chmod 0755 /usr/bin/uupd
 1. **`yq` is not in the CentOS Stream build container.** Never call `yq` in build_scripts — use `grep`/`sed`/`awk` for YAML parsing.
 2. **`image-versions.yaml` must be in the context stage.** The build container RUN step mounts `context` at `/run/context`. Only files explicitly `COPY`-ed into the `AS context` stage are available there. `image-versions.yaml` is now in the context stage via `COPY image-versions.yaml /image-versions.yaml` in the Containerfile.
 3. **Renovate tracks `downloads.uupd` version.** The `# renovate: datasource=github-releases depName=ublue-os/uupd` comment above the pinned version in `image-versions.yaml` triggers automatic version bump PRs.
+
+**uupd tarball ships binary only — service files must be fetched separately:**
+
+The GitHub release tarball (`uupd_Linux_x86_64.tar.gz`) contains only `LICENSE`, `README.md`, and the `uupd` binary. The `.service` and `.timer` files live in the source repo root (not in any release asset). Fetch them via raw.githubusercontent.com at the same tag:
+
+```bash
+UUPD_RAW="https://raw.githubusercontent.com/ublue-os/uupd/${UUPD_VERSION}"
+curl -fsSL "${UUPD_RAW}/uupd.service" -o /usr/lib/systemd/system/uupd.service
+curl -fsSL "${UUPD_RAW}/uupd.timer"   -o /usr/lib/systemd/system/uupd.timer
+```
+
+`build_scripts/40-services.sh` patches and enables these files — they must exist before that script runs.
