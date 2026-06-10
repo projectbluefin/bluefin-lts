@@ -1,86 +1,47 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-
-  // Enable GitHub's native automerge; merging is handled by GitHub and remains subject to branch protection/bypass settings
-  "platformAutomerge": true,
-
-  // Only target testing branch — testing is the staging area for Renovate updates.
-  // PRs are auto-merged to testing, then promoted to main via weekly promotion.
-  "baseBranchPatterns": ["testing"],
-
   "extends": [
-    "github>projectbluefin/renovate-config",
+    "config:recommended",
   ],
-
-  "git-submodules": {
-    "enabled": true
-  },
+  "baseBranchPatterns": ["testing"],
+  "branchPrefix": "renovate/",
+  "schedule": ["* 0-3 * * 1"],
+  "enabledManagers": ["github-actions", "custom.regex"],
 
   // Do not rebase when the default branch is updated
   "rebaseWhen": "never",
-  "customManagers": [
+
+  customManagers: [
     {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/^Justfile$/',
-      ],
+      customType: "regex",
+      managerFilePatterns: ["/^Containerfile$/"],
       matchStrings: [
-        '(?<justName>.+?)\\s:=\\s"(?<packageName>\\S+):(?<currentValue>\\S+)@(?<currentDigest>sha256:[a-f0-9]+?)"',
+        "COPY --from=(?<depName>ghcr\\.io/ublue-os/bluefin-wallpapers-gnome):(?<currentValue>[^@]+)@(?<currentDigest>sha256:[a-f0-9]+)"
       ],
-      datasourceTemplate: 'docker',
+      datasourceTemplate: "docker",
+      versioningTemplate: "docker"
     },
     {
-      // Discover container image digests from image-versions.yaml.
-      // Matches the  image: / tag: / digest:  block for each entry so Renovate
-      // can track and pin all three images (centos-bootc, common, brew) automatically.
-      customType: 'regex',
-      managerFilePatterns: [
-        '/^image-versions\\.yaml$/',
-      ],
+      customType: "regex",
+      managerFilePatterns: ["/^system_files/bluefin/usr/share/ublue-os/just/60-bonedigger\\.just$/"],
       matchStrings: [
-        'image: (?<packageName>[^\\s]+)\\n\\s+tag: (?<currentValue>[^\\s]+)\\n\\s+digest: (?<currentDigest>sha256:[a-f0-9]+)',
+        "BONEDIGGER_VERSION\\s*:=\\s*\"(?<currentValue>v?[0-9.]+)\""
       ],
-      datasourceTemplate: 'docker',
-      versioningTemplate: 'docker',
-    },
-    {
-      // Track pinned binary download versions in image-versions.yaml.
-      // Each pinned entry is preceded by a:
-      //   # renovate: datasource=github-releases depName=owner/repo
-      // comment so Renovate can discover and update the version string.
-      customType: 'regex',
-      managerFilePatterns: [
-        '/^image-versions\\.yaml$/',
-      ],
-      matchStrings: [
-        '# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)\\n\\s+\\w+: "(?<currentValue>[^"]+)"',
-      ],
-    },
-    ],
+      datasourceTemplate: "github-releases",
+      depNameTemplate: "projectbluefin/bonedigger"
+    }
+  ],
 
   "packageRules": [
     {
-      // common is a first-party trusted image; automerge digest updates immediately.
-      // No schedule — critical fixes (e.g. rechunker-group-fix) must land without delay.
-      "matchPackageNames": ["ghcr.io/projectbluefin/common"],
-      "automerge": true,
-      "schedule": ["at any time"]
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["action"],
+      "pinDigests": true
     },
     {
-      // testsuite tracks main by digest with no tags; updates are merged weekly to prevent commit-level spam
-      "matchDepNames": ["projectbluefin/testsuite"],
-      "schedule": ["before 9am on Monday"],
-      "automerge": true
-    },
-    {
-      // Auto-merge all digest/pin updates across all managers (dockerfile, github-actions, regex/Justfile)
-      "automerge": true,
-      "matchUpdateTypes": ["digest", "pin", "pinDigest"]
-    },
-    {
-      // Auto-merge minor/patch version bumps for GitHub Actions (e.g. cosign-installer v3.8 → v3.9)
       "automerge": true,
       "matchManagers": ["github-actions"],
+      "matchDepTypes": ["action"],
       "matchUpdateTypes": ["minor", "patch"]
     }
   ]
