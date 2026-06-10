@@ -353,15 +353,11 @@ If nothing is pushed, nothing should sign.
 
 ---
 
-## uupd install — COPR removed, use GitHub releases (added 2026-06-09)
+## uupd install — COPR removed, use GitHub releases
 
-**Context:** The `ublue-os/packages` COPR **epel-10 chroot was removed ~2026-06-08**. Any build that does:
-```bash
-dnf config-manager --add-repo "https://copr.fedorainfracloud.org/coprs/ublue-os/packages/repo/epel-10/..."
-```
-will get a **404** and fail. Do not restore this pattern.
+**Context:** The `ublue-os/packages` COPR epel-10 chroot was removed. Any build using the old COPR repo will get a 404 and fail. Do not restore that pattern.
 
-**Fix:** Install `uupd` from its GitHub release tarball. Version is pinned in `image-versions.yaml` under `downloads.uupd`:
+**Fix:** Install `uupd` from its GitHub release tarball. Version is pinned in `image-versions.yaml`:
 ```yaml
 downloads:
   # renovate: datasource=github-releases depName=ublue-os/uupd
@@ -377,27 +373,21 @@ curl -fsSL "https://github.com/ublue-os/uupd/releases/download/${UUPD_VERSION}/u
 chmod 0755 /usr/bin/uupd
 ```
 
-### Three lessons from this failure chain
-
-1. **`yq` is not in the CentOS Stream build container.** Never call `yq` in build_scripts — use `grep`/`sed`/`awk` for YAML parsing.
-2. **`image-versions.yaml` must be in the context stage.** The build container RUN step mounts `context` at `/run/context`. Only files explicitly `COPY`-ed into the `AS context` stage are available there. `image-versions.yaml` is now in the context stage via `COPY image-versions.yaml /image-versions.yaml` in the Containerfile.
-3. **Renovate tracks `downloads.uupd` version.** The `# renovate: datasource=github-releases depName=ublue-os/uupd` comment above the pinned version in `image-versions.yaml` triggers automatic version bump PRs.
-
-**uupd tarball ships binary only — service files must be fetched separately:**
-
-The GitHub release tarball (`uupd_Linux_x86_64.tar.gz`) contains only `LICENSE`, `README.md`, and the `uupd` binary. The `.service` and `.timer` files live in the source repo root (not in any release asset). Fetch them via raw.githubusercontent.com at the same tag:
-
+The tarball ships binary only — fetch service files separately:
 ```bash
 UUPD_RAW="https://raw.githubusercontent.com/ublue-os/uupd/${UUPD_VERSION}"
 curl -fsSL "${UUPD_RAW}/uupd.service" -o /usr/lib/systemd/system/uupd.service
 curl -fsSL "${UUPD_RAW}/uupd.timer"   -o /usr/lib/systemd/system/uupd.timer
 ```
 
-`build_scripts/40-services.sh` patches and enables these files — they must exist before that script runs.
+**Three rules from this failure:**
+1. `yq` is not in the CentOS Stream build container. Use `grep`/`sed`/`awk`.
+2. `image-versions.yaml` must be in the context stage (`COPY image-versions.yaml /image-versions.yaml` in Containerfile).
+3. `build_scripts/40-services.sh` must run **after** the service files exist — install order matters.
 
 ---
 
-### PR-based release gate model (added 2026-06-09)
+## PR-based release gate model
 
 **Design:** The always-open `auto/promote-testing-to-main` PR is the release gate. Merge it (requires 2 maintainers) to cut a release. Gate checks run automatically after each promotion update.
 
@@ -433,7 +423,7 @@ jobs:
 
 ---
 
-## execute-release.yml — startup_failure diagnosis and fix (added 2026-06-10)
+## execute-release.yml — startup_failure diagnosis and fix
 
 ### Root cause
 
@@ -491,7 +481,7 @@ The `pull_request: closed` trigger was replaced with `push: branches: [main]` be
 
 ---
 
-## E2E known issues — QEMU environment artifacts (added 2026-06-09)
+## E2E known issues — QEMU environment artifacts
 
 These units fail in the QEMU CI VM but are harmless on real hardware.
 The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
