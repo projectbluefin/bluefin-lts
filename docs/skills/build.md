@@ -95,6 +95,20 @@ Never run VMs in CI; KVM/graphics are required.
 
 Workflow guardrails key off these exact names. When copying from bluefin, replace `build_files/` with `build_scripts/` and `image-versions.yml` with `image-versions.yaml`.
 
+## Services from common — must be explicitly enabled
+
+Services shipped from `projectbluefin/common` via systemd presets are **not auto-applied** during the Containerfile build. Preset files (e.g. `00-rechunker-group-fix.preset`) are inert at build time — they only take effect when `systemctl preset-all` is called, which never happens in the LTS build.
+
+**Rule:** Every service that common ships and LTS needs must have a matching `systemctl enable <service>` line in `build_scripts/40-services.sh`.
+
+**Known required enables from common:**
+
+| Service | Purpose | Consequence if missing |
+|---|---|---|
+| `rechunker-group-fix.service` | Syncs groups to gshadow before `systemd-sysusers` for users from legacy-rechunked images | Black screen / system will not boot |
+
+When adding new services from common, always check whether they arrive via a preset and add the explicit enable. Do not assume the preset file is sufficient.
+
 ## Debugging checklist
 
 | Symptom | Check |
