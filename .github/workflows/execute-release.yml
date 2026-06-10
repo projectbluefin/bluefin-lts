@@ -8,8 +8,23 @@ on:
 permissions: {}
 
 jobs:
+  check-trigger:
+    runs-on: ubuntu-latest
+    outputs:
+      is-promotion: ${{ steps.check.outputs.is-promotion }}
+    steps:
+      - id: check
+        run: |
+          MSG="${{ github.event.head_commit.message }}"
+          if echo "$MSG" | grep -q "^chore: promote testing to main"; then
+            echo "is-promotion=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is-promotion=false" >> "$GITHUB_OUTPUT"
+          fi
+
   execute:
-    if: "startsWith(github.event.head_commit.message, 'chore: promote testing to main')"
+    needs: [check-trigger]
+    if: needs.check-trigger.outputs.is-promotion == 'true'
     permissions:
       actions: read
       contents: write
