@@ -1,9 +1,7 @@
 name: Execute Release
 
 on:
-  pull_request:
-    types:
-      - closed
+  push:
     branches:
       - main
 
@@ -11,9 +9,7 @@ permissions: {}
 
 jobs:
   execute:
-    if: >-
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.head.ref == 'auto/promote-testing-to-main'
+    if: startsWith(github.event.head_commit.message, 'chore: promote testing to main')
     permissions:
       actions: read
       contents: write
