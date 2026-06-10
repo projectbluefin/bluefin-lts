@@ -58,7 +58,6 @@ jobs:
           FROM ${{ env.BASE_IMAGE }}
 
           COPY system_files/ /
-          COPY system_files_overrides/base/ /
 
           RUN glib-compile-schemas /usr/share/glib-2.0/schemas && \
               systemctl preset-all 2>/dev/null || true
