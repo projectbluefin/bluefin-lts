@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read
       packages: write  # testsuite pushes screenshot OCI artifacts to GHCR
-    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@f71d58d592b18d2722f7903e77dea8a3aa9d687f # main — includes fix for ghcr.io/ prefix (PR #412)
+    uses: projectbluefin/testsuite/.github/workflows/e2e.yml@726ed4d24e08a18d5c31f816519f4bd6f0463511 # main — masks systemd-udev-settle in QEMU (PR #419)
     with:
       image: ${{ inputs.image }}
       suites: ${{ inputs.suites }}
