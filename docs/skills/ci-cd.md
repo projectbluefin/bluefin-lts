@@ -431,6 +431,66 @@ jobs:
 
 **E2E gate:** The gate checks for a `post-testing-e2e` workflow run on the PR's head SHA. When there is none (fresh image builds), the e2e check fails and the PR is labeled `release/blocked`. This is expected — maintainers can review and merge anyway via admin bypass.
 
+---
+
+## execute-release.yml — startup_failure diagnosis and fix (added 2026-06-10)
+
+### Root cause
+
+`execute-release.yml` calls `reusable-release.yml@main` from the `release-notes` job. That reusable workflow's nested `image-release` job has `permissions: { contents: write, actions: read }`. GitHub validates ALL permissions requested by nested jobs against the caller's permission grant at **workflow startup**, before any code runs. If the caller job does not grant a permission the callee requests, the entire workflow run gets `startup_failure` with no log output.
+
+Error (visible ONLY by fetching the Actions web page, not via API/CLI):
+```
+Error calling workflow 'reusable-release.yml@main'.
+The nested job 'image-release' is requesting 'actions: read', but is only allowed 'actions: none'.
+```
+
+**Fix:** Add `actions: read` to the `release-notes` job permissions block.
+
+```yaml
+  release-notes:
+    permissions:
+      actions: read       # required by reusable-release.yml's image-release nested job
+      contents: write
+      id-token: write
+      packages: read
+    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@main
+```
+
+### How to diagnose startup_failure in GitHub Actions
+
+GitHub API endpoints (`/jobs`, `/logs`) return nothing for `startup_failure` runs. `gh run view` gives only a generic "workflow file issue" message. **The actual error is visible only by fetching the GitHub Actions web page URL:**
+
+```python
+from web_fetch import fetch
+url = "https://github.com/projectbluefin/bluefin-lts/actions/runs/<RUN_ID>"
+result = fetch(url)
+# Search for "requesting" or "is not allowed" in the returned HTML/markdown
+```
+
+Use the `web_fetch` tool on the run URL when you see `startup_failure` in CLI output.
+
+### YAML syntax gotcha in `if:` conditions with colons in strings
+
+If a commit message pattern contains `: ` (colon-space), the `if:` condition will fail YAML parsing:
+
+```yaml
+# BROKEN — ': ' in single-quoted string breaks YAML scalar
+if: startsWith(github.event.head_commit.message, 'chore: promote testing to main')
+
+# CORRECT — wrap entire condition in double quotes
+if: "startsWith(github.event.head_commit.message, 'chore: promote testing to main')"
+```
+
+### execute-release.yml trigger change (push vs pull_request)
+
+The `pull_request: closed` trigger was replaced with `push: branches: [main]` because:
+- Bot-authored PRs that modify `.github/workflows/` via GITHUB_TOKEN cannot fire `pull_request` events (GitHub security restriction).
+- Push events fire for all merges including admin force-merges.
+- A `check-trigger` job with the `if: startsWith(...)` condition gates the actual release jobs so non-promotion pushes are no-ops.
+
+---
+
 ## E2E known issues — QEMU environment artifacts (added 2026-06-09)
 
 These units fail in the QEMU CI VM but are harmless on real hardware.
