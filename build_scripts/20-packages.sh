@@ -24,7 +24,6 @@ dnf -y install \
 	gum \
 	hplip \
 	ibus-chewing \
-	jetbrains-mono-fonts-all \
 	jxl-pixbuf-loader \
 	just \
 	nss-mdns \
