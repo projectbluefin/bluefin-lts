@@ -449,16 +449,14 @@ The nested job 'image-release' is requesting 'actions: read', but is only allowe
 
 ### How to diagnose startup_failure in GitHub Actions
 
-GitHub API endpoints (`/jobs`, `/logs`) return nothing for `startup_failure` runs. `gh run view` gives only a generic "workflow file issue" message. **The actual error is visible only by fetching the GitHub Actions web page URL:**
+GitHub API endpoints (`/jobs`, `/logs`) return nothing for `startup_failure` runs. `gh run view` gives only a generic "workflow file issue" message. Open the run URL directly in a browser and search for "requesting" or "is not allowed" in the page. The error format is:
 
-```python
-from web_fetch import fetch
-url = "https://github.com/projectbluefin/bluefin-lts/actions/runs/<RUN_ID>"
-result = fetch(url)
-# Search for "requesting" or "is not allowed" in the returned HTML/markdown
+```
+Error calling workflow 'reusable-X.yml@main'.
+The nested job 'Y' is requesting 'actions: read', but is only allowed 'actions: none'.
 ```
 
-Use the `web_fetch` tool on the run URL when you see `startup_failure` in CLI output.
+`gh run view <RUN_ID> --repo projectbluefin/bluefin-lts` will show `startup_failure` status but no log. The web UI is the only place the specific permission mismatch is shown.
 
 ### YAML syntax gotcha in `if:` conditions with colons in strings
 
@@ -470,6 +468,25 @@ if: startsWith(github.event.head_commit.message, 'chore: promote testing to main
 
 # CORRECT — wrap entire condition in double quotes
 if: "startsWith(github.event.head_commit.message, 'chore: promote testing to main')"
+```
+
+### actionlint [expression] rule — untrusted inputs in run: steps
+
+actionlint flags `github.event.head_commit.message` (and other user-controlled inputs) when interpolated directly into a `run:` shell script. It is safe in `if:` conditions because those are evaluated by GitHub's expression engine, not the shell.
+
+```yaml
+# BROKEN — actionlint [expression] error, injection risk
+- run: |
+    MSG="${{ github.event.head_commit.message }}"
+
+# CORRECT — pass through env var
+- env:
+    COMMIT_MSG: ${{ github.event.head_commit.message }}
+  run: |
+    if echo "$COMMIT_MSG" | grep -q "^chore:"; then ...
+
+# ALSO CORRECT — if: conditions are not shell, no injection risk
+  if: "startsWith(github.event.head_commit.message, 'chore: promote testing to main')"
 ```
 
 ### execute-release.yml trigger change (push vs pull_request)
@@ -490,9 +507,13 @@ The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
 | Unit | Why it fails in QEMU | Fix PR |
 |------|---------------------|--------|
 | `systemd-udev-settle.service` | Waits for udev to settle real hardware; times out (~125s) in QEMU with no physical devices. Manifests as `"No failed systemd units at boot"` smoke test failure. | projectbluefin/testsuite#419 |
+| `bootloader-update.service` | Updates the EFI bootloader on boot; fails in QEMU VMs that have no EFI boot entry to update. Appears in VM serial log as `FAILED`. Currently not caught by the smoke test assertion — no open fix PR. |
 
-**After a testsuite fix merges:**
-1. Get the merge commit SHA: `gh api repos/projectbluefin/testsuite/commits/main --jq '.sha'`
-2. Update the SHA pin in `.github/workflows/run-testsuite.yml`
-3. Open a PR to bluefin-lts with the SHA bump
-4. The post-merge E2E will re-run against the new testsuite and the issue should close
+**After a testsuite fix merges — SHA bump runbook:**
+1. Get the new SHA: `gh api repos/projectbluefin/testsuite/commits/main --jq '.sha'`
+2. Update the single `uses:` line in `.github/workflows/run-testsuite.yml` — all callers inherit it automatically
+3. Commit: `fix(ci): bump testsuite SHA to include <description> (PR #NNN)`
+4. Open a PR with `Closes #<issue>` for each open e2e failure issue
+5. After merge, post-merge E2E re-runs; the failure issues auto-close on green
+
+Current SHA (post testsuite#419): `726ed4d24e08a18d5c31f816519f4bd6f0463511`
