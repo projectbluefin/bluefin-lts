@@ -24,9 +24,20 @@ Load only the skill for the task at hand. Skill files live in `docs/skills/`.
 
 When you discover a non-obvious pattern, workaround, or convention:
 
-1. Find or create the relevant skill file in `docs/skills/`.
-2. Write the learning under a `## Learnings` or dated `### Session changes YYYY-MM-DD` heading.
-3. Commit the skill update in the **same PR** as the change that prompted it.
+1. Find the relevant skill file in `docs/skills/`.
+2. Add the learning as a **canonical pattern** — not a session log. Write it as a rule or runbook entry a future agent would use directly.
+3. Remove or replace stale content that contradicts the new learning.
+4. Commit the skill update in the **same PR** as the change that prompted it.
+
+**Signs of a session log (don't do this):**
+- Section headers with `(added YYYY-MM-DD)` dates
+- "In this session we found..." narrative phrasing
+- Multiple versions of the same pattern coexisting
+
+**Signs of a good skill entry:**
+- Imperative runbook format: "When X, do Y"
+- The broken pattern is removed or marked wrong, not preserved alongside the fix
+- Commands are copy-pasteable and tested
 
 For skill file format conventions, see:
 [`projectbluefin/actions/.github/skills/skill-improvement/SKILL.md`](https://github.com/projectbluefin/actions/blob/main/.github/skills/skill-improvement/SKILL.md)

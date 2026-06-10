@@ -2,8 +2,8 @@
 name: bluefin-lts-release
 description: >-
   Production release pipeline, branch promotion, registry rollback, and ISO status for
-  projectbluefin/bluefin-lts. Use when dispatching scheduled-lts-release.yml, performing
-  an emergency rollback via skopeo, syncing the castrojo fork, or checking ISO status.
+  projectbluefin/bluefin-lts. Use when cutting a release, performing an emergency rollback via
+  skopeo, managing the lts branch, verifying published images, or checking ISO status.
 metadata:
   type: runbook
 ---
@@ -12,24 +12,58 @@ metadata:
 
 ## Production release flow
 
-1. `sync-main-to-lts.yml` auto-promotes `main → lts` on every push via regular merge — no manual PR needed.
-2. `push` to `lts` validates only; it does **not** publish images.
-3. Dispatch manually to publish:
-   ```bash
-   gh workflow run scheduled-lts-release.yml --repo projectbluefin/bluefin-lts
-   ```
-4. `promote` skopeo-copies `:testing` → `:lts` by digest after cosign verify passes. The upgrade-test is **non-blocking** (known false positive on `ghcr.io/ublue-os/` prefix; tracked in testsuite#412 / issue #102).
-5. `generate-release` fires after `update-lts-branch` succeeds.
+**Normal path (automated via PR gate):**
+1. `promote-testing-to-main.yml` maintains an always-open `auto/promote-testing-to-main` PR.
+2. Maintainers review and merge (requires 2 `projectbluefin/maintainers` approvals).
+3. `execute-release.yml` fires on the merge push — commit message starts with `chore: promote testing to main`.
+4. `execute-release.yml` skopeo-copies `:testing` → `:lts`, fast-forwards the `lts` branch, creates a GitHub release.
+
+**Scheduled path (Tuesdays):**
+```bash
+# Dispatch scheduled release manually when needed
+gh workflow run scheduled-lts-release.yml --repo projectbluefin/bluefin-lts
+```
+This runs cosign verify, upgrade-test, then promote. The upgrade-test is **non-blocking** (known false positive on `ghcr.io/ublue-os/` prefix; tracked in testsuite#412 / issue #102).
+
+**⚠️ `sync-main-to-lts.yml` was deleted.** The lts branch is no longer auto-synced on every main push. It advances only when `execute-release.yml` fires (on promotion commits) or when manually updated.
 
 ## Promotion / branch safety
 
-- `main→lts` is automated via `sync-main-to-lts.yml` (regular merge, direct git push).
-- Never squash-merge `main→lts` directly — the sync workflow does regular merge intentionally.
+- **`main` uses squash merge.** All PRs squash into main. This is intentional.
 - Never merge `lts→main`.
-- `main` uses a merge queue with **squash** method. Required check: `Lint & syntax`. Linear history enforced.
-- `gh pr merge --auto` enqueues — do not promise immediate merge.
+- `gh pr merge --auto` enqueues into the merge queue — do not promise immediate merge.
+- `push` to `lts` does **not** trigger image builds.
 
-## Fork sync pattern (`castrojo` fork)
+## lts branch management
+
+`execute-release.yml` fast-forwards `lts` to the promotion commit SHA when a release fires. If `lts` has diverged (e.g., from old merge commits from the deleted `sync-main-to-lts.yml`), the PATCH API fast-forward will fail. Force-update it:
+
+```bash
+MAIN_SHA=$(gh api repos/projectbluefin/bluefin-lts/git/refs/heads/main --jq '.object.sha')
+gh api repos/projectbluefin/bluefin-lts/git/refs/heads/lts \
+  --method PATCH --field sha="$MAIN_SHA" --field force=true
+```
+
+Use `force=false` (the default) for safe fast-forwards. Use `force=true` only when lts has diverged and the intent is to realign it with main.
+
+## Image verification — always check digests
+
+**Do NOT trust "the fix is in main" as evidence the fix is published.** Agents have repeatedly made this mistake. Always verify by inspecting the actual OCI image:
+
+```bash
+GHCR_TOKEN=$(gh auth token)
+for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
+  skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:lts \
+    | python3 -c "import json,sys; d=json.load(sys.stdin); print('${IMAGE}:lts', d['Digest'][:22], d['Labels'].get('org.opencontainers.image.created','?')[:10])"
+done
+```
+
+A fix is published when:
+1. The `:lts` digest is **different** from the last known broken digest
+2. The `org.opencontainers.image.created` date is **after** the fix was merged
+3. All three variants (lts, lts-hwe, gdx) are updated
+
+
 
 ```bash
 git fetch projectbluefin
@@ -43,6 +77,19 @@ git push origin main --force-with-lease
 ```
 
 Do not merge `projectbluefin/main` into the fork; rebase instead.
+
+## Build cascade — rapid commits cancel in-progress builds
+
+Each push to `main` triggers new builds, which cancel any in-progress builds via concurrency groups. Landing several commits in rapid succession (e.g., CI fix chain) will cancel GDX on every commit — GDX is the slowest (60-90 min) and most vulnerable.
+
+**Rule:** Stop committing to main while builds are in progress. Or verify the image was already built from an earlier successful run before concluding GDX is broken.
+
+Check if all 3 builds completed for a specific sha:
+```bash
+gh run list --repo projectbluefin/bluefin-lts \
+  --json workflowName,status,conclusion,headSha \
+  --jq '[.[] | select(.headSha | startswith("<SHA>")) | select(.workflowName | contains("Build"))]'
+```
 
 ## Registry queries
 
