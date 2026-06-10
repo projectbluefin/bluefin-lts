@@ -430,3 +430,19 @@ jobs:
 **Gate output on PR #125:** Sticky comment with `<!-- release-status-marker -->` is posted/updated on the promotion PR. Labels `release/ready` or `release/blocked` are auto-applied.
 
 **E2E gate:** The gate checks for a `post-testing-e2e` workflow run on the PR's head SHA. When there is none (fresh image builds), the e2e check fails and the PR is labeled `release/blocked`. This is expected — maintainers can review and merge anyway via admin bypass.
+
+## E2E known issues — QEMU environment artifacts (added 2026-06-09)
+
+These units fail in the QEMU CI VM but are harmless on real hardware.
+The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
+`projectbluefin/testsuite/.github/workflows/e2e.yml`.
+
+| Unit | Why it fails in QEMU | Fix PR |
+|------|---------------------|--------|
+| `systemd-udev-settle.service` | Waits for udev to settle real hardware; times out (~125s) in QEMU with no physical devices. Manifests as `"No failed systemd units at boot"` smoke test failure. | projectbluefin/testsuite#419 |
+
+**After a testsuite fix merges:**
+1. Get the merge commit SHA: `gh api repos/projectbluefin/testsuite/commits/main --jq '.sha'`
+2. Update the SHA pin in `.github/workflows/run-testsuite.yml`
+3. Open a PR to bluefin-lts with the SHA bump
+4. The post-merge E2E will re-run against the new testsuite and the issue should close
