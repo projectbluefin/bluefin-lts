@@ -9,7 +9,7 @@ permissions: {}
 
 jobs:
   execute:
-    if: startsWith(github.event.head_commit.message, 'chore: promote testing to main')
+    if: "startsWith(github.event.head_commit.message, 'chore: promote testing to main')"
     permissions:
       actions: read
       contents: write
