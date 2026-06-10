@@ -33,6 +33,7 @@ jobs:
     needs: [execute]
     if: always() && needs.execute.result == 'success'
     permissions:
+      actions: read
       contents: write
       id-token: write
       packages: read
