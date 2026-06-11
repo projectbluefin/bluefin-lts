@@ -8,7 +8,9 @@ ARCH=$(uname -m)
 # This is the base for a minimal GNOME 50 system on CentOS Stream.
 
 # This thing slows down downloads A LOT for no reason
-dnf remove -y subscription-manager
+# --setopt=tsflags=noscripts skips postun/preun scriptlets (rhc's postun crashes
+# in container build context — tries to stop services that don't exist).
+dnf remove -y --setopt=tsflags=noscripts subscription-manager
 dnf -y install 'dnf-command(versionlock)'
 
 /run/context/build_scripts/scripts/kernel-swap.sh
