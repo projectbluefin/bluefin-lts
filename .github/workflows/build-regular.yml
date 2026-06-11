@@ -6,6 +6,7 @@ permissions:
   id-token: write
   attestations: write
   security-events: write
+  issues: write
 
 on:
   pull_request:
@@ -59,13 +60,14 @@ jobs:
       always() &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@3025b5d31f34ce44c19eab41a7fa5d4d5c5b688e # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@edc1969547183534ed609310210a00be2116eaf5 # feat/scan-image-non-blocking-cve-notify
     permissions:
       contents: read
       packages: write
       id-token: write
       attestations: write
       security-events: write
+      issues: write
     secrets: inherit
     with:
       brand_name: bluefin-lts
