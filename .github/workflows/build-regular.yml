@@ -60,7 +60,7 @@ jobs:
       always() &&
       (github.event_name != 'pull_request' ||
        needs.detect-changes.outputs.should_build == 'true')
-    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@edc1969547183534ed609310210a00be2116eaf5 # feat/scan-image-non-blocking-cve-notify
+    uses: oe3fcfe7bdd1499a47beab9a9806713b47b19d5 # feat/scan-image-non-blocking-cve-notify
     permissions:
       contents: read
       packages: write
