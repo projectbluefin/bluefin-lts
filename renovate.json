@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "local>projectbluefin/renovate-config"
+  ],
+  "packageRules": [
+    {
+      "description": "Automerge digest/pin/patch/minor for all dependencies",
+      "matchUpdateTypes": ["digest", "pin", "patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    },
+    {
+      "description": "Group and automerge projectbluefin/actions composite SHA updates",
+      "matchManagers": ["github-actions"],
+      "matchDepPatterns": ["projectbluefin/actions"],
+      "groupName": "projectbluefin/actions",
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "labels": ["chore/deps", "automerge"]
+    }
+  ]
+}
