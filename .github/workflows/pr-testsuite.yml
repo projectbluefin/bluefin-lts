@@ -38,7 +38,7 @@ jobs:
           echo "No COPR usage found."
 
       - name: Validate PR
-        uses: projectbluefin/actions/bootc-build/validate-pr@4d46a63f49ed0159e2f5958a2109cc936a50417e # v1
+        uses: projectbluefin/actions/bootc-build/validate-pr@v1
         with:
           hadolint-config: ""
           # LTS shell lives under build_scripts/, not bluefin's build_files/.
