@@ -1,11 +1,16 @@
 name: Post-Merge E2E — Testing Parity
 
-# Runs after the main-branch testing image build completes so bluefin-lts has
-# the same continuous post-merge smoke/common coverage as bluefin.
+# Runs after the HWE image build completes so bluefin-lts has the same
+# continuous post-merge smoke/common coverage as bluefin.
+#
+# IMPORTANT: trigger on "Build Bluefin LTS HWE", not "Build Bluefin LTS".
+# The tested image is ghcr.io/projectbluefin/bluefin-lts-hwe:testing which is
+# produced by the HWE build workflow. Triggering on the wrong (non-HWE)
+# workflow caused the job to be skipped even when the HWE build succeeded.
 on:
   workflow_run:
     workflows:
-      - Build Bluefin LTS
+      - Build Bluefin LTS HWE
     types:
       - completed
     branches: [main, testing]
