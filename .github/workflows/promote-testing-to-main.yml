@@ -35,7 +35,7 @@ permissions:
 
 jobs:
   promote:
-    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@72ee991c06c58b865c2419db0af8748eef70199b # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@feat/retry-e2e-promote # validation branch
     with:
       variants: >-
         [{"image":"bluefin-lts"},{"image":"bluefin-lts-hwe"},{"image":"bluefin-gdx"}]
