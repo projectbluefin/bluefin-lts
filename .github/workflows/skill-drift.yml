@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   skill-drift:
-    uses: projectbluefin/actions/.github/workflows/skill-drift-check.yml@3025b5d31f34ce44c19eab41a7fa5d4d5c5b688e # v1
+    uses: projectbluefin/actions/.github/workflows/skill-drift-check.yml@4d46a63f49ed0159e2f5958a2109cc936a50417e # v1
     with:
       # LTS build/layout files differ from bluefin; keep skills/docs updates coupled to these paths.
       code-paths: '[".github/workflows/**", "build_scripts/**", "system_files/**", "system_files_overrides/**", "Containerfile", "image-versions.yaml", "Justfile"]'
