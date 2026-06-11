@@ -14,9 +14,13 @@ on:
     - cron: '0 23 * * *'
   workflow_dispatch:
   workflow_run:
-    workflows: ["Post-Merge E2E — Testing Parity"]
+    # Both workflows run with headBranch=main. The old branches:[testing] filter
+    # never matched and was silently dead. Sync main→testing uses GITHUB_TOKEN
+    # so its push to testing never re-triggers this workflow directly — we must
+    # watch for the sync workflow completing instead.
+    workflows: ["Post-Merge E2E — Testing Parity", "Sync main → testing"]
     types: [completed]
-    branches: [testing]
+    branches: [main]
 
 concurrency:
   group: promote-testing-to-main
