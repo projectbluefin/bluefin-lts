@@ -5,6 +5,9 @@ set -xeuo pipefail
 # shellcheck disable=SC2034
 ARCH=$(uname -m)
 
+READ_PKGS="python3 /run/context/build_scripts/scripts/read-packages"
+PKGS_TOML="/run/context/build_scripts/packages/base.toml"
+
 # This is the base for a minimal GNOME 50 system on CentOS Stream.
 
 # This thing slows down downloads A LOT for no reason
@@ -68,39 +71,11 @@ dnf group install -y --nobest \
 # Minimal GNOME group. ("Multimedia" adds most of the packages from the GNOME group. This should clear those up too.)
 # In order to reproduce this, get the packages with `dnf group info GNOME`, install them manually with dnf install and see all the packages that are already installed.
 # Other than that, I've removed a few packages we didnt want, those being a few GUI applications.
-dnf -y install \
-	-x PackageKit \
-	-x PackageKit-command-not-found \
-	-x gnome-software-fedora-langpacks \
-	-x gnome-extensions-app \
-	-x gnome-software \
-	"NetworkManager-adsl" \
-	"adwaita-fonts-all" \
-	"centos-backgrounds" \
-	"dbus-daemon" \
-	"gdm" \
-	"gnome-bluetooth" \
-	"gnome-color-manager" \
-	"gnome-control-center" \
-	"gnome-initial-setup" \
-	"gnome-remote-desktop" \
-	"gnome-session-wayland-session" \
-	"gnome-settings-daemon" \
-	"gnome-shell" \
-	"gnome-user-docs" \
-	"gvfs-fuse" \
-	"gvfs-goa" \
-	"gvfs-gphoto2" \
-	"gvfs-mtp" \
-	"gvfs-smb" \
-	"libsane-hpaio" \
-	"nautilus" \
-	"orca" \
-	"ptyxis" \
-	"sane-backends-drivers-scanners" \
-	"xdg-desktop-portal-gnome" \
-	"xdg-user-dirs-gtk" \
-	"yelp-tools"
+readarray -t GNOME_PKGS    < <($READ_PKGS "$PKGS_TOML" gnome)
+readarray -t GNOME_EXCL    < <($READ_PKGS "$PKGS_TOML" gnome_excluded)
+GNOME_EXCLUDE_ARGS=()
+for pkg in "${GNOME_EXCL[@]}"; do GNOME_EXCLUDE_ARGS+=(-x "$pkg"); done
+dnf -y install "${GNOME_EXCLUDE_ARGS[@]}" "${GNOME_PKGS[@]}"
 
 dnf -y install \
 	plymouth \
