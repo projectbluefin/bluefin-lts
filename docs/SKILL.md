@@ -19,6 +19,7 @@ Load only the skill for the task at hand. Skill files live in `docs/skills/`.
 | CentOS vs Fedora: packages, COPR, akmods, EPEL | [`skills/centos-vs-fedora.md`](skills/centos-vs-fedora.md) |
 | GNOME Shell extensions: add, remove, build patterns | [`skills/gnome-extensions.md`](skills/gnome-extensions.md) |
 | Release pipeline, rollback, registry, ISO status | [`skills/release.md`](skills/release.md) |
+| OEM hardware hooks, Framework/Ampere setup, hook architecture | [`skills/hardware.md`](skills/hardware.md) |
 
 ## Self-improvement mandate
 
