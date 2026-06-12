@@ -23,7 +23,6 @@ metadata:
 - [Renovate auto-merge pipeline](#renovate-auto-merge-pipeline)
 - [Weekly release pipeline](#weekly-release-pipeline)
 - [Release pipeline pitfalls](#release-pipeline-pitfalls)
-- [generate-release.yml trigger logic](#generate-releaseyml-trigger-logic)
 - [GHCR Package Access](#ghcr-package-access--always-use-githubtoken-never-custom-pats)
 - [SBOM rules](#sbom-rules)
 - [Condition quick reference](#condition-quick-reference)
@@ -35,9 +34,13 @@ metadata:
 | `build-regular.yml` | caller for `bluefin-lts` |
 | `build-regular-hwe.yml` | caller for `bluefin-lts-hwe` (HWE kernel) |
 | `build-gdx.yml` | caller for `bluefin-gdx` (NVIDIA/AI) |
-| `sync-main-to-lts.yml` | auto-merges `main → lts` on every push to `main`; thin caller to `projectbluefin/actions/reusable-sync-branches.yml@v1` |
-| `scheduled-lts-release.yml` | Tuesday production dispatcher; dispatches 3 build workflows on `lts`; production environment gate **currently disabled** (TODO #94) |
-| `generate-release.yml` | creates GitHub Release — only after e2e smoke passes |
+| `sync-main-to-testing.yml` | force-syncs `main → testing` on every push to `main`; thin caller to `projectbluefin/actions/reusable-sync-branches.yml@v1` |
+| `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`main → lts`); calls `reusable-promote-squash.yml@v1` with `source_branch=main, target_branch=lts` |
+| `execute-release.yml` | fires on promotion PR merge; cosign re-verify, skopeo `:testing` → `:lts`, fast-forward `lts`, GitHub release |
+| ~~`sync-main-to-lts.yml`~~ | **deleted** — replaced by PR-as-gate promotion model |
+| ~~`scheduled-lts-release.yml`~~ | **deleted** — releases cut by merging the promotion PR |
+| ~~`generate-release.yml`~~ | **deleted** — release creation handled by `execute-release.yml` |
+| ~~`lifecycle-caller.yml`~~ | **deleted** |
 | `pr-testsuite.yml` | runs **`validate-pr@v1`** (just check, shellcheck, hadolint, pre-commit) + **e2e smoke** on every PR; only `Lint & syntax` is a required check |
 | `pr-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
 | `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
@@ -68,14 +71,16 @@ metadata:
 
 ## Promotion flow (`main→lts`)
 
-`sync-main-to-lts.yml` auto-merges `main → lts` on every push to `main` via direct `git push` (uses `projectbluefin/actions/reusable-sync-branches.yml@v1`). No manual PR needed.
+`promote-testing-to-main.yml` maintains an always-open `auto/promote-testing-to-main` PR targeting `lts`. Merging it cuts a release — see `docs/skills/release.md`.
 
-1. PRs merge to `main` via the merge queue using **squash merge**.
-2. `sync-main-to-lts.yml` fires immediately after and merges `main → lts` via regular `git merge`.
-3. `push` to `lts` does **not** publish images — it only validates.
-4. `scheduled-lts-release.yml` (manual dispatch on `lts`) publishes production images.
+**Critical:** The caller passes `source_branch: main` and `target_branch: lts`. Without these, the reusable workflow defaults to `testing → main`, trees are always identical, and no PR is ever created.
 
-**Never squash-merge `main→lts` directly.** The sync workflow uses regular merge — this is intentional to preserve merge base.
+1. PRs squash-merge to `main`.
+2. `sync-main-to-testing.yml` mirrors `main → testing`, triggering the promote workflow.
+3. Promote workflow compares `main` vs `lts` trees; rebuilds squash branch if different.
+4. Maintainers merge promotion PR (2 approvals required) → `execute-release.yml` fires → `:testing` copied to `:lts`.
+
+**Never squash-merge the promotion PR** — breaks merge base for future promotions.
 **Never merge `lts→main`.**
 
 ## `stream_name` — how tags are determined
@@ -100,7 +105,7 @@ There is no separate `publish: false` gate. Callers always publish when they run
 | `push` | `main` | `testing`, `testing-YYYYMMDD` | normal CI after merge |
 | `push` | `lts` | nothing | no build callers trigger on lts push |
 | `workflow_dispatch` | `main` | `testing`, `testing-YYYYMMDD` | manual re-run |
-| `workflow_dispatch` | `lts` | `lts`, `lts-YYYYMMDD` | triggered by `scheduled-lts-release.yml` or manually |
+| `workflow_dispatch` | `lts` | `lts`, `lts-YYYYMMDD` | triggered by `execute-release.yml` on promotion merge |
 | `pull_request` | `main` | nothing | CI only; detect-changes may skip build entirely |
 | `merge_group` | `main` | nothing | CI only |
 
@@ -141,7 +146,7 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 
 ## Schedule ownership
 
-`scheduled-lts-release.yml` is the **only** owner of Tuesday `0 6 * * 2` production runs. Do **not** add `schedule:` to the 3 build callers; scheduled caller runs would fire on `main`, produce `stream_name: testing`, and publish redundant testing tags.
+`release-reminder.yml` is the only scheduled workflow — posts a reminder on the promotion PR after 7 days open. Do not add `schedule:` triggers to the build callers.
 
 ## Renovate auto-merge pipeline
 
@@ -184,20 +189,6 @@ When E2E is fixed, the flow will be:
 
 **Never use `"enabled": false` for common** — this silently drops all critical fixes without any PR. The rechunker-group-fix was stuck in common for >2 days before manual intervention (issue ublue-os/bluefin-lts#918).
 
-## Weekly release pipeline
-
-`scheduled-lts-release.yml` dispatches manually or on a Tuesday `0 6 * * 2` schedule. Job chain:
-
-1. `check-promotion-floor` — 7-day minimum; bypassed by `workflow_dispatch`
-2. `resolve` — pulls `:testing` digests for all 3 variants; verifies all 3 share the same `org.opencontainers.image.revision` (CentOS bootc base SHA — see pitfalls below); locks current `main` SHA as `locked_main_sha` via the GitHub API
-3. `verify-signatures` — cosign-verifies all 3 `:testing` digests; cert-identity-regexp must be `projectbluefin/(bluefin-lts|actions)/.github/workflows/` (signing happens inside `projectbluefin/actions` reusable workflow, not the caller)
-4. `run-upgrade-test` — lifecycle test via `upgrade-test.yml@v1`; **non-blocking** (known false positive — testsuite hardcodes `ghcr.io/ublue-os/` prefix; tracked in testsuite#412 / issue #102)
-5. `promote` (`if: always() && resolve.success && verify-signatures.success && run-upgrade-test in [success,failure]`) — skopeo-copies `:testing` → `:lts` by digest; SHA guard checks `locked_main_sha` vs current `main` (fails if main advanced during e2e — re-run)
-6. `update-lts-branch` (`if: always() && promote.success`) — fast-forwards `lts` to `locked_main_sha`; no-ops if `sync-main-to-lts.yml` already created a merge commit containing the target
-7. `generate-release` (`if: always() && update-lts-branch.success`) — dispatches `generate-release.yml --ref main -f target=lts`
-8. `close-failure-issue` (`if: always() && promote.success`) — closes any open `ci: weekly LTS release failure` issue
-9. `report-failure` (`if: always() && failure()`) — opens/updates failure issue
-
 ## Release pipeline pitfalls
 
 **`org.opencontainers.image.revision` is the CentOS base SHA, not the LTS repo SHA.**
@@ -207,28 +198,19 @@ The label is inherited from `quay.io/centos-bootc/centos-bootc:c10s`. Never comp
 When a transitive ancestor fails (e.g. `run-upgrade-test`), GitHub skips all downstream jobs — even ones that only `needs:` a job that succeeded. Jobs after `promote` must use `if: always() && needs.X.result == 'success'`, not just `if: needs.X.result == 'success'`.
 
 **`lts` branch is always "ahead" of `main`.**
-`sync-main-to-lts.yml` creates a regular merge commit on `lts` for every push to `main`. The fast-forward PATCH will fail with `Update is not a fast forward`. The `update-lts-branch` step checks with the compare API and no-ops if `lts` already contains the target SHA.
+`execute-release.yml` fast-forwards `lts` after a release. If `lts` has diverged, the fast-forward fails — see `release.md` for the force-update command.
 
 **`continue-on-error: true` is not valid on `uses:` jobs.**
 actionlint rejects it. Make a job non-blocking by using `if: always() && ...` conditions on the jobs that depend on it.
 
 **SHA guard fires if `main` advances during the upgrade-test window (~10 min).**
-Just re-dispatch `scheduled-lts-release.yml` once main is quiet.
+Re-run the promote workflow once main is quiet: `gh workflow run "Promote testing to main" --repo projectbluefin/bluefin-lts`
 
 **Branch protection on `main`:** Required check `Lint & syntax` + linear history enforced. Matches `projectbluefin/bluefin`.
-
-## `generate-release.yml` trigger logic
-
-Fires in two ways:
-1. **`workflow_dispatch`** (from `scheduled-lts-release.yml`): always creates a release; this is the normal production path.
-2. **`workflow_run: Build Bluefin LTS GDX`** on `lts` branch with `event == 'workflow_dispatch'` and `conclusion == 'success'`: catches independently-dispatched GDX runs.
-
-Do not rely on the `workflow_run` path for routine releases — always use `scheduled-lts-release.yml`.
 
 ## Release-generation pitfalls
 
 - `workflow_run` chaining does not propagate from `GITHUB_TOKEN`-dispatched workflows reliably enough for LTS release generation.
-- If touching `scheduled-lts-release.yml`, preserve the explicit wait/poll pattern before `generate-release.yml` so release creation happens after published tags exist.
 - `pr-validate.yml` in `projectbluefin/testsuite` is NOT a reusable workflow (no `workflow_call`). Never call it with `uses:`; it is the testsuite's own linter.
 
 ### bluefin vs bluefin-lts quick reference
