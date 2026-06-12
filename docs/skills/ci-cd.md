@@ -517,3 +517,31 @@ The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
 5. After merge, post-merge E2E re-runs; the failure issues auto-close on green
 
 Current SHA (post testsuite#419): `726ed4d24e08a18d5c31f816519f4bd6f0463511`
+
+---
+
+## Trivy scan FATAL — CentOS 10 CPE indices missing
+
+**Symptom:** All three build jobs (`Build Bluefin LTS`, `Build Bluefin LTS HWE`, `Build Bluefin GDX`) fail at the `image (main, …, testing, x86_64)` step with exit code 1 and no obvious container build error. The actual error is Trivy crashing at the very end of the job (after a successful container build):
+
+```
+FATAL  Fatal error  run error: image scan error: … unable to find CPE indices.
+See https://github.com/aquasecurity/trivy-db/issues/435
+```
+
+**Root cause:** Trivy 0.70.x exits 1 with `FATAL` when its database has no CPE index entries for a new OS family (CentOS Stream 10). The `exit-code: '0'` Trivy parameter only suppresses non-zero exit when *vulnerabilities are found* — it does **not** suppress exits caused by Trivy's own DB crash.
+
+The `bootc-build/scan-image@v1` action in `projectbluefin/actions` did not have `continue-on-error: true` on the Trivy steps, so a Trivy FATAL kills the entire build job.
+
+**Fix:** `projectbluefin/actions` PR #201:
+- `continue-on-error: true` on both Trivy scan steps (SARIF + JSON)
+- Guard Python summarize step against missing `trivy-results.json`
+
+**After actions PR #201 merges:** A maintainer must retag `v1` in `projectbluefin/actions`:
+```bash
+git tag -f v1 <merge-commit-sha>
+git push origin v1 --force
+```
+All consuming repos (`bluefin-lts`, `bluefin`, `dakota`) pick up the fix immediately via `@v1`.
+
+**Note:** The dracut POSTTRANS failures (`error: rpm-ostree kernel-install: … Invalid cross-device link`) in `kernel-swap.sh` are **non-fatal warnings** — dnf exits 0 despite them and the build continues past them. They appear in logs but do not kill the build. PR #174 adds `export DRACUT_TMPDIR=/boot` as a belt-and-suspenders fix but the primary blocker is the Trivy issue above.
