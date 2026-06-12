@@ -1,0 +1,34 @@
+name: Update package cadence intervals
+
+# Runs immediately after Execute Release pushes the new :lts image to GHCR.
+# workflow_run ensures we measure the version that users just received, not
+# whatever happened to be in the registry when a cron fired.
+
+on:
+  workflow_run:
+    workflows: ["Execute Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      force_reclassify:
+        description: 'Recompute all intervals from observed churn, ignoring bootstrap heuristics'
+        type: boolean
+        default: false
+
+permissions: {}
+
+jobs:
+  cadence:
+    # Only run when a real release happened (promotion commit) — skip no-op Execute Release runs.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        startsWith(github.event.workflow_run.head_commit.message, 'chore: promote testing to main')
+      )
+    uses: projectbluefin/actions/.github/workflows/reusable-pkg-cadence.yml@v1
+    with:
+      image: ghcr.io/projectbluefin/bluefin-lts:lts
+      repo: projectbluefin/bluefin-lts
+      force_reclassify: ${{ inputs.force_reclassify || false }}
+    secrets: inherit

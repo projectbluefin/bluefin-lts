@@ -2,44 +2,26 @@
 
 set -xeuo pipefail
 
-dnf -y remove \
-	setroubleshoot
+READ_PKGS="python3 /run/context/build_scripts/scripts/read-packages"
+PKGS_TOML="/run/context/build_scripts/packages/base.toml"
+
+# Remove packages that conflict with image content
+readarray -t REMOVE_PKGS < <($READ_PKGS "$PKGS_TOML" remove)
+dnf -y remove "${REMOVE_PKGS[@]}"
+
+# Main package install from base/EPEL repos
+readarray -t INSTALL_PKGS    < <($READ_PKGS "$PKGS_TOML" install)
+readarray -t EXCLUDED_PKGS   < <($READ_PKGS "$PKGS_TOML" install_excluded)
+
+EXCLUDE_ARGS=()
+for pkg in "${EXCLUDED_PKGS[@]}"; do
+    EXCLUDE_ARGS+=(-x "$pkg")
+done
 
 dnf -y install \
-	-x gnome-extensions-app \
-	NetworkManager-openconnect-gnome \
-	NetworkManager-openvpn-gnome \
-	btrfs-progs \
-	buildah \
-	containerd \
-	ddcutil \
-	distrobox \
-	fastfetch \
-	firewalld \
-	flatpak \
-	fpaste \
-	fzf \
-	glow \
-	gnome-disk-utility \
-	gum \
-	hplip \
-	ibus-chewing \
-	jetbrains-mono-fonts-all \
-	jxl-pixbuf-loader \
-	just \
-	nss-mdns \
-	ntfs-3g \
-	papers-thumbnailer \
-	pcsc-lite \
-	powertop \
-	rclone \
-	restic \
-	system-reinstall-bootc \
-	tuned-ppd \
-	wireguard-tools \
-	wl-clipboard \
-	xdg-terminal-exec \
-	xhost
+    "${EXCLUDE_ARGS[@]}" \
+    "${INSTALL_PKGS[@]}"
+
 rm -rf /usr/share/doc/just
 
 # Everything that depends on external repositories should be after this.
@@ -50,7 +32,7 @@ dnf config-manager --add-repo "https://pkgs.tailscale.com/stable/centos/${MAJOR_
 dnf config-manager --set-disabled "tailscale-stable"
 # FIXME: tailscale EPEL10 request: https://bugzilla.redhat.com/show_bug.cgi?id=2349099
 dnf -y --enablerepo "tailscale-stable" install \
-	tailscale
+    tailscale
 
 # Install uupd from GitHub release tarball.
 # The ublue-os/packages COPR no longer has an epel-10 chroot (removed ~2026-06-08).
@@ -72,6 +54,5 @@ curl -fsSL "${UUPD_RAW}/uupd.timer"   -o /usr/lib/systemd/system/uupd.timer
 dnf -y --setopt=install_weak_deps=False install gcc
 
 # Versionlock GNOME 50 components to prevent downgrades to EL10 base versions
-dnf versionlock add gnome-shell gdm mutter gnome-session-wayland-session \
-    gnome-settings-daemon gnome-control-center gsettings-desktop-schemas \
-    gtk4 libadwaita pango fontconfig selinux-policy selinux-policy-targeted gnutls
+readarray -t VERSIONLOCK_PKGS < <($READ_PKGS "$PKGS_TOML" versionlock_gnome)
+dnf versionlock add "${VERSIONLOCK_PKGS[@]}"

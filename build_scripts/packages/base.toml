@@ -1,0 +1,123 @@
+# Package manifest for the bluefin-lts base image (CentOS Stream 10).
+# Read by build scripts via build_scripts/scripts/read-packages.
+#
+# Sections:
+#   [gnome]              GNOME 50 packages (10-packages-image-base.sh)
+#   [gnome_excluded]     packages excluded via -x during GNOME install
+#   [install]            main bluefin-lts packages (20-packages.sh)
+#   [install_excluded]   packages excluded via -x during main install
+#   [remove]             packages removed before install (20-packages.sh)
+#   [versionlock_gnome]  GNOME 50 components pinned against EL10 downgrades
+
+[gnome]
+# Minimal GNOME group — packages chosen to avoid GUI apps we don't want.
+# Groups (Core, Workstation, etc.) are handled inline in 10-packages-image-base.sh;
+# only the per-package install list lives here.
+packages = [
+    "NetworkManager-adsl",
+    "adwaita-fonts-all",
+    "centos-backgrounds",
+    "dbus-daemon",
+    "gdm",
+    "gnome-bluetooth",
+    "gnome-color-manager",
+    "gnome-control-center",
+    "gnome-initial-setup",
+    "gnome-remote-desktop",
+    "gnome-session-wayland-session",
+    "gnome-settings-daemon",
+    "gnome-shell",
+    "gnome-user-docs",
+    "gvfs-fuse",
+    "gvfs-goa",
+    "gvfs-gphoto2",
+    "gvfs-mtp",
+    "gvfs-smb",
+    "libsane-hpaio",
+    "nautilus",
+    "orca",
+    "ptyxis",
+    "sane-backends-drivers-scanners",
+    "xdg-desktop-portal-gnome",
+    "xdg-user-dirs-gtk",
+    "yelp-tools",
+]
+
+[gnome_excluded]
+# Excluded via -x during the GNOME install to keep the image lean.
+packages = [
+    "PackageKit",
+    "PackageKit-command-not-found",
+    "gnome-software-fedora-langpacks",
+    "gnome-extensions-app",
+    "gnome-software",
+]
+
+[install]
+# Main bluefin-lts packages from base/EPEL repos.
+packages = [
+    "NetworkManager-openconnect-gnome",
+    "NetworkManager-openvpn-gnome",
+    "btrfs-progs",
+    "buildah",
+    "containerd",
+    "ddcutil",
+    "distrobox",
+    "fastfetch",
+    "firewalld",
+    "flatpak",
+    "fpaste",
+    "fzf",
+    "glow",
+    "gnome-disk-utility",
+    "gum",
+    "hplip",
+    "ibus-chewing",
+    "jxl-pixbuf-loader",
+    "just",
+    "nss-mdns",
+    "ntfs-3g",
+    "papers-thumbnailer",
+    "pcsc-lite",
+    "powertop",
+    "rclone",
+    "restic",
+    "system-reinstall-bootc",
+    "tuned-ppd",
+    "wireguard-tools",
+    "wl-clipboard",
+    "xdg-terminal-exec",
+    "xhost",
+]
+
+[install_excluded]
+# Excluded via -x during the main install.
+packages = [
+    "gnome-extensions-app",
+]
+
+[remove]
+# Packages removed before the main install.
+packages = [
+    "setroubleshoot",
+]
+
+[versionlock_gnome]
+# GNOME 50 components pinned to prevent downgrades to EL10 base versions.
+# See: https://github.com/projectbluefin/bluefin-lts/issues — GNOME 50 skew
+packages = [
+    "gnome-shell",
+    "gdm",
+    "mutter",
+    "gnome-session-wayland-session",
+    "gnome-settings-daemon",
+    "gnome-control-center",
+    "gsettings-desktop-schemas",
+    "gtk4",
+    "libadwaita",
+    "pango",
+    "fontconfig",
+    "selinux-policy",
+    "selinux-policy-targeted",
+    "gnutls",
+]
