@@ -16,6 +16,7 @@ on:
   push:
     branches:
       - lts
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -29,8 +30,9 @@ jobs:
       - id: check
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
+          EVENT: ${{ github.event_name }}
         run: |
-          if echo "$COMMIT_MSG" | grep -q "^chore: promote main to lts"; then
+          if [ "$EVENT" = "workflow_dispatch" ] || echo "$COMMIT_MSG" | grep -q "^chore: promote main to lts"; then
             echo "is-promotion=true" >> "$GITHUB_OUTPUT"
           else
             echo "is-promotion=false" >> "$GITHUB_OUTPUT"
