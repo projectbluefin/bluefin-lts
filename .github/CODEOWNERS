@@ -1,10 +1,10 @@
-# Default: any one maintainer approves
-* @castrojo @p5 @m2Giles @tulilirockz
+# Default: maintainers team owns everything
+* @projectbluefin/maintainers
 
 # Sensitive paths — require maintainer review
-.github/workflows/  @castrojo @p5 @m2Giles @tulilirockz
-Justfile            @castrojo @p5 @m2Giles @tulilirockz
-build_scripts/      @castrojo @p5 @m2Giles @tulilirockz
+.github/workflows/  @projectbluefin/maintainers
+Justfile            @projectbluefin/maintainers
+build_scripts/      @projectbluefin/maintainers
 
 # Exempt from CODEOWNERS review (Renovate-managed, auto-merged by renovate-automerge.yml)
 image-versions.yaml
