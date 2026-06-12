@@ -44,6 +44,17 @@ for pkg in "${INSTALL_PKGS[@]}"; do
   RPM_NAMES+=("/tmp/kernel-rpms/$pkg-$CACHED_VERSION.rpm")
 done
 
+# /boot and /var/tmp are separate tmpfs mounts inside the container build RUN layer;
+# rename(2) across two different devices fails with EXDEV (os error 18).
+# Setting DRACUT_TMPDIR=/boot tells rpm-ostree's 05-rpmostree.install to pass
+# --tmpdir /boot to dracut, keeping staging and final initramfs on the same device.
+#
+# This was previously present (removed in 791b9623) when the base image included
+# kernel-uki-virt.  centos-bootc:c10s ≥ 6.12.0-233 no longer pre-installs it,
+# so kernel-swap reinstalls kernel-core from scratch, re-triggering the POSTTRANS
+# scriptlet and the EXDEV regression.
+export DRACUT_TMPDIR=/boot
+
 dnf -y install "${RPM_NAMES[@]}"
 
 # HWE-specific: Install common akmods
