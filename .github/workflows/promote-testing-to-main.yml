@@ -1,14 +1,12 @@
 name: Promote testing to main
 
 # Thin caller — logic lives in projectbluefin/actions/reusable-promote-squash.yml
-# Replaces the previous 354-line promote-testing-to-main.yml.
-#
-# Key improvement: squash branch is always rebuilt fresh on every run —
-# no staleness, no conflict drift, no merge friction.
 #
 # Branch model for bluefin-lts: main → lts
-# source_branch=main, target_branch=lts — compares main vs lts trees
-# and opens auto/promote-testing-to-main → lts when they differ.
+# source_branch=main, target_branch=lts compares main vs lts trees and
+# opens auto/promote-testing-to-main → lts when they differ.
+#
+# Closes: #172
 
 on:
   push:
@@ -18,10 +16,6 @@ on:
     - cron: '0 23 * * *'
   workflow_dispatch:
   workflow_run:
-    # Both workflows run with headBranch=main. The old branches:[testing] filter
-    # never matched and was silently dead. Sync main→testing uses GITHUB_TOKEN
-    # so its push to testing never re-triggers this workflow directly — we must
-    # watch for the sync workflow completing instead.
     workflows: ["Post-Merge E2E — Testing Parity", "Sync main → testing"]
     types: [completed]
     branches: [main]
@@ -30,20 +24,16 @@ concurrency:
   group: promote-testing-to-main
   cancel-in-progress: false
 
-# The called reusable workflow needs write access to push the squash branch,
-# open/update PRs, and write issues. Caller-level permissions set the maximum
-# grants available to the called workflow's jobs — too-narrow a grant here
-# causes startup_failure before any job runs.
 permissions:
-  contents: write       # push squash promotion branch
-  pull-requests: write  # create / update / auto-merge the promotion PR
-  issues: write         # open / close failure-tracking issues
-  packages: read        # read image digests in release-gate checks
-  actions: read         # inspect workflow-run statuses in release-gate
+  contents: write
+  pull-requests: write
+  issues: write
+  packages: read
+  actions: read
 
 jobs:
   promote:
-    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@901346fcaab92a4107f8760533cd993d7fe3cb9b # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
         [{"image":"bluefin-lts"},{"image":"bluefin-lts-hwe"},{"image":"bluefin-gdx"}]
