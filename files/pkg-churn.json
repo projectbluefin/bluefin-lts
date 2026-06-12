@@ -1,0 +1,7447 @@
+{
+  "LCEVCdec": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ModemManager": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ModemManager-glib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-adsl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-bluetooth": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-cloud-setup": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-libnm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-openconnect": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-openconnect-gnome": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-openvpn": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-openvpn-gnome": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-tui": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-wifi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "NetworkManager-wwan": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "PackageKit-glib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "PackageKit-gstreamer-plugin": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "SDL3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "WALinuxAgent-udev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "aardvark-dns": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "accountsservice": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "accountsservice-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "acl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "adcli": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "adcli-selinux": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "adobe-mappings-cmap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "adobe-mappings-cmap-deprecated": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "adobe-mappings-pdf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "adwaita-cursor-theme": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "adwaita-fonts-all": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "adwaita-icon-theme": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "adwaita-mono-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "adwaita-sans-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "alsa-lib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "alsa-sof-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "alsa-ucm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "alsa-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "alternatives": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "amd-gpu-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "amd-ucode-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "anthy-unicode": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "appstream": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "appstream-data": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "aribb24": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "at": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "at-spi2-atk": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "at-spi2-core": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "atheros-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "atk": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "attr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "audit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "audit-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "audit-rules": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "authselect": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "authselect-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "avahi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "avahi-glib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "avahi-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "avahi-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "basesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bash": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bash-color-prompt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bash-completion": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bind-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bind-license": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bind-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "binutils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "binutils-gold": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bison": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "blktrace": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bluez": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bluez-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bluez-obexd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bolt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bootc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "weekly"
+  },
+  "bootupd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bpftool": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "brcmfmac-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "brlapi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "brltty": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "btrfs-progs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bubblewrap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "buildah": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bzip2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "bzip2-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "c-ares": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ca-certificates": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cairo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cairo-gobject": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "catatonit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "centos-backgrounds": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "centos-gpg-keys": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "centos-stream-release": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "centos-stream-repos": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "checkpolicy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "chrony": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cifs-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cirrus-audio-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "cjson": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cldr-emoji-annotation": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cldr-emoji-annotation-dtd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cloud-utils-growpart": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cmake-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "codec2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "color-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "colord": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "colord-gtk4": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "colord-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "composefs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "composefs-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "conmon": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "container-selinux": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "containerd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "containers-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "containers-common-extra": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "coreutils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "coreutils-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cpio": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cpp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cpuinfo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cracklib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cracklib-dicts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "criu": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "criu-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "crun": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "crypto-policies": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "crypto-policies-scripts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cryptsetup": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cryptsetup-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cups": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cups-browsed": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cups-client": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cups-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cups-filters": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cups-filters-driverless": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cups-ipptool": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cups-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cups-pk-helper": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "curl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cyrus-sasl-gssapi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cyrus-sasl-lib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "cyrus-sasl-plain": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "davs2-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dbus": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dbus-broker": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dbus-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dbus-daemon": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dbus-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dbus-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dconf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ddcutil": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "default-fonts-am": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ar": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-as": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ast": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-be": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-bg": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-bn": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-bo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-br": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-chr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-cjk-mono": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-cjk-sans": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-cjk-serif": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-core-emoji": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-core-math": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-core-mono": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-core-sans": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-core-serif": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-dv": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-dz": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-el": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-eo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-eu": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-fa": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-gu": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-he": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-hi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-hy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ia": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-iu": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ka": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-km": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-kn": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ku": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-lo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-mai": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ml": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-mni": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-mr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-my": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-nb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ne": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-nn": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-nr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-nso": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-or": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-other-mono": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-other-sans": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-other-serif": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-pa": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ru": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-sat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-si": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ss": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ta": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-te": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-th": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-tn": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-uk": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ur": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-ve": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-vi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-xh": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-yi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "default-fonts-zu": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "dejavu-sans-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "dejavu-sans-mono-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "dejavu-serif-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "desktop-file-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "device-mapper": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "device-mapper-event": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "device-mapper-event-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "device-mapper-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "device-mapper-persistent-data": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "diffutils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "distrobox": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "weekly"
+  },
+  "dmidecode": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dnf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dnf-bootc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dnf-data": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dnf-plugins-core": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dnsmasq": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dos2unix": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dosfstools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dotconf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "double-conversion": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dracut": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dracut-config-rescue": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dracut-network": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "dracut-squash": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "duktape": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "e2fsprogs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "e2fsprogs-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ed": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "efi-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "efibootmgr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "efivar-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "elfutils-debuginfod-client": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "elfutils-default-yama-scope": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "elfutils-libelf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "elfutils-libelf-devel": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "elfutils-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "emacs-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "enchant2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "enscript": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "epel-release": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "erofs-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "espeak-ng": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ethtool": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "evolution-data-server": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "evolution-data-server-langpacks": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "exempi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "exfatprogs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "exiv2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "exiv2-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "expat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fastfetch": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "weekly"
+  },
+  "ffmpeg": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ffmpegthumbnailer": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ffmpegthumbnailer-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fftw-libs-double": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fftw-libs-single": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "file": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "file-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "findutils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "firewalld": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "firewalld-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "flac-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "flashrom": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "flatpak": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "flatpak-selinux": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "flatpak-session-helper": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "flex": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "flite": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fontconfig": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fonts-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "foomatic": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "foomatic-db": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "foomatic-db-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "foomatic-db-ppds": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fpaste": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fprintd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fprintd-pam": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "freeglut": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "freerdp-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "freetype": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fribidi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fstrm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fuse": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fuse-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fuse-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fuse3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fuse3-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fwupd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fwupd-efi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fwupd-plugin-flashrom": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "fzf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "game-music-emu": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gawk": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gawk-all-langpacks": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gcc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gcr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gcr-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gcr3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gcr3-base": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gdbm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gdbm-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gdk-pixbuf2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gdm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "generic-logos": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "geoclue2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "geoclue2-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "geocode-glib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gettext": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gettext-envsubst": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gettext-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gettext-runtime": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ghostscript": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ghostscript-tools-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "ghostscript-tools-printing": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "giflib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "git": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "git-core": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "git-core-doc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gjs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glib-networking": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glib2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glibc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glibc-all-langpacks": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glibc-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glibc-devel": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glibc-gconv-extra": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glibc-minimal-langpack": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glow": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glx-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glycin-loaders": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "glycin-thumbnailer": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gmp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-autoar": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-bluetooth": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-bluetooth-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-color-manager": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-control-center": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-control-center-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-desktop3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-desktop4": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-disk-utility": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-initial-setup": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-keyring": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-keyring-pam": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-online-accounts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-online-accounts-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-remote-desktop": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-session": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-session-wayland-session": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-settings-daemon": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-shell": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-tour": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome-user-docs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnome49-el10-compat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnupg2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gnutls": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gobject-introspection": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "google-droid-sans-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-color-emoji-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-emoji-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-fonts-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-naskh-arabic-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-arabic-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-armenian-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-bengali-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-canadian-aboriginal-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-cherokee-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-cjk-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-devanagari-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-ethiopic-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-georgian-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-gujarati-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-gurmukhi-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-hebrew-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-kannada-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-khmer-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-lao-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-math-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-meetei-mayek-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-mono-cjk-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-mono-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-ol-chiki-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-oriya-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-sinhala-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-symbols-2-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-symbols-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-tamil-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-telugu-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-thaana-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-thai-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-sans-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-armenian-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-bengali-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-cjk-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-devanagari-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-ethiopic-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-georgian-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-gujarati-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-gurmukhi-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-hebrew-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-kannada-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-khmer-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-lao-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-oriya-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-sinhala-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-tamil-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-telugu-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-thai-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "google-noto-serif-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "gpg-pubkey": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gpgme": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gpgmepp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "graphene": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "graphite2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "grep": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "groff-base": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "grub2-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "grub2-efi-x64": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "grub2-pc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "grub2-pc-modules": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "grub2-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "grub2-tools-minimal": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "grubby": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gsettings-desktop-schemas": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gsm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gsound": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gssdp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gssproxy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gstreamer1": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gstreamer1-plugins-bad": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gstreamer1-plugins-base": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gstreamer1-plugins-good": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gstreamer1-plugins-ugly": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gtk-update-icon-cache": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gtk3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gtk4": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gtksourceview5": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gum": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gupnp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gupnp-igd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gutenprint": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gutenprint-cups": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gutenprint-doc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gutenprint-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gvfs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gvfs-client": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gvfs-fuse": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gvfs-goa": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gvfs-gphoto2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gvfs-mtp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gvfs-smb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "gzip": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "harfbuzz": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "harfbuzz-icu": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hdparm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hicolor-icon-theme": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "highway": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hostname": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hplip": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hplip-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hplip-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hunspell": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hunspell-en-GB": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hunspell-en-US": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hunspell-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hwdata": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hyperv-daemons": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hyperv-daemons-license": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hypervfcopyd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hypervkvpd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hypervvssd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "hyphen": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "i2c-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-anthy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-anthy-python": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-chewing": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-gtk3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-hangul": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-libpinyin": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-libzhuyin": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-m17n": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-setup": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ibus-typing-booster": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "iio-sensor-proxy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ilbc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ima-evm-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "inih": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "inih-cpp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "initscripts-rename-device": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "initscripts-service": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "insights-core": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "insights-core-selinux": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "intel-audio-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "intel-gpu-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "intel-mediasdk": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "intel-vpl-gpu-rt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "intel-vsc-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ipp-usb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "iproute": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "iproute-tc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ipset": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ipset-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "iptables-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "iptables-nft": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "iptables-nft-services": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "iputils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "irqbalance": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "iso-codes": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "itstool": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "iw": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "iwlwifi-dvm-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "iwlwifi-mvm-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "jansson": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "javascriptcoregtk4.1": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "jbig2dec-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "jbigkit-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "jetbrains-mono-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "jetbrains-mono-fonts-all": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "jetbrains-mono-nl-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "jomolhari-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "jq": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "json-c": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "json-glib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "just": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "jxl-pixbuf-loader": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kasumi-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kasumi-unicode": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kbd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kbd-legacy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kbd-misc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kdump-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel-core": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel-devel": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel-devel-matched": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel-headers": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel-modules": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel-modules-core": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel-modules-extra": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel-tools-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kernel-uki-virt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kexec-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "keyutils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "keyutils-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kmod": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kmod-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kmod-zfs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kpartx": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kpatch": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kpatch-dnf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "krb5-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kvazaar-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "kyotocabinet-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ladspa": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lame": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lame-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "langtable": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lcms2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ledmon": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ledmon-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "leptonica": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "less": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libICE": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libSM": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libX11": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libX11-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libX11-xcb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXau": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXcomposite": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXcursor": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXdamage": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXdmcp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXext": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXfixes": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXfont2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXft": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXinerama": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXmu": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXpm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXrandr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXrender": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXres": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXtst": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXv": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libXxf86vm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "liba52": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libacl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libadwaita": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libaio": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libao": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libaom": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libarchive": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libaribcaption": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libass": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libassuan": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libasyncns": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libatasmart": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libattr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libavc1394": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libavcodec": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libavdevice": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libavfilter": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libavformat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libavif": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libavutil": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libbabeltrace": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libbasicobjects": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblkid": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblockdev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblockdev-crypto": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblockdev-fs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblockdev-loop": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblockdev-mdraid": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblockdev-nvme": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblockdev-part": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblockdev-smart": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblockdev-swap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libblockdev-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libbluray": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libbpf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libbrotli": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libbs2b": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libbytesize": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcaca": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcamera": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcamera-gstreamer": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcamera-ipa": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcamera-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcamera-v4l2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcanberra": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcanberra-gtk3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcap-ng": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcap-ng-python3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcbor": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcdio": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcdio-paranoia": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libchewing": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libchromaprint": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcollection": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcom_err": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcomps": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libconfig": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcupsfilters": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libcurl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdaemon": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdatrie": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdav1d": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdc1394": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdca": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libde265": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdecor": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdhash": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdisplay-info": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdnf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdnf-plugin-subscription-manager": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdovi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdrm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdvdnav": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libdvdread": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libeconf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libedit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libei": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libeis": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libepoxy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "liberation-fonts-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "liberation-mono-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "libertas-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libevdev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libevent": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libexif": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libfdisk": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libfdk-aac": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libffi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libfido2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libfontenc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libfprint": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libfreeaptx": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgcc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgcrypt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgda": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgexiv2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libglvnd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libglvnd-egl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libglvnd-gles": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libglvnd-glx": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libglvnd-opengl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgomp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgpg-error": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgphoto2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgsf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgtop2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgudev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgusb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgweather": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libgxps": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libhandy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libhangul": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libi2c": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libibverbs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libical": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libical-glib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libicu": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libidn2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libiec61883": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libieee1284": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libijs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libini_config": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libinput": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libipa_hbac": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libiptcdata": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libjcat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libjpeg-turbo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libjxl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libkcapi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libkcapi-hasher": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libkcapi-hmaccalc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libklvanc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libksba": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "liblc3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libldac": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libldb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "liblerc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "liblouis": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "liblouis-tables": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmanette": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmaxminddb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmbim": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmbim-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmicrodns": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmnl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmodplug": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmodulemd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmount": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmpc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmpeg2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmspack": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmtp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libmysofa": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libndp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnet": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnetfilter_conntrack": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnfnetlink": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnfsidmap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnftnl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnghttp2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnice": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnl3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnma": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnma-gtk4": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnotify": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnvme": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libnvpair3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "liboeffis": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libogg": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libopenmpt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libosinfo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpaper": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpath_utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpcap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpciaccess": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpinyin": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpinyin-data": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpipeline": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpkgconf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libplacebo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpng": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libportal": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libportal-gtk4": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpostproc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libppd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libproxy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpskc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpsl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libpwquality": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libqmi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libqmi-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libqrtr-glib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "librabbitmq": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libraw1394": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libref_array": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "librepo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "librist": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "librsvg2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "librsvg2-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "librtmp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsamplerate": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsane-airscan": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsane-hpaio": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsbc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libseccomp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsecret": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libselinux": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libselinux-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsemanage": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsepol": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libshaderc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libshout": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsmartcols": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsmbclient": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsndfile": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsodium": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsolv": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsoup3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libspelling": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsrtp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libss": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libssh": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libssh-config": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsss_certmap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsss_idmap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsss_nss_idmap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsss_sudo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libstdc++": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libstoragemgmt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libswresample": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libswscale": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libsysfs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libtalloc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libtasn1": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libtdb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libtevent": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libthai": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libtheora": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libtiff": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libtinysparql": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libtirpc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libtool-ltdl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libtraceevent": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libudfread": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libudisks2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libunibreak": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libunistring": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libunwind": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "liburing": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libusb1": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libutempter": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libuuid": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libuutil3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libuv": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libv4l": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libva": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libvdpau": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libverto": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libverto-libev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libvmaf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libvo-aacenc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libvorbis": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libvpl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libvpx": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libwacom": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libwacom-data": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libwayland-client": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libwayland-cursor": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libwayland-egl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libwayland-server": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libwbclient": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libwebp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libwinpr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libwnck3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxavs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxcb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxcrypt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxcrypt-devel": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxcvt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxkbcommon": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxkbcommon-x11": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxkbfile": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxml2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxmlb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxshmfence": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libxslt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libyaml": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libzfs6": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libzhuyin": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libzpool6": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libzstd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "libzstd-devel": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lilv-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "linux-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "linux-firmware-whence": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "llvm-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "llvm-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lm_sensors-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lmdb-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "localsearch": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lockdev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "logrotate": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "low-memory-monitor": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lrzsz": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lsb_release": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lshw": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lsof": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lsscsi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lua-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lv2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lvm2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lvm2-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lz4-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "lzo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "m17n-db": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "m17n-lib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "m4": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "madan-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "mailcap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "make": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "makedumpfile": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mallard-rng": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "man-db": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "man-pages": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mbedtls": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mcelog": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mdadm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "memstrack": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mesa-dri-drivers": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mesa-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mesa-libEGL": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mesa-libGL": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mesa-libGLU": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mesa-libgbm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mesa-vulkan-drivers": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "microcode_ctl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mjpegtools-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mobile-broadband-provider-info": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mokutil": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mozjs140": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mpdecimal": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mpfr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mpg123-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mt7xxx-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "mtdev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mtr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mutter": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "mutter-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nano": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nautilus": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nautilus-extensions": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ncurses": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ncurses-base": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ncurses-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "neon": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nerd-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "net-snmp-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "net-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "netavark": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "netronome-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nettle": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "newt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nfs-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nftables": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nm-connection-editor": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nmap-ncat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "npth": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nspr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nss": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nss-altfiles": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nss-mdns": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nss-softokn": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nss-softokn-freebl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nss-sysinit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nss-util": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ntfs-3g": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ntfs-3g-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ntfs-3g-system-compression": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "numactl-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nvidia-gpu-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nvme-cli": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "nxpwireless-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "ocl-icd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "oniguruma": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "open-vm-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "open-vm-tools-desktop": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openal-soft": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openconnect": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "opencore-amr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openexr-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openh264": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openjpeg2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openldap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openpgm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openssh": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openssh-clients": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openssh-server": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openssl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openssl-devel": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openssl-fips-provider": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openssl-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "openvpn": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "opus": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "orc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "orca": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "os-prober": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "osinfo-db": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "osinfo-db-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ostree": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "ostree-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "p11-kit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "p11-kit-server": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "p11-kit-trust": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "paktype-naskh-basic-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "pam": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pam-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pango": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "papers-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "papers-thumbnailer": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "paps": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "parted": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "passt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "passt-selinux": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pcaudiolib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pciutils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pciutils-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pcp-conf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pcp-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pcre2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pcre2-syntax": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pcre2-utf16": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pcre2-utf32": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pcsc-lite": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pcsc-lite-ccid": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pcsc-lite-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-AutoLoader": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-B": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Carp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Class-Struct": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Data-Dumper": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Digest": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Digest-MD5": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-DynaLoader": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Encode": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Errno": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Error": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Exporter": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Fcntl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-File-Basename": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-File-Path": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-File-Temp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-File-stat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-FileHandle": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Getopt-Long": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Getopt-Std": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Git": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-HTTP-Tiny": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-IO": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-IO-Socket-IP": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-IO-Socket-SSL": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-IPC-Open3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-MIME-Base64": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Mozilla-CA": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-NDBM_File": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Net-SSLeay": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-POSIX": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-PathTools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Pod-Escapes": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Pod-Perldoc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Pod-Simple": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Pod-Usage": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Scalar-List-Utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-SelectSaver": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Socket": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Storable": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Symbol": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Term-ANSIColor": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Term-Cap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-TermReadKey": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Text-ParseWords": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Text-Tabs+Wrap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-Time-Local": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-URI": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-base": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-constant": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-if": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-interpreter": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-lib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-libnet": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-locale": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-mro": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-overload": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-overloading": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-parent": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-podlators": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "perl-vars": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pigz": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pinentry": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pinentry-gnome3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pipewire": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pipewire-alsa": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pipewire-gstreamer": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pipewire-jack-audio-connection-kit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pipewire-jack-audio-connection-kit-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pipewire-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pipewire-plugin-libcamera": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pipewire-pulseaudio": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pipewire-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pixman": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pkcs11-helper": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pkcs11-provider": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pkgconf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pkgconf-m4": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pkgconf-pkg-config": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "plocate": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "plymouth": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "plymouth-core-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "plymouth-graphics-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "plymouth-plugin-label": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "plymouth-plugin-two-step": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "plymouth-scripts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "plymouth-system-theme": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "plymouth-theme-spinner": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pnm2ppa": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "podman": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "podman-sequoia": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "policycoreutils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "policycoreutils-python-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "polkit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "polkit-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "polkit-pkla-compat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "poppler": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "poppler-cpp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "poppler-data": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "poppler-glib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "poppler-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "popt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "powertop": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "prefixdevname": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "procps-ng": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "protobuf-c": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "psacct": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "psmisc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pt-sans-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "ptyxis": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "publicsuffix-list-dafsa": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pulseaudio-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "pulseaudio-libs-glib2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python-unversioned-command": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-argcomplete": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-attrs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-audit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-brlapi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-cairo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-cffi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-charset-normalizer": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-cloud-what": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-cups": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-dasbus": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-dateutil": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-dbus": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-decorator": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-distro": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-dnf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-dnf-plugin-versionlock": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-dnf-plugins-core": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-enchant": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-file-magic": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-firewall": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-gobject": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-gobject-base": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-gobject-base-noarch": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-hawkey": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-idna": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-iniparse": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-inotify": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-jsonschema": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-jsonschema-specifications": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-langtable": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-libcomps": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-libdnf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-librepo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-libselinux": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-libsemanage": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-libstoragemgmt": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-libxml2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-linux-procfs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-louis": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-lxml": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-nftables": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-packaging": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-pam": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-perf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-pexpect": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-pip-wheel": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-ply": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-policycoreutils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-psutil": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-ptyprocess": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-pyatspi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-pycparser": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-pyudev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-pyxdg": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-pyyaml": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-pyzfs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-referencing": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-regex": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-requests": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-rpds-py": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-rpm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-setools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-setuptools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-six": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-speechd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-subscription-manager-rhsm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-systemd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "python3-urllib3": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qemu-guest-agent": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qpdf-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qrencode-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt5-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt5-qtbase": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt5-qtbase-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt5-qtbase-gui": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt5-qtdeclarative": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt5-qttranslations": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt5-qtwayland": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt5-qtx11extras": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt6-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt6-qtbase": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt6-qtbase-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt6-qtbase-gui": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt6-qtdeclarative": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt6-qtsvg": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "qt6-qttranslations": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "quota": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "quota-nls": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rav1e-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rclone": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "readline": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "realmd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "realtek-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "redhat-display-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "redhat-mono-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "redhat-text-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "rest": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "restic": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rit-meera-new-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "rit-rachana-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "rootfiles": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpcbind": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpm-build-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpm-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpm-ostree": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpm-ostree-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpm-plugin-audit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpm-plugin-selinux": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpm-plugin-systemd-inhibit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpm-sequoia": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rpm-sign-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rsvg-pixbuf-loader": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rsync": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rtkit": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "rubberband": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "runc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "samba-client-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "samba-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "samba-common-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sane-airscan": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sane-backends": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sane-backends-drivers-cameras": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sane-backends-drivers-scanners": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sane-backends-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sdl2-compat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sed": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "selinux-policy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "selinux-policy-targeted": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sequoia-sq": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "serd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "setup": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sg3_utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sg3_utils-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "shadow-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "shadow-utils-subid": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "shared-mime-info": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "shim-x64": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sil-padauk-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "simdutf": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "skopeo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "slang": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "smartmontools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "smartmontools-selinux": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "snappy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "socat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sord": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sos": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sound-theme-freedesktop": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "soundtouch": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "soxr": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "spandsp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "speech-dispatcher": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "speech-dispatcher-espeak-ng": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "speex": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "spice-vdagent": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "spirv-tools-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sqlite-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sratom": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "srt-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-ad": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-client": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-common-pac": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-ipa": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-kcm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-krb5": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-krb5-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-ldap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-nfs-idmap": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sssd-proxy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "stalld": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "startup-notification": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "stix-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "stoken-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "strace": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "subscription-manager-rhsm-certificates": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sudo": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sudo-python-plugin": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "svt-av1-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "svt-vp9-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "switcheroo-control": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "symlinks": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "sysstat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "system-config-printer-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "system-config-printer-udev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "system-reinstall-bootc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "systemd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "systemd-container": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "systemd-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "systemd-oomd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "systemd-pam": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "systemd-resolved": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "systemd-udev": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "taglib": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tailscale": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "weekly"
+  },
+  "tar": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tcpdump": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tecla": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "telnet": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tesseract": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tesseract-langpack-eng": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tesseract-tessdata-doc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "thermald": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "time": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tinysparql": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tiwilink-firmware": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "quarterly"
+  },
+  "toolbox": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tpm2-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tpm2-tss": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tpm2-tss-fapi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "traceroute": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tree": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tuned": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tuned-ppd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "twolame-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "tzdata": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "uavs3d-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "udisks2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "unicode-ucd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "unzip": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "upower": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "upower-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "urw-base35-bookman-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-c059-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-d050000l-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-fonts-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-gothic-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-nimbus-mono-ps-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-nimbus-roman-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-nimbus-sans-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-p052-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-standard-symbols-ps-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "urw-base35-z003-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "usbutils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "userspace-rcu": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "util-linux": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "util-linux-core": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "uupd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "weekly"
+  },
+  "vamp-plugin-sdk": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vazirmatn-vf-fonts": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "yearly"
+  },
+  "vid.stab": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vim-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vim-data": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vim-enhanced": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vim-filesystem": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vim-minimal": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "virt-what": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vo-amrwbenc": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "volume_key-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vpnc-script": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vte-profile": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vte291": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vte291-gtk4": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vulkan-loader": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "vvenc-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "wavpack": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "webkit2gtk4.1": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "webrtc-audio-processing": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "wget": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "which": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "wireguard-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "wireless-regdb": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "wireplumber": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "wireplumber-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "wl-clipboard": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "woff2": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "words": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "wpa_supplicant": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "wsdd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "x264-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "x265-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xavs2-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xcb-util": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xcb-util-cursor": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xcb-util-image": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xcb-util-keysyms": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xcb-util-renderutil": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xcb-util-wm": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xdg-dbus-proxy": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xdg-desktop-portal": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xdg-desktop-portal-gnome": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xdg-desktop-portal-gtk": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xdg-terminal-exec": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xdg-user-dirs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xdg-user-dirs-gtk": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xdg-utils": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xevd-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xeve-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xfsdump": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xfsprogs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xhost": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xkbcomp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xkeyboard-config": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xml-common": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xmlsec1": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xmlsec1-openssl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xorg-x11-server-Xwayland": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xprop": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xvidcore": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xxd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xz": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "xz-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "yelp-tools": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "yelp-xsl": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "yggdrasil": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "yggdrasil-worker-package-manager": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "yum": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "yyjson": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zbar-libs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zeromq": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zfs": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zimg": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zip": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zix": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zlib-ng-compat": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zlib-ng-compat-devel": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zram-generator": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zstd": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zvbi": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  },
+  "zxing-cpp": {
+    "changes": 0,
+    "window_start": "2026-06-12",
+    "interval": "monthly"
+  }
+}
