@@ -19,11 +19,16 @@ permissions: {}
 
 jobs:
   cadence:
-    # Only run when the release actually succeeded — skip on cancelled/failed releases.
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # Only run when a real release happened (promotion commit) — skip no-op Execute Release runs.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        startsWith(github.event.workflow_run.head_commit.message, 'chore: promote testing to main')
+      )
     uses: projectbluefin/actions/.github/workflows/reusable-pkg-cadence.yml@v1
     with:
-      image: ghcr.io/projectbluefin/bluefin:lts
+      image: ghcr.io/projectbluefin/bluefin-lts:lts
       repo: projectbluefin/bluefin-lts
       force_reclassify: ${{ inputs.force_reclassify || false }}
     secrets: inherit
