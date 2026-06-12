@@ -4,13 +4,6 @@ name: Execute Release
 # "chore: promote main to lts" — the squash commit produced by
 # promote-testing-to-main.yml when auto/promote-testing-to-main merges
 # into lts.
-#
-# Why push instead of pull_request: closed:
-# GitHub blocks pull_request-triggered workflows when the triggering PR was
-# created by github-actions[bot] AND the PR modifies .github/workflows/ files.
-# The promotion squash always carries SHA pin bumps from Renovate, so the
-# pull_request: closed trigger produced startup_failed on every release.
-# A push: [lts] trigger is not subject to this restriction.
 
 on:
   push:
@@ -47,7 +40,7 @@ jobs:
       issues: write
       packages: write
       pull-requests: write
-    uses: projectbluefin/actions/.github/workflows/reusable-execute-release.yml@efa19f2c3efdcbef1c55a1730229891d781fd11b # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-execute-release.yml@c4e9e5511a984cc88623be152e140d96740185f5 # v1
     with:
       registry: ghcr.io/projectbluefin
       variants: >-
@@ -68,10 +61,12 @@ jobs:
       contents: write
       id-token: write
       packages: read
-    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@efa19f2c3efdcbef1c55a1730229891d781fd11b # v1
+    # Use bluefin-lts-hwe as the primary image so the HWE (CoreOS stable) kernel
+    # version appears in the Key components table instead of the base CentOS kernel.
+    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@c4e9e5511a984cc88623be152e140d96740185f5 # v1
     with:
       stream_name: lts
-      image: ghcr.io/projectbluefin/bluefin-lts
+      image: ghcr.io/projectbluefin/bluefin-lts-hwe
       generate_sbom_inline: true
       checkout_ref: lts
       project_name: Bluefin LTS
@@ -81,10 +76,57 @@ jobs:
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
       notable_packages: >-
         [
-          {"sbom_name": "kernel", "label": "Kernel"},
+          {"sbom_name": "kernel", "label": "Kernel (HWE)"},
           {"sbom_name": "gnome-shell", "label": "GNOME Shell"},
           {"sbom_name": "flatpak", "label": "Flatpak"},
           {"sbom_name": "bootc", "label": "bootc"}
         ]
       docs_url: https://docs.projectbluefin.io/changelogs
     secrets: inherit
+
+  post-release-variants:
+    # Prepend a variants table to the release body so all promoted images are listed.
+    needs: [execute, release-notes]
+    if: always() && needs.release-notes.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Resolve promoted digests
+        id: digests
+        run: |
+          set -euo pipefail
+          for image in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
+            digest=$(skopeo inspect --no-tags "docker://ghcr.io/projectbluefin/${image}:lts" \
+              | jq -r '.Digest' | cut -c1-19)
+            echo "${image}=${digest}" >> "$GITHUB_OUTPUT"
+          done
+
+      - name: Prepend variants table to release
+        env:
+          LTS_DIGEST: ${{ steps.digests.outputs.bluefin-lts }}
+          HWE_DIGEST: ${{ steps.digests.outputs.bluefin-lts-hwe }}
+          GDX_DIGEST: ${{ steps.digests.outputs.bluefin-gdx }}
+        run: |
+          set -euo pipefail
+          TAG=$(gh release list --repo "${{ github.repository }}" --limit 1 --json tagName --jq '.[0].tagName')
+          CURRENT=$(gh release view "$TAG" --repo "${{ github.repository }}" --json body --jq '.body')
+
+          VARIANTS_SECTION="## Variants promoted
+
+| Variant | Tag | Digest |
+|---|---|---|
+| \`bluefin-lts\` | \`:lts\` | \`${LTS_DIGEST}\` |
+| \`bluefin-lts-hwe\` | \`:lts\` | \`${HWE_DIGEST}\` |
+| \`bluefin-gdx\` | \`:lts\` | \`${GDX_DIGEST}\` |
+
+> **bluefin-lts-hwe** and **bluefin-gdx** use the Fedora CoreOS stable kernel. The **Kernel (HWE)** version above applies to both.
+
+---
+
+"
+          printf '%s%s' "$VARIANTS_SECTION" "$CURRENT" > /tmp/updated-body.md
+          gh release edit "$TAG" --repo "${{ github.repository }}" --notes-file /tmp/updated-body.md
