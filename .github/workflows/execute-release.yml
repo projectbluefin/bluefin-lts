@@ -1,7 +1,7 @@
 name: Execute Release
 
 # Triggered by a push to lts whose commit message starts with
-# "chore: promote testing to main" — the squash commit produced by
+# "chore: promote main to lts" — the squash commit produced by
 # promote-testing-to-main.yml when auto/promote-testing-to-main merges
 # into lts.
 #
@@ -30,7 +30,7 @@ jobs:
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          if echo "$COMMIT_MSG" | grep -q "^chore: promote testing to main"; then
+          if echo "$COMMIT_MSG" | grep -q "^chore: promote main to lts"; then
             echo "is-promotion=true" >> "$GITHUB_OUTPUT"
           else
             echo "is-promotion=false" >> "$GITHUB_OUTPUT"
