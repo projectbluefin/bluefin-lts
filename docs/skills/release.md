@@ -122,7 +122,8 @@ Rollback all three variants, then verify digest/created time.
 
 1. Push fix to `main` — builds trigger automatically.
 2. Wait for all 3 builds to complete (~45-90 min). Never promote before builds finish.
-3. Skopeo-copy `:testing` → `:lts` by digest:
+3. Verify the new `:testing` image has a fresh initramfs (see Verifying images below).
+4. Skopeo-copy `:testing` → `:lts` by digest:
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
@@ -138,6 +139,44 @@ done
 ```
 
 Always copy by digest, not tag — prevents races with concurrent pushes.
+
+## Verifying images
+
+### No `:stable` tag
+
+bluefin-lts images have two tags: `:lts` (production) and `:testing` (pre-release). There is no `:stable` tag.
+
+### `/boot/` is intentionally empty in the OCI image
+
+bootc stores the kernel and initramfs under `/usr/lib/modules/<kver>/`, not `/boot/`. An empty `/boot/` in the container layer is **expected and correct**. bootc populates the real `/boot` partition from `/usr/lib/modules/` during deployment.
+
+```bash
+# Correct way to verify kernel/initramfs health:
+podman run --rm ghcr.io/projectbluefin/bluefin-lts:lts bash -c '
+  sha256sum /usr/lib/modules/*/initramfs.img
+  ls -la /usr/lib/modules/*/vmlinuz
+  grep BUILD_ID /etc/os-release
+'
+```
+
+### OCI label vs BUILD_ID
+
+`org.opencontainers.image.revision` in the OCI manifest may show the `testing` branch SHA rather than the `main` branch commit that built the image (the reusable build workflow in `projectbluefin/actions` uses `github.sha` which resolves to the triggering branch HEAD). Use `BUILD_ID` from `/etc/os-release` inside the container as the authoritative commit reference.
+
+### Initramfs must differ from the previous broken build
+
+After a dracut-related fix, verify the initramfs SHA changed:
+
+```bash
+# Before promotion: record old SHA
+OLD=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:lts bash -c 'sha256sum /usr/lib/modules/*/initramfs.img' 2>/dev/null | awk '{print $1}')
+
+# After promotion: pull fresh and compare
+podman pull ghcr.io/projectbluefin/bluefin-lts:lts
+NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:lts bash -c 'sha256sum /usr/lib/modules/*/initramfs.img' 2>/dev/null | awk '{print $1}')
+
+[ "$OLD" != "$NEW" ] && echo "✅ initramfs changed" || echo "❌ same initramfs — promotion may be a no-op"
+```
 
 ## ISO status
 
