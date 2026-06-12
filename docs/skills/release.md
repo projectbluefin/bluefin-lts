@@ -12,31 +12,50 @@ metadata:
 
 ## Production release flow
 
-**Normal path (automated via PR gate):**
-1. `promote-testing-to-main.yml` maintains an always-open `auto/promote-testing-to-main` PR.
-2. Maintainers review and merge (requires 2 `projectbluefin/maintainers` approvals).
-3. `execute-release.yml` fires on the merge push — commit message starts with `chore: promote testing to main`.
-4. `execute-release.yml` skopeo-copies `:testing` → `:lts`, fast-forwards the `lts` branch, creates a GitHub release.
+Releases are cut by merging the always-open `auto/promote-testing-to-main` PR.
 
-**Scheduled path (Tuesdays):**
+1. `promote-testing-to-main.yml` runs on every push to `main` (via `Sync main → testing` completion) and on a nightly cron. It calls `reusable-promote-squash.yml@v1` with `source_branch=main, target_branch=lts`. When `main` and `lts` trees differ it rebuilds the squash branch and upserts the promotion PR.
+2. The gate job verifies cosign signatures, resolves digests, and checks for a passing post-merge E2E run. Results are posted as a live checklist in the PR body.
+3. **2 approvals from `@projectbluefin/maintainers`** are required — branch protection on `lts` enforces this.
+4. Merge with a regular merge commit. `execute-release.yml` fires on merge, re-verifies cosign, skopeo-copies `:testing` → `:lts`, fast-forwards the `lts` branch, creates a GitHub release with changelog via `reusable-release.yml@v1`.
+
 ```bash
-# Dispatch scheduled release manually when needed
-gh workflow run scheduled-lts-release.yml --repo projectbluefin/bluefin-lts
+# Check the gate status
+gh pr list --repo projectbluefin/bluefin-lts --head auto/promote-testing-to-main
+
+# Merge when gate is green (requires 2 maintainer approvals)
+gh pr merge <pr-number> --repo projectbluefin/bluefin-lts --merge
+
+# Force merge — emergency bypass of branch protection
+gh pr merge <pr-number> --repo projectbluefin/bluefin-lts --merge --admin
 ```
-This runs cosign verify, upgrade-test, then promote. The upgrade-test is **non-blocking** (known false positive on `ghcr.io/ublue-os/` prefix; tracked in testsuite#412 / issue #102).
 
-**⚠️ `sync-main-to-lts.yml` was deleted.** The lts branch is no longer auto-synced on every main push. It advances only when `execute-release.yml` fires (on promotion commits) or when manually updated.
+## Branch protection
 
-## Promotion / branch safety
+`lts` branch requires 2 approvals from `@projectbluefin/maintainers`. `main` has the same rule. Both are enforced via GitHub branch protection (set 2026-06-12). `maintainers` team members can bypass with `--admin`.
 
-- **`main` uses squash merge.** All PRs squash into main. This is intentional.
-- Never merge `lts→main`.
-- `gh pr merge --auto` enqueues into the merge queue — do not promise immediate merge.
-- `push` to `lts` does **not** trigger image builds.
+## Gate checklist — E2E skipped for CI-only commits
+
+When recent commits to `main` are CI-only (no image changes), `Post-Merge E2E — Testing Parity` is skipped, not run. The gate shows ⏳ because it cannot find a passing E2E run. Fix by dispatching manually:
+
+```bash
+gh workflow run "Post-Merge E2E — Testing Parity" --repo projectbluefin/bluefin-lts
+```
+
+The gate reruns automatically when the promotion workflow next fires (nightly cron or next push to main).
+
+## Branch model
+
+- `main` — active development. All PRs target `main`. Builds push `:testing` OCI tag.
+- `lts` — production. Advances only when `execute-release.yml` fires on a promotion merge.
+- `testing` — mirror of `main`. `Sync main → testing` force-syncs after every push to `main`. Used by the promote workflow's trigger chain.
+
+**Never merge `lts → main`.** Flow is one-way: `main → lts`.
+**Never push directly to `lts`.** Pushes do not trigger builds.
 
 ## lts branch management
 
-`execute-release.yml` fast-forwards `lts` to the promotion commit SHA when a release fires. If `lts` has diverged (e.g., from old merge commits from the deleted `sync-main-to-lts.yml`), the PATCH API fast-forward will fail. Force-update it:
+`execute-release.yml` fast-forwards `lts` to the promotion commit SHA. If `lts` has diverged, the fast-forward fails. Fix:
 
 ```bash
 MAIN_SHA=$(gh api repos/projectbluefin/bluefin-lts/git/refs/heads/main --jq '.object.sha')
@@ -44,11 +63,9 @@ gh api repos/projectbluefin/bluefin-lts/git/refs/heads/lts \
   --method PATCH --field sha="$MAIN_SHA" --field force=true
 ```
 
-Use `force=false` (the default) for safe fast-forwards. Use `force=true` only when lts has diverged and the intent is to realign it with main.
-
 ## Image verification — always check digests
 
-**Do NOT trust "the fix is in main" as evidence the fix is published.** Agents have repeatedly made this mistake. Always verify by inspecting the actual OCI image:
+Do NOT trust "the fix is in main" as evidence the fix is published. Verify:
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
@@ -59,36 +76,19 @@ done
 ```
 
 A fix is published when:
-1. The `:lts` digest is **different** from the last known broken digest
-2. The `org.opencontainers.image.created` date is **after** the fix was merged
+1. The `:lts` digest differs from the last known digest
+2. The `org.opencontainers.image.created` date is after the fix merged
 3. All three variants (lts, lts-hwe, gdx) are updated
-
-
-
-```bash
-git fetch projectbluefin
-git rebase projectbluefin/main
-git push origin <branch> --force-with-lease
-
-# after merge to projectbluefin
-git checkout main
-git reset --hard projectbluefin/main
-git push origin main --force-with-lease
-```
-
-Do not merge `projectbluefin/main` into the fork; rebase instead.
 
 ## Build cascade — rapid commits cancel in-progress builds
 
-Each push to `main` triggers new builds, which cancel any in-progress builds via concurrency groups. Landing several commits in rapid succession (e.g., CI fix chain) will cancel GDX on every commit — GDX is the slowest (60-90 min) and most vulnerable.
+Each push to `main` triggers new builds which cancel in-progress builds via concurrency groups. GDX is slowest (60-90 min). Stop committing to `main` while builds are in progress.
 
-**Rule:** Stop committing to main while builds are in progress. Or verify the image was already built from an earlier successful run before concluding GDX is broken.
-
-Check if all 3 builds completed for a specific sha:
 ```bash
+SHA=<commit-sha>
 gh run list --repo projectbluefin/bluefin-lts \
   --json workflowName,status,conclusion,headSha \
-  --jq '[.[] | select(.headSha | startswith("<SHA>")) | select(.workflowName | contains("Build"))]'
+  --jq "[.[] | select(.headSha | startswith(\"$SHA\")) | select(.workflowName | contains(\"Build\"))]"
 ```
 
 ## Registry queries
@@ -101,19 +101,11 @@ skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-gdx
 ```
 
 Images publish to:
-- `ghcr.io/projectbluefin/bluefin-lts` (base)
-- `ghcr.io/projectbluefin/bluefin-lts-hwe` (HWE kernel)
-- `ghcr.io/projectbluefin/bluefin-gdx` (NVIDIA/AI)
+- `ghcr.io/projectbluefin/bluefin-lts`
+- `ghcr.io/projectbluefin/bluefin-lts-hwe`
+- `ghcr.io/projectbluefin/bluefin-gdx`
 
 ## Emergency rollback
-
-Use immutable dated tags as rollback sources.
-
-| Image | Floating tag | Rollback source |
-|---|---|---|
-| `bluefin-lts` | `lts` | `lts-YYYYMMDD` |
-| `bluefin-lts-hwe` | `lts` | `lts-YYYYMMDD` |
-| `bluefin-gdx` | `lts` | `lts-YYYYMMDD` |
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
@@ -122,87 +114,41 @@ skopeo copy \
   --dest-creds "castrojo:${GHCR_TOKEN}" \
   docker://ghcr.io/projectbluefin/IMAGE:lts-YYYYMMDD \
   docker://ghcr.io/projectbluefin/IMAGE:lts
-
-skopeo inspect --no-creds docker://ghcr.io/projectbluefin/IMAGE:lts \
-  | python3 -c "import json,sys; d=json.load(sys.stdin); print('Digest:', d['Digest']); print('Created:', d['Created'])"
 ```
 
-Rollback every affected floating tag, then verify digest/created time for each.
-
-## ISO status
-
-**LTS ISO is disabled. Do not re-enable or promote it.**
-
-- Do not enable `build-iso-lts.yml` schedules.
-- Do not run `promote-iso.yml` with `variant: lts` or `variant: all`.
-- Do not run `build-iso-all.yml` for LTS promotion.
-- Existing production ISOs remain safe; new LTS ISO builds must stay blocked because Anaconda is broken on the CentOS Stream LTS base.
+Rollback all three variants, then verify digest/created time.
 
 ## Emergency promotion for production-bricking bugs
 
-When production images are bricking machines, skip the normal release gate and promote directly.
+1. Push fix to `main` — builds trigger automatically.
+2. Wait for all 3 builds to complete (~45-90 min). Never promote before builds finish.
+3. Skopeo-copy `:testing` → `:lts` by digest:
 
-**Pattern (used 2026-06-09 for rechunker-group-fix):**
-
-1. Push fix to `testing` branch directly — builds trigger automatically on both `main` and `testing`:
-   ```bash
-   git cherry-pick <fix-sha>
-   git push projectbluefin HEAD:testing
-   ```
-2. Open a PR to `main` in parallel for the formal merge path.
-3. Wait for builds to complete (~45-90 min). Do NOT promote until builds finish — promoting before completion copies the old broken image.
-4. Skopeo-copy `:testing` → `:lts` by digest for all 3 variants:
-   ```bash
-   GHCR_TOKEN=$(gh auth token)
-   for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
-     DIGEST=$(skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:testing | python3 -c "import json,sys; print(json.load(sys.stdin)['Digest'])")
-     echo "Copying ${IMAGE}@${DIGEST} -> :lts"
-     skopeo copy \
-       --src-creds "castrojo:${GHCR_TOKEN}" \
-       --dest-creds "castrojo:${GHCR_TOKEN}" \
-       docker://ghcr.io/projectbluefin/${IMAGE}@${DIGEST} \
-       docker://ghcr.io/projectbluefin/${IMAGE}:lts
-   done
-   ```
-5. Verify digests match:
-   ```bash
-   for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
-     skopeo inspect --no-creds docker://ghcr.io/projectbluefin/${IMAGE}:lts \
-       | python3 -c "import json,sys; d=json.load(sys.stdin); print('${IMAGE}:lts', d['Digest'], d['Created'])"
-   done
-   ```
-6. Merge the PR to `main` after the emergency is resolved (no rush).
-
-**Key rules:**
-- Copy by digest, not tag — prevents races with concurrent pushes.
-- E2E red is acceptable for emergency merges — use `--admin` bypass if needed.
-- Do not use the auto/promote-testing-to-main PR for emergencies — it may be BEHIND and requires approvals. Manual skopeo is faster and safer.
-
-## PR-as-gate release model (as of 2026-06-09)
-
-**How releases work now:**
-
-1. `promote-testing-to-main.yml` runs daily/on push to `testing` — creates/updates the always-open `auto/promote-testing-to-main` PR with the current testing→main diff
-2. The promote workflow inlines a `gate` job that calls `reusable-release-gate.yml@main` — verifies digests, cosign signatures, e2e; posts sticky comment; labels PR `release/ready` or `release/blocked`
-3. Maintainers review the PR on Tuesdays (or as needed) — if checks pass, merge to cut a release
-4. `execute-release.yml` fires on PR merge — re-verifies, skopeo-copies `:testing` → `:lts`, fast-forwards `lts` branch, creates GitHub release
-5. `release-reminder.yml` (daily cron) posts reminder after 7 days if PR is still open
-
-**To cut a release:**
 ```bash
-# Check the gate status
-gh pr view 125 --repo projectbluefin/bluefin-lts
-
-# When ready, merge (requires 2 projectbluefin/maintainers approvals)
-gh pr merge 125 --repo projectbluefin/bluefin-lts --merge --admin
+GHCR_TOKEN=$(gh auth token)
+for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
+  DIGEST=$(skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:testing \
+    | python3 -c "import json,sys; print(json.load(sys.stdin)['Digest'])")
+  skopeo copy \
+    --src-creds "castrojo:${GHCR_TOKEN}" \
+    --dest-creds "castrojo:${GHCR_TOKEN}" \
+    docker://ghcr.io/projectbluefin/${IMAGE}@${DIGEST} \
+    docker://ghcr.io/projectbluefin/${IMAGE}:lts
+done
 ```
 
-**Branch protection requirement (human must apply in Settings):**
+Always copy by digest, not tag — prevents races with concurrent pushes.
 
-`main` branch in bluefin-lts, bluefin, and dakota should require 2 approvals from `projectbluefin/maintainers` team before merge. This is a GitHub Settings > Branches configuration that agents cannot set.
+## ISO status
 
-Path: Repository Settings → Branches → Branch protection rules → main → Require a pull request before merging → Required number of approvals: 2 → Restrict reviews to specific team: `projectbluefin/maintainers`
+**LTS ISO is disabled. Do not re-enable.** Anaconda is broken on CentOS Stream base.
 
-Until this is configured, a single maintainer can merge. The workflows enforce the intent via the gate checks, but the 2-reviewer gate is a social contract until the branch protection rule is applied.
+## promote-testing-to-main.yml — reusable workflow internals
 
-**Admin bypass:** `--admin` flag on `gh pr merge` bypasses branch protection including the 2-reviewer requirement. Use only for emergency fixes.
+The caller passes `source_branch: main` and `target_branch: lts` to `reusable-promote-squash.yml@v1`. **This is critical.** The reusable workflow defaults to `testing → main` — without these inputs, `testing` and `main` trees are always identical and no PR is ever created.
+
+The reusable workflow:
+- Checks out the calling repo for git history
+- Does a sparse checkout of `projectbluefin/actions` into `.workflow-scripts/` to access `scripts/render_pr_body.py`
+- Creates PR via `gh pr create` and extracts the PR number from the returned URL (`--json` flag not available in runner's gh version)
+- Assigns review to `@projectbluefin/maintainers` team on create
