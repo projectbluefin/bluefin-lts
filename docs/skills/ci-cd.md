@@ -353,15 +353,11 @@ If nothing is pushed, nothing should sign.
 
 ---
 
-## uupd install — COPR removed, use GitHub releases (added 2026-06-09)
+## uupd install — COPR removed, use GitHub releases
 
-**Context:** The `ublue-os/packages` COPR **epel-10 chroot was removed ~2026-06-08**. Any build that does:
-```bash
-dnf config-manager --add-repo "https://copr.fedorainfracloud.org/coprs/ublue-os/packages/repo/epel-10/..."
-```
-will get a **404** and fail. Do not restore this pattern.
+**Context:** The `ublue-os/packages` COPR epel-10 chroot was removed. Any build using the old COPR repo will get a 404 and fail. Do not restore that pattern.
 
-**Fix:** Install `uupd` from its GitHub release tarball. Version is pinned in `image-versions.yaml` under `downloads.uupd`:
+**Fix:** Install `uupd` from its GitHub release tarball. Version is pinned in `image-versions.yaml`:
 ```yaml
 downloads:
   # renovate: datasource=github-releases depName=ublue-os/uupd
@@ -377,27 +373,21 @@ curl -fsSL "https://github.com/ublue-os/uupd/releases/download/${UUPD_VERSION}/u
 chmod 0755 /usr/bin/uupd
 ```
 
-### Three lessons from this failure chain
-
-1. **`yq` is not in the CentOS Stream build container.** Never call `yq` in build_scripts — use `grep`/`sed`/`awk` for YAML parsing.
-2. **`image-versions.yaml` must be in the context stage.** The build container RUN step mounts `context` at `/run/context`. Only files explicitly `COPY`-ed into the `AS context` stage are available there. `image-versions.yaml` is now in the context stage via `COPY image-versions.yaml /image-versions.yaml` in the Containerfile.
-3. **Renovate tracks `downloads.uupd` version.** The `# renovate: datasource=github-releases depName=ublue-os/uupd` comment above the pinned version in `image-versions.yaml` triggers automatic version bump PRs.
-
-**uupd tarball ships binary only — service files must be fetched separately:**
-
-The GitHub release tarball (`uupd_Linux_x86_64.tar.gz`) contains only `LICENSE`, `README.md`, and the `uupd` binary. The `.service` and `.timer` files live in the source repo root (not in any release asset). Fetch them via raw.githubusercontent.com at the same tag:
-
+The tarball ships binary only — fetch service files separately:
 ```bash
 UUPD_RAW="https://raw.githubusercontent.com/ublue-os/uupd/${UUPD_VERSION}"
 curl -fsSL "${UUPD_RAW}/uupd.service" -o /usr/lib/systemd/system/uupd.service
 curl -fsSL "${UUPD_RAW}/uupd.timer"   -o /usr/lib/systemd/system/uupd.timer
 ```
 
-`build_scripts/40-services.sh` patches and enables these files — they must exist before that script runs.
+**Three rules from this failure:**
+1. `yq` is not in the CentOS Stream build container. Use `grep`/`sed`/`awk`.
+2. `image-versions.yaml` must be in the context stage (`COPY image-versions.yaml /image-versions.yaml` in Containerfile).
+3. `build_scripts/40-services.sh` must run **after** the service files exist — install order matters.
 
 ---
 
-### PR-based release gate model (added 2026-06-09)
+## PR-based release gate model
 
 **Design:** The always-open `auto/promote-testing-to-main` PR is the release gate. Merge it (requires 2 maintainers) to cut a release. Gate checks run automatically after each promotion update.
 
@@ -433,7 +423,7 @@ jobs:
 
 ---
 
-## execute-release.yml — startup_failure diagnosis and fix (added 2026-06-10)
+## execute-release.yml — startup_failure diagnosis and fix
 
 ### Root cause
 
@@ -459,16 +449,14 @@ The nested job 'image-release' is requesting 'actions: read', but is only allowe
 
 ### How to diagnose startup_failure in GitHub Actions
 
-GitHub API endpoints (`/jobs`, `/logs`) return nothing for `startup_failure` runs. `gh run view` gives only a generic "workflow file issue" message. **The actual error is visible only by fetching the GitHub Actions web page URL:**
+GitHub API endpoints (`/jobs`, `/logs`) return nothing for `startup_failure` runs. `gh run view` gives only a generic "workflow file issue" message. Open the run URL directly in a browser and search for "requesting" or "is not allowed" in the page. The error format is:
 
-```python
-from web_fetch import fetch
-url = "https://github.com/projectbluefin/bluefin-lts/actions/runs/<RUN_ID>"
-result = fetch(url)
-# Search for "requesting" or "is not allowed" in the returned HTML/markdown
+```
+Error calling workflow 'reusable-X.yml@main'.
+The nested job 'Y' is requesting 'actions: read', but is only allowed 'actions: none'.
 ```
 
-Use the `web_fetch` tool on the run URL when you see `startup_failure` in CLI output.
+`gh run view <RUN_ID> --repo projectbluefin/bluefin-lts` will show `startup_failure` status but no log. The web UI is the only place the specific permission mismatch is shown.
 
 ### YAML syntax gotcha in `if:` conditions with colons in strings
 
@@ -482,6 +470,25 @@ if: startsWith(github.event.head_commit.message, 'chore: promote testing to main
 if: "startsWith(github.event.head_commit.message, 'chore: promote testing to main')"
 ```
 
+### actionlint [expression] rule — untrusted inputs in run: steps
+
+actionlint flags `github.event.head_commit.message` (and other user-controlled inputs) when interpolated directly into a `run:` shell script. It is safe in `if:` conditions because those are evaluated by GitHub's expression engine, not the shell.
+
+```yaml
+# BROKEN — actionlint [expression] error, injection risk
+- run: |
+    MSG="${{ github.event.head_commit.message }}"
+
+# CORRECT — pass through env var
+- env:
+    COMMIT_MSG: ${{ github.event.head_commit.message }}
+  run: |
+    if echo "$COMMIT_MSG" | grep -q "^chore:"; then ...
+
+# ALSO CORRECT — if: conditions are not shell, no injection risk
+  if: "startsWith(github.event.head_commit.message, 'chore: promote testing to main')"
+```
+
 ### execute-release.yml trigger change (push vs pull_request)
 
 The `pull_request: closed` trigger was replaced with `push: branches: [main]` because:
@@ -491,7 +498,7 @@ The `pull_request: closed` trigger was replaced with `push: branches: [main]` be
 
 ---
 
-## E2E known issues — QEMU environment artifacts (added 2026-06-09)
+## E2E known issues — QEMU environment artifacts
 
 These units fail in the QEMU CI VM but are harmless on real hardware.
 The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
@@ -500,9 +507,41 @@ The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
 | Unit | Why it fails in QEMU | Fix PR |
 |------|---------------------|--------|
 | `systemd-udev-settle.service` | Waits for udev to settle real hardware; times out (~125s) in QEMU with no physical devices. Manifests as `"No failed systemd units at boot"` smoke test failure. | projectbluefin/testsuite#419 |
+| `bootloader-update.service` | Updates the EFI bootloader on boot; fails in QEMU VMs that have no EFI boot entry to update. Appears in VM serial log as `FAILED`. Currently not caught by the smoke test assertion — no open fix PR. |
 
-**After a testsuite fix merges:**
-1. Get the merge commit SHA: `gh api repos/projectbluefin/testsuite/commits/main --jq '.sha'`
-2. Update the SHA pin in `.github/workflows/run-testsuite.yml`
-3. Open a PR to bluefin-lts with the SHA bump
-4. The post-merge E2E will re-run against the new testsuite and the issue should close
+**After a testsuite fix merges — SHA bump runbook:**
+1. Get the new SHA: `gh api repos/projectbluefin/testsuite/commits/main --jq '.sha'`
+2. Update the single `uses:` line in `.github/workflows/run-testsuite.yml` — all callers inherit it automatically
+3. Commit: `fix(ci): bump testsuite SHA to include <description> (PR #NNN)`
+4. Open a PR with `Closes #<issue>` for each open e2e failure issue
+5. After merge, post-merge E2E re-runs; the failure issues auto-close on green
+
+Current SHA (post testsuite#419): `726ed4d24e08a18d5c31f816519f4bd6f0463511`
+
+---
+
+## Trivy scan FATAL — CentOS 10 CPE indices missing
+
+**Symptom:** All three build jobs (`Build Bluefin LTS`, `Build Bluefin LTS HWE`, `Build Bluefin GDX`) fail at the `image (main, …, testing, x86_64)` step with exit code 1 and no obvious container build error. The actual error is Trivy crashing at the very end of the job (after a successful container build):
+
+```
+FATAL  Fatal error  run error: image scan error: … unable to find CPE indices.
+See https://github.com/aquasecurity/trivy-db/issues/435
+```
+
+**Root cause:** Trivy 0.70.x exits 1 with `FATAL` when its database has no CPE index entries for a new OS family (CentOS Stream 10). The `exit-code: '0'` Trivy parameter only suppresses non-zero exit when *vulnerabilities are found* — it does **not** suppress exits caused by Trivy's own DB crash.
+
+The `bootc-build/scan-image@v1` action in `projectbluefin/actions` did not have `continue-on-error: true` on the Trivy steps, so a Trivy FATAL kills the entire build job.
+
+**Fix:** `projectbluefin/actions` PR #201:
+- `continue-on-error: true` on both Trivy scan steps (SARIF + JSON)
+- Guard Python summarize step against missing `trivy-results.json`
+
+**After actions PR #201 merges:** A maintainer must retag `v1` in `projectbluefin/actions`:
+```bash
+git tag -f v1 <merge-commit-sha>
+git push origin v1 --force
+```
+All consuming repos (`bluefin-lts`, `bluefin`, `dakota`) pick up the fix immediately via `@v1`.
+
+**Note:** The dracut POSTTRANS failures (`error: rpm-ostree kernel-install: … Invalid cross-device link`) in `kernel-swap.sh` are **non-fatal warnings** — dnf exits 0 despite them and the build continues past them. They appear in logs but do not kill the build. PR #174 adds `export DRACUT_TMPDIR=/boot` as a belt-and-suspenders fix but the primary blocker is the Trivy issue above.
