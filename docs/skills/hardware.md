@@ -87,5 +87,6 @@ set -xeuo pipefail
 - `grubby` is available on CentOS Stream — kernel arg management works the same as Fedora
 - `dconf write` is available — icon/setting hooks work without modification
 - `glib-compile-schemas` is available — extension schema compilation works
-- `brew` is **not** in a default bluefin-lts image — hooks depending on brew must have a
-  `command -v brew || exit 0` guard or stay in bluefin only
+- `brew` is present in bluefin-lts — it ships via a dedicated brew image layer (`BREW_IMAGE_REF`)
+  copied in the Containerfile, and `brew-setup.service` is enabled in `build_scripts/40-services.sh`.
+  Hooks using brew work the same as in bluefin
