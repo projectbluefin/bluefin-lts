@@ -150,12 +150,35 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 
 ## Renovate auto-merge pipeline
 
-**Current status: broken due to issue #34.** `renovate-automerge.yml` triggers on `workflow_run: completed: "PR Validation — testsuite"` and only proceeds when `conclusion == 'success'`. Because the E2E smoke job always fails, the whole pr-testsuite workflow conclusion is `failure` — auto-merge never fires. Renovate PRs require manual `gh pr merge --auto` until issue #34 is resolved.
+`renovate-automerge.yml` triggers on `workflow_run: completed: "PR Validation — testsuite"` and only proceeds when `conclusion == 'success'`. `pr-testsuite` is **lint-only** (COPR guard + validate-pr — no E2E smoke), so it completes in ~10 min and drives automerge reliably.
 
-When E2E is fixed, the flow will be:
-1. Renovate (or `mergeraptor[bot]`) opens PR → `pr-testsuite.yml` runs lint + e2e smoke
-2. `renovate-automerge.yml` triggers on `workflow_run` success → calls `gh pr merge --auto --merge`
-3. Merge queue merges with `MERGE` commit (not squash)
+Flow:
+1. Renovate opens PR → `pr-testsuite.yml` runs lint (~10 min)
+2. `renovate-automerge.yml` triggers on `workflow_run` success → calls `reusable-renovate-automerge.yml@v1`
+3. PR merges to `main` → build workflows fire on `push: main` → `:testing` published
+
+**Required status check** (ruleset 4940669): `Lint & syntax` only. Builds are informational.
+
+### projectbluefin/actions refs — always use @v1, never SHA-pin
+
+All `projectbluefin/actions` refs in `.github/workflows/` must use the `@v1` managed tag. Never SHA-pin them.
+
+- SHA-pinned internal refs require a Renovate bump PR in every caller before a fix takes effect — propagation lag is days, not minutes
+- `@v1` always points to the latest stable release; fixes in `projectbluefin/actions` propagate instantly to all callers
+- AGENTS.md explicitly exempts `projectbluefin/` refs from the SHA-pin requirement: *"projectbluefin/ refs (@v1, @main) are intentional managed tags and are exempted."*
+- A pre-commit hook (`no-sha-pins-for-internal-actions` in `.pre-commit-config.yaml`) blocks any future SHA pin on `projectbluefin/` actions at commit time
+
+### Handling stale Renovate SHA-bump branches after a bulk @v1 conversion
+
+After merging a bulk PR that converts `projectbluefin/actions` SHA pins → `@v1`, Renovate's in-flight SHA-bump branch becomes stale: it tries to replace `@v1` with a specific SHA (going backwards). Fix:
+
+```bash
+git fetch origin
+git checkout -B renovate/projectbluefinactions origin/main
+git push origin renovate/projectbluefinactions --force
+```
+
+This resets the branch to main (empty diff). The open Renovate PR will show no changes and can be closed. Renovate will not re-open it since there are no SHA pins left to track.
 
 **Required status check** (ruleset 4940669): `Lint & syntax` only. Builds are informational.
 
