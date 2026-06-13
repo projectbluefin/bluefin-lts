@@ -7,7 +7,7 @@ set ${CI:+-x} -euo pipefail
 KERNEL_NAME="kernel"
 KERNEL_VRA="$(rpm -q "$KERNEL_NAME" --queryformat '%{EVR}.%{ARCH}')"
 KERNEL_SUFFIX=""
-QUALIFIED_KERNEL="$(rpm -qa | grep -P 'kernel-(|'"$KERNEL_SUFFIX"'-)(\d+\.\d+\.\d+)' | sed -E 's/kernel-(|'"$KERNEL_SUFFIX"'-)//' | tail -n 1)"
+QUALIFIED_KERNEL="$(rpm -qa | grep -P 'kernel-(|'"$KERNEL_SUFFIX"'-)(\ d+\.\d+\.\d+)' | sed -E 's/kernel-(|'"$KERNEL_SUFFIX"'-)//' | tail -n 1)"
 
 # Detect architecture for NVIDIA repo
 ARCH="$(uname -m)"
@@ -81,3 +81,9 @@ sed -i 's@ nvidia @ i915 amdgpu nvidia @g' /usr/lib/dracut/dracut.conf.d/99-nvid
 
 # Make sure initramfs is rebuilt after nvidia drivers or kernel replacement
 /usr/bin/dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --reproducible --zstd -v --add ostree -f "/lib/modules/$QUALIFIED_KERNEL/initramfs.img"
+
+### CDI configuration for rootless Podman GPU access
+# nvidia-container-toolkit is already installed above; configure it for rootless use.
+# nvidia-cdi-refresh.{path,service} is enabled via the system_files_overrides/gdx preset
+# and generates /var/run/cdi/nvidia.yaml at boot from the loaded driver.
+nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place
