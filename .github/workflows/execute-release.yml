@@ -40,7 +40,7 @@ jobs:
       issues: write
       packages: write
       pull-requests: write
-    uses: projectbluefin/actions/.github/workflows/reusable-execute-release.yml@c4e9e5511a984cc88623be152e140d96740185f5 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-execute-release.yml@v1
     with:
       registry: ghcr.io/projectbluefin
       variants: >-
@@ -63,7 +63,7 @@ jobs:
       packages: read
     # Use bluefin-lts-hwe as the primary image so the HWE (CoreOS stable) kernel
     # version appears in the Key components table instead of the base CentOS kernel.
-    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@c4e9e5511a984cc88623be152e140d96740185f5 # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-release.yml@v1
     with:
       stream_name: lts
       image: ghcr.io/projectbluefin/bluefin-lts-hwe
