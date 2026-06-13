@@ -1,8 +1,13 @@
-name: PR E2E Gate
+name: PR E2E Gate (advisory)
 
 # Composes system_files/ changes from the PR on top of bluefin-lts:testing
-# and runs the smoke suite against the composed image.
-# Required check on main — all PRs touching build or system files must boot to GDM.
+# and runs the smoke suite. Non-blocking — informational coverage only.
+# The :testing publish gate lives in post-merge-e2e.yml (post-build smoke).
+# See: issue #68, ACMM Level 3 bridge gap.
+#
+# Does NOT rebuild packages from build_scripts/ — that coverage comes from
+# the post-merge e2e gate (post-merge-e2e.yml) after the full CI build.
+
 on:
   pull_request:
     branches:
