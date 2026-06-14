@@ -239,7 +239,7 @@ bluefin-lts verifies `common` and `brew` signatures before every build using ven
 
 When a key rotation occurs: update the `.pub` file in `keys/` via PR with justification, then retry the build.
 
-**Pattern discovery (2026-06-14):** A cosign signing regression in `common` was caught by `bluefin` CI (`no signatures found`) but went undetected by LTS because LTS had no signature verification. Fixed by PR #219.
+**Pattern discovery:** A cosign signing regression in `common` was caught by `bluefin` CI (`no signatures found`) but went undetected by LTS because LTS had no signature verification. This is the canonical reason bluefin-lts must mirror bluefin's verification patterns — silent acceptance of unsigned images launders a potentially compromised image through the LTS signing pipeline.
 
 `ghcr.io/projectbluefin/common` delivers first-party fixes (e.g. `rechunker-group-fix`, boot services) that are **safety-critical** for users. These must land in `:testing` automatically without human intervention.
 
