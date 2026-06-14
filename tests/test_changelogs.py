@@ -7,8 +7,6 @@ Run with: pytest tests/test_changelogs.py -v
 import json
 import subprocess
 import sys
-import tempfile
-import textwrap
 from pathlib import Path
 from typing import Dict
 from unittest.mock import MagicMock, patch
@@ -59,8 +57,18 @@ MINIMAL_CONFIG: Dict = {
         "changelog_title": "{os} {tag}: {pretty}",
         "handwritten_placeholder": "Auto-generated for `{curr}`.",
         "hwe_kernel_table": "### HWE\n{changes}",
+        "changelog_format": (
+            "{handwritten}\n\nFrom previous `{target}` version `{prev}` there have been "
+            "the following changes. **One package per new version shown.**\n\n"
+            "### Major packages\n| Name | Version |\n| --- | --- |\n{changes}"
+        ),
     },
-    "sections": {"centos": "CentOS packages", "common": "Common packages"},
+    "sections": {
+        "all": "All Images",
+        "base": "Base Images",
+        "dx": "[Developer Experience Images]",
+        "gdx": "[Graphical Developer Experience Images]",
+    },
     "defaults": {
         "retries": 3,
         "retry_wait": 5,
