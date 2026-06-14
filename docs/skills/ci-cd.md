@@ -237,6 +237,8 @@ bluefin-lts verifies `common` and `brew` signatures before every build using ven
 
 `just verify-container` handles auto-install of cosign v3+ if the runner ships an older version. Verification is fatal in CI. Skip locally with `SKIP_BASE_VERIFY=1` (only works when `CI` is not `true`).
 
+**cosign self-install bootstrap:** when the runner's cosign is pre-v3, `verify-container` downloads the pinned binary from GitHub Releases. The download is verified with `sha256sum` against the `.sha256` file published alongside the binary. Without this check the verification chain is circular — we would trust cosign because we downloaded it, which is the same supply-chain problem cosign is meant to prevent. Use `mktemp` for the install path to avoid concurrent-build races on shared runners.
+
 When a key rotation occurs: update the `.pub` file in `keys/` via PR with justification, then retry the build.
 
 **Pattern discovery:** A cosign signing regression in `common` was caught by `bluefin` CI (`no signatures found`) but went undetected by LTS because LTS had no signature verification. This is the canonical reason bluefin-lts must mirror bluefin's verification patterns — silent acceptance of unsigned images launders a potentially compromised image through the LTS signing pipeline.
@@ -608,3 +610,22 @@ git push origin v1 --force
 All consuming repos (`bluefin-lts`, `bluefin`, `dakota`) pick up the fix immediately via `@v1`.
 
 **Note:** The dracut POSTTRANS failures (`error: rpm-ostree kernel-install: … Invalid cross-device link`) in `kernel-swap.sh` are **non-fatal warnings** — dnf exits 0 despite them and the build continues past them. They appear in logs but do not kill the build. PR #174 adds `export DRACUT_TMPDIR=/boot` as a belt-and-suspenders fix but the primary blocker is the Trivy issue above.
+
+## changelogs.py — OCI manifest diff changelog
+
+`changelogs.py` (`.github/`) generates per-package changelogs by comparing OCI image manifests via skopeo between published container tags. It is called by `reusable-release.yml` from the consumer repo's `.github/` directory.
+
+**This tool is different from the two changelog tools in `projectbluefin/actions`:**
+
+| Tool | Input | Output |
+|---|---|---|
+| `bootc-build/generate-release-notes` | git commit history | Conventional Commits changelog |
+| `bootc-build/create-release` (`sbom_diff.py`) | SPDX SBOM artifacts | Notable package version table |
+| `changelogs.py` (this repo) | OCI manifests via skopeo | Full RPM diff between image tags |
+
+**Drift warning:** `bluefin-lts/changelogs.py` (1176 lines, config-driven via `changelog_config.yaml`) and `bluefin/changelogs.py` (534 lines, hardcoded globals) have diverged. Each repo maintains its own copy. Tracked for centralization in `projectbluefin/common#707` (`bootc-build/generate-manifest-changelog` action proposed).
+
+**When modifying `changelogs.py`:**
+- Tests live in `tests/test_changelogs.py` (pytest, run via `.github/workflows/pytest.yml`)
+- `MINIMAL_CONFIG` in the test file must mirror the production `changelog_config.yaml` schema exactly — divergence creates false-green tests where production code paths are never exercised
+- Verify `sections` keys (`all`, `base`, `dx`, `gdx`) and `templates` keys (including `changelog_format`) match `changelog_config.yaml`

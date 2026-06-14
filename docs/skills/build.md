@@ -138,3 +138,55 @@ just clean
 just check && just lint
 just build bluefin lts
 ```
+
+## Unit testing build scripts
+
+`tests/unit/` contains bats tests for `build_scripts/`. Run with:
+
+```bash
+just unit-tests        # runs bats tests/unit/
+bats tests/unit/       # direct
+```
+
+CI runs on `pull_request` via `.github/workflows/unit-tests.yml` (triggers on `build_scripts/**` or `tests/**` changes).
+
+### Bats test authoring patterns
+
+**Always use `BATS_TEST_TMPDIR` for sandbox dirs:**
+
+```bash
+setup() {
+    TEST_ROOT="${BATS_TEST_TMPDIR}/sandbox"   # bats-managed, unique per test
+    STUB_BIN="${TEST_ROOT}/stub-bin"
+    mkdir -p "${STUB_BIN}"
+    export TEST_ROOT STUB_BIN PATCHED_SCRIPT
+}
+```
+
+Never use `${SCRIPT_DIR}/.bats-sandbox/name.${BATS_TEST_NUMBER:-0}.$$` — `$$` behaviour across bats versions is unreliable and causes non-deterministic failures.
+
+**Pass PATH explicitly via `env` for stub isolation:**
+
+When the script under test uses external commands (e.g. `ghcurl`, `jq`, `numfmt`), pass PATH explicitly rather than relying on `export PATH` surviving bats subprocess boundaries:
+
+```bash
+run env PATH="${STUB_BIN}:${PATH}" IMAGE_NAME=bluefin ... bash "${PATCHED_SCRIPT}"
+```
+
+This is more reliable than `run my_function` where the function internally calls `bash`. The latter can drop exported PATH depending on bats version.
+
+**Use `#!/usr/bin/env bash` in stubs** (not `#!/usr/bin/bash`) for portability across distros where `/usr/bin/bash` may not be a symlink.
+
+**Neutralise `set -euo pipefail` network calls in patched scripts:**
+
+If the script under test has `set -o pipefail` and ends with optional network calls (badge fetching, API calls), add `|| true` to those lines in the patched script to prevent SIGPIPE from bats' output-capture mechanism killing the test:
+
+```bash
+# In setup(), after the main sed patching:
+sed -i \
+    -e '/ghcurl/s/$/ || true/' \
+    -e '/bazaar-install-count/s/$/ || true/' \
+    "${PATCHED_SCRIPT}"
+```
+
+SIGPIPE occurs when bats closes its capture pipe before all pipeline stages finish writing. With `set -o pipefail`, a killed pipeline stage propagates as non-zero exit, and `[ "$status" -eq 0 ]` fails non-deterministically.

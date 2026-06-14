@@ -39,29 +39,35 @@ If absent, add:
 systemctl enable ublue-user-setup.service
 ```
 
-## Current state of hardware hooks in bluefin-lts
+## Hardware hooks: shipped by common, not by bluefin-lts
 
-**bluefin-lts ships zero hardware hooks.** Framework laptop users and Ampere/Thelio Astra users
-on LTS silently miss all hardware-specific first-boot setup.
+**bluefin-lts does not ship any hardware hooks directly.** They are provided by
+`projectbluefin/common` and land automatically via the common OCI layer.
 
-The fix is tracked in the centralization epic: **projectbluefin/common#651**
+Common ships (since commit `7e97675`, 2026-06-13, closes #651 #652 #653):
 
-Once that epic lands, common's OCI layer will ship:
-- `user-setup.hooks.d/10-theming.sh` — Framework/Ampere icon, natural scroll, font scaling
-- `system-setup.hooks.d/10-framework.sh` — kernel args, BIOS detection, Framework 13 fixes
-- `framework-logo-symbolic.svg` and `ampere-logo-symbolic.svg` icon assets
-
-## What bluefin ships that lts does not (as of 2026-06)
-
-These live in `projectbluefin/bluefin` `system_files/shared/` and are absent from lts:
-
-| File | Effect |
+| File in common | Effect |
 |---|---|
-| `user-setup.hooks.d/10-theming.sh` | Sets Framework/Ampere icon in custom-command-menu; Framework natural scroll + font scaling |
-| `user-setup.hooks.d/20-framework.sh` | Installs `framework_tool` + Framework wallpapers via brew |
-| `system-setup.hooks.d/10-framework.sh` | Kernel args, BIOS version detection, Framework 13 hardware fixes |
-| `icons/.../framework-logo-symbolic.svg` | Icon asset for Framework logo in menu |
-| `icons/.../ampere-logo-symbolic.svg` | Icon asset for Ampere logo in menu |
+| `system-setup.hooks.d/10-framework.sh` | Intel keyboard fix (hid_sensor_hub blacklist); Framework 13 AMD suspend + ALSA fixes keyed to BIOS version |
+| `user-setup.hooks.d/10-theming.sh` | Framework logo + natural scroll + font scaling; Ampere/Thelio Astra logo |
+| `framework-logo-symbolic.svg` | Icon asset referenced by 10-theming.sh |
+| `ampere-logo-symbolic.svg` | Icon asset referenced by 10-theming.sh |
+
+### Updating common hooks
+
+If a new hardware quirk needs a hook:
+1. File the hook in `projectbluefin/common` (not in bluefin-lts)
+2. Bump `image-versions.yaml` `common.digest` in bluefin-lts to the new published common image
+3. Verify with `skopeo inspect docker://ghcr.io/projectbluefin/common@sha256:<digest>` that the hook files are present before bumping
+
+### Removing a local hook that moved to common
+
+This has happened once (PR #208). The pattern to follow:
+
+1. Confirm the hook is present in the published common image — **check the digest date, not the PR date**
+2. Bump `image-versions.yaml` to a common digest that postdates the commit adding the hook
+3. Remove the local file in the same commit as the bump — they must be atomic
+4. Never remove the local file before the common digest is bumped; users who update will silently lose the hardware setup with no error
 
 ## Writing a new hardware hook
 
