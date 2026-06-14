@@ -529,7 +529,6 @@ gen-sbom base="bluefin-lts" stream="lts" flavor="main" syft_cmd="syft":
 secureboot base="bluefin-lts" tag="lts" flavor="main":
     echo "Secureboot check: LTS is CentOS bootc-based (TPM2/Verity). UKI check not applicable."
 
-### Verify Container with Cosign
 # Verify Container with Cosign
 [group('Utility')]
 verify-container container="" registry="ghcr.io/ublue-os" key="":
@@ -550,11 +549,17 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
     if [[ "${COSIGN_MAJOR}" -ge 3 ]]; then
         echo "cosign v${COSIGN_MAJOR} already available"
     else
-        COSIGN_INSTALL_PATH="{{ justfile_directory() }}/.cosign-install"
+        COSIGN_INSTALL_PATH=$(mktemp)
         echo "Installing cosign ${COSIGN_VERSION} (installed major=${COSIGN_MAJOR} is pre-v3)..."
         trap 'rm -f "${COSIGN_INSTALL_PATH}"' EXIT
         curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
             -o "${COSIGN_INSTALL_PATH}"
+        # Verify the downloaded binary matches the published sha256 before installing.
+        # Without this check the verification chain is circular: we trust cosign
+        # because we downloaded it, which is the same problem cosign is meant to solve.
+        curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64.sha256" \
+            -o "${COSIGN_INSTALL_PATH}.sha256"
+        echo "$(cat "${COSIGN_INSTALL_PATH}.sha256")  ${COSIGN_INSTALL_PATH}" | sha256sum -c -
         chmod +x "${COSIGN_INSTALL_PATH}"
         ${SUDOIF} install -m 0755 "${COSIGN_INSTALL_PATH}" /usr/local/bin/cosign
         echo "cosign installed: $(cosign version 2>/dev/null | awk '/GitVersion:/{print $2}')"
@@ -562,7 +567,7 @@ verify-container container="" registry="ghcr.io/ublue-os" key="":
 
     # Public Key for Container Verification
     # Keys are vendored in keys/ — update via PR with justification
-    key={{ key }}
+    key="{{ key }}"
     if [[ -z "${key:-}" ]]; then
         key="{{ justfile_directory() }}/keys/ublue-os-brew.pub"
     fi
