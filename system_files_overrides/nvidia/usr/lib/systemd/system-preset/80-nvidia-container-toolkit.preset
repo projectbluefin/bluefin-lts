@@ -1,5 +1,5 @@
 # Enable CDI spec auto-generation so 'podman run --device nvidia.com/gpu=all' works
-# out of the box on nvidia GDX image variants.
+# out of the box on nvidia image variants.
 #
 # nvidia-cdi-refresh.path watches /lib/modules/*/modules.dep and /usr/bin/nvidia-ctk
 # and re-triggers nvidia-cdi-refresh.service whenever the driver or toolkit changes.
