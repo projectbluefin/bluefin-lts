@@ -130,3 +130,37 @@ jobs:
             '')
           printf '%s\n%s' "$VARIANTS_SECTION" "$CURRENT" > /tmp/updated-body.md
           gh release edit "$TAG" --repo "${{ github.repository }}" --notes-file /tmp/updated-body.md
+
+  tag-stable:
+    # Create :stable as a floating alias for :lts on every release.
+    # Makes the production tag discoverable without knowing the lts branch model.
+    needs: [execute]
+    if: always() && needs.execute.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    env:
+      REGISTRY: ghcr.io/projectbluefin
+    steps:
+      - name: Install skopeo
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y skopeo
+
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io \
+            --username "${{ github.actor }}" --password-stdin
+
+      - name: Copy :lts → :stable for all variants
+        run: |
+          set -euo pipefail
+          for image in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
+            DIGEST=$(skopeo inspect --no-tags "docker://${REGISTRY}/${image}:lts" \
+              | jq -r '.Digest')
+            echo "Tagging ${image}@${DIGEST} as :stable"
+            skopeo copy \
+              "docker://${REGISTRY}/${image}@${DIGEST}" \
+              "docker://${REGISTRY}/${image}:stable"
+            echo "  ✅ ${image}:stable → ${image}@${DIGEST}"
+          done
