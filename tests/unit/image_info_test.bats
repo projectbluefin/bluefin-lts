@@ -7,7 +7,9 @@ SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
 IMAGE_INFO_SCRIPT="${SCRIPT_DIR}/../../build_scripts/90-image-info.sh"
 
 setup() {
-    TEST_ROOT="${SCRIPT_DIR}/.bats-sandbox/image-info.${BATS_TEST_NUMBER:-0}.$$"
+    # BATS_TEST_TMPDIR is a unique per-test directory managed by bats (available since 1.3.0).
+    # Using it avoids relying on $$ for uniqueness, which is unreliable across bats versions.
+    TEST_ROOT="${BATS_TEST_TMPDIR}/sandbox"
     STUB_BIN="${TEST_ROOT}/stub-bin"
 
     mkdir -p "${STUB_BIN}"
@@ -29,12 +31,11 @@ REDHAT_SUPPORT_PRODUCT="Red Hat Enterprise Linux"
 REDHAT_SUPPORT_PRODUCT_VERSION="10"
 EOF
 
-    export PATH="${STUB_BIN}:${PATH}"
-
-    # Stub external commands used for badges/counts
+    # Stub external commands used for badges/counts.
+    # #!/usr/bin/env bash avoids reliance on /usr/bin/bash existing.
     for cmd in ghcurl jq numfmt; do
         cat > "${STUB_BIN}/${cmd}" <<'EOF'
-#!/usr/bin/bash
+#!/usr/bin/env bash
 echo "0"
 EOF
         chmod +x "${STUB_BIN}/${cmd}"
@@ -42,7 +43,7 @@ EOF
 
     # curl stub for flathub API
     cat > "${STUB_BIN}/curl" <<'EOF'
-#!/usr/bin/bash
+#!/usr/bin/env bash
 echo '{"installs_last_7_days": 0}'
 EOF
     chmod +x "${STUB_BIN}/curl"
@@ -56,24 +57,41 @@ EOF
         -e "s|/usr/share/ublue-os/bazaar-install-count|${TEST_ROOT}/usr/share/ublue-os/bazaar-install-count|g" \
         "${IMAGE_INFO_SCRIPT}" > "${PATCHED_SCRIPT}"
     chmod +x "${PATCHED_SCRIPT}"
-    export PATCHED_SCRIPT TEST_ROOT STUB_BIN
+    # The badge-fetching lines (ghcurl + curl/flathub) call external APIs and
+    # are not tested here; neutralise them so set -euo pipefail doesn't kill
+    # the script when bats' output-capture pipe causes SIGPIPE on the stubs.
+    sed -i \
+        -e '/ghcurl/s/$/ || true/' \
+        -e '/bazaar-install-count/s/$/ || true/' \
+        "${PATCHED_SCRIPT}"
+    # Export so test assertions can reference TEST_ROOT and so PATH/STUB_BIN
+    # are available as env vars when composing the run command inline.
+    export TEST_ROOT STUB_BIN PATCHED_SCRIPT
 }
 
 teardown() {
+    # BATS_TEST_TMPDIR is auto-cleaned by bats; explicit cleanup for safety.
     rm -rf "${TEST_ROOT}"
 }
 
-run_script() {
-    IMAGE_NAME="${1:-bluefin}"
-    IMAGE_VENDOR="${2:-projectbluefin}"
-    MAJOR_VERSION_NUMBER="${3:-10}"
-    ENABLE_HWE="${4:-0}"
-    SHA_HEAD_SHORT="${5:-deadbeef}"
-    IMAGE_NAME="${IMAGE_NAME}" \
-        IMAGE_VENDOR="${IMAGE_VENDOR}" \
-        MAJOR_VERSION_NUMBER="${MAJOR_VERSION_NUMBER}" \
-        ENABLE_HWE="${ENABLE_HWE}" \
-        SHA_HEAD_SHORT="${SHA_HEAD_SHORT}" \
+# Helper: run the patched script with PATH explicitly set so stubs are found
+# regardless of how bats propagates exported variables across subprocess
+# boundaries. Uses `run env ...` (direct command) instead of a function wrapper
+# to avoid bats function-dispatch inconsistencies with PATH export.
+_run_image_info() {
+    local image_name="${1:-bluefin}"
+    local image_vendor="${2:-projectbluefin}"
+    local major_version="${3:-10}"
+    local enable_hwe="${4:-0}"
+    local sha="${5:-deadbeef}"
+
+    run env \
+        PATH="${STUB_BIN}:${PATH}" \
+        IMAGE_NAME="${image_name}" \
+        IMAGE_VENDOR="${image_vendor}" \
+        MAJOR_VERSION_NUMBER="${major_version}" \
+        ENABLE_HWE="${enable_hwe}" \
+        SHA_HEAD_SHORT="${sha}" \
         bash "${PATCHED_SCRIPT}"
 }
 
@@ -82,37 +100,37 @@ run_script() {
 # ──────────────────────────────────────────────────────────────────────────────
 
 @test "image-info: image-info.json is created" {
-    run run_script
+    _run_image_info
     [ "$status" -eq 0 ]
     [ -f "${TEST_ROOT}/usr/share/ublue-os/image-info.json" ]
 }
 
 @test "image-info: image-info.json contains image-name" {
-    run run_script bluefin
+    _run_image_info bluefin
     [ "$status" -eq 0 ]
     grep -q '"image-name": "bluefin"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
 @test "image-info: image-info.json contains image-vendor" {
-    run run_script bluefin projectbluefin
+    _run_image_info bluefin projectbluefin
     [ "$status" -eq 0 ]
     grep -q '"image-vendor": "projectbluefin"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
 @test "image-info: image-info.json contains centos-version" {
-    run run_script bluefin projectbluefin 10
+    _run_image_info bluefin projectbluefin 10
     [ "$status" -eq 0 ]
     grep -q '"centos-version": "10"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
 @test "image-info: image-tag is 'lts' when ENABLE_HWE=0" {
-    run run_script bluefin projectbluefin 10 0
+    _run_image_info bluefin projectbluefin 10 0
     [ "$status" -eq 0 ]
     grep -q '"image-tag": "lts"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
 @test "image-info: image-tag is 'lts-hwe' when ENABLE_HWE=1" {
-    run run_script bluefin projectbluefin 10 1
+    _run_image_info bluefin projectbluefin 10 1
     [ "$status" -eq 0 ]
     grep -q '"image-tag": "lts-hwe"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
@@ -122,50 +140,50 @@ run_script() {
 # ──────────────────────────────────────────────────────────────────────────────
 
 @test "image-info: os-release NAME is set to 'Bluefin LTS'" {
-    run run_script
+    _run_image_info
     [ "$status" -eq 0 ]
     grep -q 'NAME="Bluefin LTS"' "${TEST_ROOT}/usr/lib/os-release"
 }
 
 @test "image-info: os-release PRETTY_NAME is set to 'Bluefin LTS'" {
-    run run_script
+    _run_image_info
     [ "$status" -eq 0 ]
     grep -q 'PRETTY_NAME="Bluefin LTS"' "${TEST_ROOT}/usr/lib/os-release"
 }
 
 @test "image-info: os-release VERSION_CODENAME is set to Achillobator" {
-    run run_script
+    _run_image_info
     [ "$status" -eq 0 ]
     grep -q 'VERSION_CODENAME="Achillobator"' "${TEST_ROOT}/usr/lib/os-release"
 }
 
 @test "image-info: os-release CPE_NAME is rewritten to universal-blue:bluefin-lts" {
-    run run_script
+    _run_image_info
     [ "$status" -eq 0 ]
     grep -q 'cpe:/o:universal-blue:bluefin-lts' "${TEST_ROOT}/usr/lib/os-release"
 }
 
 @test "image-info: os-release strips REDHAT_ fields" {
-    run run_script
+    _run_image_info
     [ "$status" -eq 0 ]
     run grep "REDHAT_" "${TEST_ROOT}/usr/lib/os-release"
     [ "$status" -ne 0 ]
 }
 
 @test "image-info: os-release appends DOCUMENTATION_URL" {
-    run run_script
+    _run_image_info
     [ "$status" -eq 0 ]
     grep -q 'DOCUMENTATION_URL="https://docs.projectbluefin.io"' "${TEST_ROOT}/usr/lib/os-release"
 }
 
 @test "image-info: os-release appends BUILD_ID from SHA_HEAD_SHORT" {
-    run run_script bluefin projectbluefin 10 0 abc1234
+    _run_image_info bluefin projectbluefin 10 0 abc1234
     [ "$status" -eq 0 ]
     grep -q 'BUILD_ID="abc1234"' "${TEST_ROOT}/usr/lib/os-release"
 }
 
 @test "image-info: os-release appends DEFAULT_HOSTNAME=bluefin" {
-    run run_script
+    _run_image_info
     [ "$status" -eq 0 ]
     grep -q 'DEFAULT_HOSTNAME="bluefin"' "${TEST_ROOT}/usr/lib/os-release"
 }
@@ -175,6 +193,6 @@ run_script() {
 # ──────────────────────────────────────────────────────────────────────────────
 
 @test "image-info: script exits 0 with env set" {
-    run run_script
+    _run_image_info
     [ "$status" -eq 0 ]
 }

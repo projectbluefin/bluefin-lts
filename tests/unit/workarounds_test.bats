@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
 WORKAROUNDS_SCRIPT="${SCRIPT_DIR}/../../build_scripts/00-workarounds.sh"
 
 setup() {
-    TEST_ROOT="${SCRIPT_DIR}/.bats-sandbox/workarounds.${BATS_TEST_NUMBER:-0}.$$"
+    TEST_ROOT="${BATS_TEST_TMPDIR}/sandbox"
     STUB_BIN="${TEST_ROOT}/stub-bin"
 
     mkdir -p "${STUB_BIN}"

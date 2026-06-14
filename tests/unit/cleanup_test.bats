@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
 CLEANUP_SCRIPT="${SCRIPT_DIR}/../../build_scripts/cleanup.sh"
 
 setup() {
-    TEST_ROOT="${SCRIPT_DIR}/.bats-sandbox/cleanup.${BATS_TEST_NUMBER:-0}.$$"
+    TEST_ROOT="${BATS_TEST_TMPDIR}/sandbox"
     STUB_BIN="${TEST_ROOT}/stub-bin"
 
     mkdir -p "${STUB_BIN}"
@@ -19,7 +19,7 @@ setup() {
     # Stub commands that require a real system environment
     for cmd in dnf bootc; do
         cat > "${STUB_BIN}/${cmd}" <<'EOF'
-#!/usr/bin/bash
+#!/usr/bin/env bash
 exit 0
 EOF
         chmod +x "${STUB_BIN}/${cmd}"
