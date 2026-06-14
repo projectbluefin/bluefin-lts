@@ -37,6 +37,16 @@ just check && just lint
 - `just check` validates Just syntax (<30s).
 - `just lint` runs shellcheck (<10s).
 
+## Unit tests
+
+| Command | What it tests | Time |
+|---|---|---|
+| `just unit-tests` | bats tests for `build_scripts/` | <5s |
+| `pytest tests/test_changelogs.py -v` | pytest tests for `.github/changelogs.py` | <1s |
+
+Both run in CI on changes to `build_scripts/**` and `tests/**`. Use them to verify build script
+behaviour locally before pushing.
+
 ## Core builds
 
 | Goal | Command | Typical time |
