@@ -90,3 +90,43 @@ set -xeuo pipefail
 - `brew` is present in bluefin-lts — it ships via a dedicated brew image layer (`BREW_IMAGE_REF`)
   copied in the Containerfile, and `brew-setup.service` is enabled in `build_scripts/40-services.sh`.
   Hooks using brew work the same as in bluefin
+
+## GDX — NVIDIA CDI (rootless Podman GPU passthrough)
+
+The `bluefin-gdx` variant ships full CDI configuration so `podman run --device nvidia.com/gpu=all` works out of the box without root or privileged containers.
+
+### What's wired (as of 2026-06)
+
+**`build_scripts/overrides/gdx/20-nvidia.sh`**
+```bash
+# Configure nvidia-container-toolkit for rootless use.
+# --in-place patches /etc/nvidia-container-runtime/config.toml directly into the image.
+# Required for bootc — cgroup device delegation is not available in unprivileged containers.
+nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place
+```
+
+**`system_files_overrides/gdx/usr/lib/systemd/system-preset/80-nvidia-container-toolkit.preset`**
+```
+enable nvidia-cdi-refresh.path
+enable nvidia-cdi-refresh.service
+```
+
+`nvidia-cdi-refresh.path` watches `/lib/modules/*/modules.dep` and `/usr/bin/nvidia-ctk`; on change it triggers `nvidia-cdi-refresh.service` which runs `nvidia-ctk cdi generate` and writes `/var/run/cdi/nvidia.yaml`. This means CDI regenerates automatically on driver or toolkit updates without any user action.
+
+### Why `no-cgroups` is required on bootc
+
+bootc images run in unprivileged OCI containers at build time and on first boot the cgroup v2 device controller delegation path that `nvidia-container-cli` normally uses is not available. Without `no-cgroups`, Podman GPU containers fail with a cgroups permission error at runtime.
+
+### Testing
+
+```bash
+podman run --rm \
+  --device nvidia.com/gpu=all \
+  --security-opt=label=disable \
+  nvcr.io/nvidia/cuda:12.4.1-base-ubuntu22.04 \
+  nvidia-smi
+```
+
+### Reference
+
+Mirrors `projectbluefin/dakota` elements/bluefin-nvidia/nvidia-container-toolkit-preset.bst. When dakota changes its CDI wiring, apply the same change here.

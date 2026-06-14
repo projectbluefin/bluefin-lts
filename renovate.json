@@ -3,6 +3,7 @@
   "extends": [
     "local>projectbluefin/renovate-config"
   ],
+  "baseBranchPatterns": ["testing"],
   "packageRules": [
     {
       "description": "Automerge digest/pin/patch/minor for all dependencies",

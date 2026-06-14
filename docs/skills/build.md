@@ -118,6 +118,7 @@ When adding new services from common, always check whether they arrive via a pre
 | package pulls fail | repo/network timeout; retry after failure completes naturally |
 | storage errors | run `just clean`, verify free disk |
 | permission issues | some build paths require sudo/root; `gen-sbom` runs as root — `sbom_out/` is chowned back to runner after write |
+| **build script `Permission denied` (exit 126)** | A script in `build_scripts/` was committed without the execute bit (`100644` instead of `100755`). Fix: `git update-index --chmod=+x build_scripts/path/to/script.sh && git commit`. Verify with `git ls-tree HEAD build_scripts/` — all `.sh` files must show `100755`. |
 | NVIDIA driver version mismatch in GDX | Set `COREOS_STABLE_VERSION=NN` to pin; or let it auto-resolve from CoreOS stable |
 
 Recovery loop:
