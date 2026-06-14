@@ -17,6 +17,7 @@ on:
       - Justfile
       - build_scripts/**
       - system_files/**
+      - system_files_overrides/**
       - image-versions.yaml
   push:
     branches:
@@ -48,6 +49,7 @@ jobs:
               - 'Containerfile'
               - 'build_scripts/**'
               - 'system_files/**'
+              - 'system_files_overrides/**'
               - 'image-versions.yaml'
               - 'Justfile'
             nvidia:

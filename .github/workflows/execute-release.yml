@@ -157,7 +157,7 @@ jobs:
           set -euo pipefail
           for image in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
             DIGEST=$(skopeo inspect --no-tags "docker://${REGISTRY}/${image}:lts" \
-              | jq -r '.Digest')
+              | jq -er '.Digest')
             echo "Tagging ${image}@${DIGEST} as :stable"
             skopeo copy \
               "docker://${REGISTRY}/${image}@${DIGEST}" \
