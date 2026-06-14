@@ -77,8 +77,9 @@ metadata:
 
 1. PRs squash-merge to `main`.
 2. `sync-main-to-testing.yml` mirrors `main → testing`, triggering the promote workflow.
-3. Promote workflow compares `main` vs `lts` trees; rebuilds squash branch if different.
-4. Maintainers merge promotion PR (2 approvals required) → `execute-release.yml` fires → `:testing` copied to `:lts`.
+3. `promote-testing-to-main.yml` also fires on `push: main` and on `workflow_run` completion of `Post-Merge E2E — Testing Gate` (correct name — not "Testing Parity", which was a dead trigger).
+4. Promote workflow compares `main` vs `lts` trees; rebuilds squash branch if different.
+5. Maintainers merge promotion PR (2 approvals required) → `execute-release.yml` fires → `:testing` copied to `:lts`.
 
 **Never squash-merge the promotion PR** — breaks merge base for future promotions.
 **Never merge `lts→main`.**
@@ -153,25 +154,33 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 `renovate-automerge.yml` triggers on `workflow_run: completed: "PR Validation — testsuite"` and only proceeds when `conclusion == 'success'`. `pr-testsuite` is **lint-only** (COPR guard + validate-pr — no E2E smoke), so it completes in ~10 min and drives automerge reliably.
 
 Flow:
-1. Renovate opens PR → `pr-testsuite.yml` runs lint (~10 min)
+1. Renovate/Mergeraptor opens PR targeting `testing` → builds run + `pr-testsuite.yml` runs lint (~10 min)
 2. `renovate-automerge.yml` triggers on `workflow_run` success → calls `reusable-renovate-automerge.yml@v1`
-3. PR merges to `main` → build workflows fire on `push: main` → `:testing` published
+3. PR squash-merges to `testing` (no branch protection) → `sync-main-to-testing.yml` and build jobs pick up the change
 
 **Required status check** (ruleset 4940669): `Lint & syntax` only. Builds are informational.
 
 ### Renovate automerge pitfalls
 
-**`base_branch` must be set explicitly.** `reusable-renovate-automerge.yml@v1` defaults `base_branch` to `testing`. All bluefin-lts Renovate PRs target `main`. Without the override the automerge workflow logs `No open Renovate/Mergeraptor PR found for SHA … on base testing — skipping` and never merges anything.
+**Renovate PRs must target `testing`, not `main`.** `main` requires 2 maintainer reviews; `github-actions[bot]` cannot bypass that. `testing` has no branch protection, so the reusable can squash-merge directly with `github.token`. This is the factory-wide pattern — `bluefin` and `dakota` both use it.
 
+The `renovate.json` must include:
+```json
+"baseBranchPatterns": ["testing"]
+```
+
+The `renovate-automerge.yml` must NOT pass `base_branch: main` — let the reusable default to `testing`:
 ```yaml
-# renovate-automerge.yml — required
+# renovate-automerge.yml — correct factory shape
 jobs:
   automerge:
     uses: projectbluefin/actions/.github/workflows/reusable-renovate-automerge.yml@v1
     with:
       head_sha: ${{ github.event.workflow_run.head_sha }}
-      base_branch: main   # ← must be explicit; default is 'testing'
+      # no base_branch override — reusable defaults to 'testing' which is correct
 ```
+
+**Do not add `base_branch: main`.** That was tried and reverted (#216 → #218). It looks like a fix but causes every automerge to silently fail because `github-actions[bot]` lacks merge rights on `main`.
 
 **Never add `projectbluefin/` refs to the automerge `pin` rule.** The `matchUpdateTypes: ["pin"]` Renovate rule generates PRs that SHA-pin `@v1`/`@main` managed tags to commit hashes. The `no-sha-pins-for-internal-actions` pre-commit hook then rejects them permanently (exit 1). The fix is to exclude all `projectbluefin/` refs entirely:
 
