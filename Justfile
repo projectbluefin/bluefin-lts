@@ -120,6 +120,24 @@ build $target_image=image_name $tag=default_tag $dx="0" $gdx="0" $hwe="0" $kerne
     brew_image_sha=$(yq -r '.images[] | select(.name == "brew") | .digest' image-versions.yaml)
     brew_image_ref="${brew_image}@${brew_image_sha}"
 
+    # Verify base images with cosign — fatal in CI, skippable locally for dev convenience.
+    # A verification failure means an image cannot be trusted; continuing would launder
+    # a potentially compromised image through the LTS signing pipeline.
+    if [[ "${SKIP_BASE_VERIFY:-}" == "1" && "${CI:-}" != "true" ]]; then
+        echo "WARNING: Skipping base image verification (SKIP_BASE_VERIFY=1, local dev only)"
+    else
+        {{ just_executable() }} verify-container "common:latest@${common_image_sha}" ghcr.io/projectbluefin "{{ justfile_directory() }}/keys/projectbluefin-common.pub" || {
+            echo "ERROR: common image cosign verification FAILED for ${common_image_ref}"
+            echo "This may indicate a key rotation, registry compromise, or transient network issue."
+            echo "If this is a known key rotation, update keys/projectbluefin-common.pub and retry."
+            exit 1
+        }
+        {{ just_executable() }} verify-container "brew:latest@${brew_image_sha}" ghcr.io/ublue-os "{{ justfile_directory() }}/keys/ublue-os-brew.pub" || {
+            echo "ERROR: brew image cosign verification FAILED for ${brew_image_ref}"
+            exit 1
+        }
+    fi
+
     BUILD_ARGS=()
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE_REF=${common_image_ref}")
     BUILD_ARGS+=("--build-arg" "BREW_IMAGE_REF=${brew_image_ref}")
@@ -510,3 +528,56 @@ gen-sbom base="bluefin-lts" stream="lts" flavor="main" syft_cmd="syft":
 [group('Utility')]
 secureboot base="bluefin-lts" tag="lts" flavor="main":
     echo "Secureboot check: LTS is CentOS bootc-based (TPM2/Verity). UKI check not applicable."
+
+### Verify Container with Cosign
+# Verify Container with Cosign
+[group('Utility')]
+verify-container container="" registry="ghcr.io/ublue-os" key="":
+    #!/usr/bin/bash
+    set -eou pipefail
+
+    # cosign v3+ is required to verify Sigstore Bundle v0.3 signatures (produced by cosign >=v3.0).
+    # The CI runner may ship an older pre-installed cosign; install the pinned release when needed.
+    COSIGN_VERSION="v3.0.6"
+    COSIGN_MAJOR=0
+    SUDOIF=""
+    if [[ "${UID:-$(id -u)}" -ne 0 ]]; then
+        SUDOIF="sudo"
+    fi
+    if command -v cosign >/dev/null 2>&1; then
+        COSIGN_MAJOR=$(cosign version 2>/dev/null | awk '/GitVersion:/{gsub(/[^0-9.]/, "", $2); split($2, a, "."); print a[1]+0}')
+    fi
+    if [[ "${COSIGN_MAJOR}" -ge 3 ]]; then
+        echo "cosign v${COSIGN_MAJOR} already available"
+    else
+        COSIGN_INSTALL_PATH="{{ justfile_directory() }}/.cosign-install"
+        echo "Installing cosign ${COSIGN_VERSION} (installed major=${COSIGN_MAJOR} is pre-v3)..."
+        trap 'rm -f "${COSIGN_INSTALL_PATH}"' EXIT
+        curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
+            -o "${COSIGN_INSTALL_PATH}"
+        chmod +x "${COSIGN_INSTALL_PATH}"
+        ${SUDOIF} install -m 0755 "${COSIGN_INSTALL_PATH}" /usr/local/bin/cosign
+        echo "cosign installed: $(cosign version 2>/dev/null | awk '/GitVersion:/{print $2}')"
+    fi
+
+    # Public Key for Container Verification
+    # Keys are vendored in keys/ — update via PR with justification
+    key={{ key }}
+    if [[ -z "${key:-}" ]]; then
+        key="{{ justfile_directory() }}/keys/ublue-os-brew.pub"
+    fi
+
+    # Verify Container using cosign public key (retry up to 5 times for transient registry errors)
+    MAX_RETRIES=5
+    RETRY_DELAY=10
+    for attempt in $(seq 1 ${MAX_RETRIES}); do
+        if cosign verify --key "${key}" "{{ registry }}"/"{{ container }}" >/dev/null; then
+            break
+        fi
+        if [[ "${attempt}" -eq "${MAX_RETRIES}" ]]; then
+            echo "NOTICE: Verification failed after ${MAX_RETRIES} attempts. Please ensure your public key is correct."
+            exit 1
+        fi
+        echo "NOTICE: Verification attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${RETRY_DELAY}s..."
+        sleep "${RETRY_DELAY}"
+    done
