@@ -77,8 +77,9 @@ metadata:
 
 1. PRs squash-merge to `main`.
 2. `sync-main-to-testing.yml` mirrors `main → testing`, triggering the promote workflow.
-3. Promote workflow compares `main` vs `lts` trees; rebuilds squash branch if different.
-4. Maintainers merge promotion PR (2 approvals required) → `execute-release.yml` fires → `:testing` copied to `:lts`.
+3. `promote-testing-to-main.yml` also fires on `push: main` and on `workflow_run` completion of `Post-Merge E2E — Testing Gate` (correct name — not "Testing Parity", which was a dead trigger).
+4. Promote workflow compares `main` vs `lts` trees; rebuilds squash branch if different.
+5. Maintainers merge promotion PR (2 approvals required) → `execute-release.yml` fires → `:testing` copied to `:lts`.
 
 **Never squash-merge the promotion PR** — breaks merge base for future promotions.
 **Never merge `lts→main`.**
@@ -153,11 +154,47 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 `renovate-automerge.yml` triggers on `workflow_run: completed: "PR Validation — testsuite"` and only proceeds when `conclusion == 'success'`. `pr-testsuite` is **lint-only** (COPR guard + validate-pr — no E2E smoke), so it completes in ~10 min and drives automerge reliably.
 
 Flow:
-1. Renovate opens PR → `pr-testsuite.yml` runs lint (~10 min)
+1. Renovate/Mergeraptor opens PR targeting `testing` → builds run + `pr-testsuite.yml` runs lint (~10 min)
 2. `renovate-automerge.yml` triggers on `workflow_run` success → calls `reusable-renovate-automerge.yml@v1`
-3. PR merges to `main` → build workflows fire on `push: main` → `:testing` published
+3. PR squash-merges to `testing` (no branch protection) → `sync-main-to-testing.yml` and build jobs pick up the change
 
 **Required status check** (ruleset 4940669): `Lint & syntax` only. Builds are informational.
+
+### Renovate automerge pitfalls
+
+**Renovate PRs must target `testing`, not `main`.** `main` requires 2 maintainer reviews; `github-actions[bot]` cannot bypass that. `testing` has no branch protection, so the reusable can squash-merge directly with `github.token`. This is the factory-wide pattern — `bluefin` and `dakota` both use it.
+
+The `renovate.json` must include:
+```json
+"baseBranchPatterns": ["testing"]
+```
+
+The `renovate-automerge.yml` must NOT pass `base_branch: main` — let the reusable default to `testing`:
+```yaml
+# renovate-automerge.yml — correct factory shape
+jobs:
+  automerge:
+    uses: projectbluefin/actions/.github/workflows/reusable-renovate-automerge.yml@v1
+    with:
+      head_sha: ${{ github.event.workflow_run.head_sha }}
+      # no base_branch override — reusable defaults to 'testing' which is correct
+```
+
+**Do not add `base_branch: main`.** That was tried and reverted (#216 → #218). It looks like a fix but causes every automerge to silently fail because `github-actions[bot]` lacks merge rights on `main`.
+
+**Never add `projectbluefin/` refs to the automerge `pin` rule.** The `matchUpdateTypes: ["pin"]` Renovate rule generates PRs that SHA-pin `@v1`/`@main` managed tags to commit hashes. The `no-sha-pins-for-internal-actions` pre-commit hook then rejects them permanently (exit 1). The fix is to exclude all `projectbluefin/` refs entirely:
+
+```json
+{
+  "description": "Never SHA-pin projectbluefin/ refs — use @v1/@main managed tags",
+  "matchManagers": ["github-actions"],
+  "matchDepNames": ["/^projectbluefin\\//"],
+  "pinDigests": false,
+  "enabled": false
+}
+```
+
+If a stuck `chore(deps): pin dependencies` PR appears targeting `projectbluefin/actions`, close it — it can never pass lint. Add the rule above to `renovate.json` to prevent recurrence.
 
 ### projectbluefin/* refs — always use managed tags, never SHA-pin
 
@@ -517,14 +554,15 @@ The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
 | `systemd-udev-settle.service` | Waits for udev to settle real hardware; times out (~125s) in QEMU with no physical devices. Manifests as `"No failed systemd units at boot"` smoke test failure. | projectbluefin/testsuite#419 |
 | `bootloader-update.service` | Updates the EFI bootloader on boot; fails in QEMU VMs that have no EFI boot entry to update. Appears in VM serial log as `FAILED`. Currently not caught by the smoke test assertion — no open fix PR. |
 
-**After a testsuite fix merges — SHA bump runbook:**
-1. Get the new SHA: `gh api repos/projectbluefin/testsuite/commits/main --jq '.sha'`
-2. Update the single `uses:` line in `.github/workflows/run-testsuite.yml` — all callers inherit it automatically
-3. Commit: `fix(ci): bump testsuite SHA to include <description> (PR #NNN)`
-4. Open a PR with `Closes #<issue>` for each open e2e failure issue
-5. After merge, post-merge E2E re-runs; the failure issues auto-close on green
+**After a testsuite fix merges** the workaround is already live — `run-testsuite.yml` uses `@main`, which always tracks the head of the testsuite's default branch. No SHA bump needed. Remove any temporary KERNEL_ARGS mask in the testsuite if the fix makes it obsolete, but no action is required in bluefin-lts itself.
 
-Current SHA (post testsuite#419): `726ed4d24e08a18d5c31f816519f4bd6f0463511`
+**Never SHA-pin `projectbluefin/testsuite`.** Even as a temporary workaround, a SHA pin in `run-testsuite.yml` will cause `Lint & syntax` to fail permanently (the `no-sha-pins-for-internal-actions` hook catches it), blocking the entire Renovate automerge pipeline. If you need to pin to a specific testsuite commit while waiting for a fix to merge, hold off on merging PRs that trigger E2E instead.
+
+If stale SHA pins from a previous workaround are present on Renovate branches, update those branches with:
+```bash
+gh pr update-branch <PR_NUMBER> --repo projectbluefin/bluefin-lts
+```
+This rebases the branch onto main (which has the `@main` fix) and re-triggers CI.
 
 ---
 
