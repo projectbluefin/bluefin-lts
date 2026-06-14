@@ -87,7 +87,7 @@ sed -i 's@ nvidia @ i915 amdgpu nvidia @g' /usr/lib/dracut/dracut.conf.d/99-nvid
 # --in-place patches /etc/nvidia-container-runtime/config.toml directly into the image
 # so no-cgroups is active on every boot (required for bootc — cgroup device delegation
 # is not available in unprivileged containers).
-# nvidia-cdi-refresh.{path,service} is enabled unconditionally for all GDX builds via
-# system_files_overrides/gdx/80-nvidia-container-toolkit.preset and generates
+# nvidia-cdi-refresh.{path,service} is enabled unconditionally for all nvidia builds via
+# system_files_overrides/nvidia/80-nvidia-container-toolkit.preset and generates
 # /var/run/cdi/nvidia.yaml at first boot from the loaded driver.
 nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place
