@@ -12,16 +12,11 @@
       "automergeStrategy": "squash"
     },
     {
-      "description": "Group and automerge projectbluefin/actions composite SHA updates",
+      "description": "Never SHA-pin projectbluefin/ refs — use @v1/@main managed tags; SHA pins break the no-sha-pins-for-internal-actions pre-commit hook and block automerge",
       "matchManagers": ["github-actions"],
-      "groupName": "projectbluefin/actions",
-      "automerge": true,
-      "automergeType": "pr",
-      "automergeStrategy": "squash",
-      "labels": ["chore/deps", "automerge"],
-      "matchDepNames": [
-        "/projectbluefin/actions/"
-      ]
+      "matchDepNames": ["/^projectbluefin\//"],
+      "pinDigests": false,
+      "enabled": false
     }
   ]
 }
