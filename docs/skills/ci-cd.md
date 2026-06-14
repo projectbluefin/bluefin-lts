@@ -44,7 +44,7 @@ metadata:
 | `pr-testsuite.yml` | runs **`validate-pr@v1`** (just check, shellcheck, hadolint, pre-commit) + **e2e smoke** on every PR; only `Lint & syntax` is a required check |
 | `pr-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
 | `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
-| `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; pin the testsuite SHA here |
+| `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; use `@main` (never SHA-pin — see below) |
 | `renovate-automerge.yml` | auto-merges Renovate/mergeraptor PRs when pr-testsuite passes |
 | `post-merge-e2e.yml` | runs E2E smoke+common suites after a successful build on `main`; informational only |
 | `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
@@ -159,14 +159,17 @@ Flow:
 
 **Required status check** (ruleset 4940669): `Lint & syntax` only. Builds are informational.
 
-### projectbluefin/actions refs — always use @v1, never SHA-pin
+### projectbluefin/* refs — always use managed tags, never SHA-pin
 
-All `projectbluefin/actions` refs in `.github/workflows/` must use the `@v1` managed tag. Never SHA-pin them.
+All `projectbluefin/` refs in `.github/workflows/` must use managed tags (`@v1` or `@main`). **Never SHA-pin any `projectbluefin/` repo**, including `projectbluefin/testsuite`.
 
-- SHA-pinned internal refs require a Renovate bump PR in every caller before a fix takes effect — propagation lag is days, not minutes
-- `@v1` always points to the latest stable release; fixes in `projectbluefin/actions` propagate instantly to all callers
+- **`projectbluefin/actions`** → `@v1`
+- **`projectbluefin/testsuite`** → `@main`
+- SHA-pinned internal refs trigger the `validate-pr` action's tag checker, causing `Lint & syntax` to fail with exit code 1 — this blocks the Renovate automerge pipeline entirely
 - AGENTS.md explicitly exempts `projectbluefin/` refs from the SHA-pin requirement: *"projectbluefin/ refs (@v1, @main) are intentional managed tags and are exempted."*
-- A pre-commit hook (`no-sha-pins-for-internal-actions` in `.pre-commit-config.yaml`) blocks any future SHA pin on `projectbluefin/` actions at commit time
+- A pre-commit hook (`no-sha-pins-for-internal-actions` in `.pre-commit-config.yaml`) blocks future SHA pins on `projectbluefin/` actions at commit time
+
+**Temporary workaround SHAs** (e.g. pinned to a pre-merge fix): remove as soon as the fix lands in the target branch's `main`. If you're unsure, check whether the referenced PR has merged — if yes, switch back to the managed tag immediately.
 
 ### Handling stale Renovate SHA-bump branches after a bulk @v1 conversion
 
