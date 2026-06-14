@@ -59,11 +59,11 @@ if [ "$ENABLE_DX" == "1" ]; then
 	run_buildscripts_for "$(arch)/dx"
 fi
 
-if [ "$ENABLE_GDX" == "1" ]; then
-	copy_systemfiles_for gdx
-	run_buildscripts_for gdx
-	copy_systemfiles_for "$(arch)-gdx"
-	run_buildscripts_for "$(arch)/gdx"
+if [ "$ENABLE_NVIDIA" == "1" ]; then
+	copy_systemfiles_for nvidia
+	run_buildscripts_for nvidia
+	copy_systemfiles_for "$(arch)-nvidia"
+	run_buildscripts_for "$(arch)/nvidia"
 fi
 
 printf "::group:: ===Image Cleanup===\n"
