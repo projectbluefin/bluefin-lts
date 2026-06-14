@@ -226,6 +226,23 @@ This resets the branch to main (empty diff). The open Renovate PR will show no c
 
 `ghcr.io/projectbluefin/common` delivers first-party fixes (e.g. `rechunker-group-fix`, boot services) that are **safety-critical** for users. These must land in `:testing` automatically without human intervention.
 
+### Cosign verification for base images
+
+bluefin-lts verifies `common` and `brew` signatures before every build using vendored public keys in `keys/`.
+
+| File | Key for |
+|---|---|
+| `keys/projectbluefin-common.pub` | `ghcr.io/projectbluefin/common` |
+| `keys/ublue-os-brew.pub` | `ghcr.io/ublue-os/brew` |
+
+`just verify-container` handles auto-install of cosign v3+ if the runner ships an older version. Verification is fatal in CI. Skip locally with `SKIP_BASE_VERIFY=1` (only works when `CI` is not `true`).
+
+When a key rotation occurs: update the `.pub` file in `keys/` via PR with justification, then retry the build.
+
+**Pattern discovery (2026-06-14):** A cosign signing regression in `common` was caught by `bluefin` CI (`no signatures found`) but went undetected by LTS because LTS had no signature verification. Fixed by PR #219.
+
+`ghcr.io/projectbluefin/common` delivers first-party fixes (e.g. `rechunker-group-fix`, boot services) that are **safety-critical** for users. These must land in `:testing` automatically without human intervention.
+
 **The right configuration (`renovate.json5`):**
 
 1. **Custom manager for `image-versions.yaml`** — Renovate needs a regex manager to discover the `image: / tag: / digest:` block. Without it, common is invisible to Renovate:
