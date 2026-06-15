@@ -33,7 +33,7 @@ metadata:
 |---|---|
 | `build-regular.yml` | caller for `bluefin-lts` |
 | `build-regular-hwe.yml` | caller for `bluefin-lts-hwe` (HWE kernel) |
-| `build-gdx.yml` | caller for `bluefin-gdx` (NVIDIA/AI) |
+| `build-nvidia.yml` | caller for `bluefin-lts-nvidia` (NVIDIA/AI) |
 | `sync-main-to-testing.yml` | force-syncs `main → testing` on every push to `main`; thin caller to `projectbluefin/actions/reusable-sync-branches.yml@v1` |
 | `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`main → lts`); calls `reusable-promote-squash.yml@v1` with `source_branch=main, target_branch=lts` |
 | `execute-release.yml` | fires on promotion PR merge; cosign re-verify, skopeo `:testing` → `:lts`, fast-forward `lts`, GitHub release |
@@ -50,7 +50,8 @@ metadata:
 | `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
 | `skill-drift.yml` | warns on PRs that change CI/build/system files without updating docs/skills |
 | `validate-renovate.yaml` | validates `.github/renovate.json5` on relevant PRs and pushes |
-| ~~`build-dx.yml`~~ | **deleted** — no DX variant in LTS; GDX is the NVIDIA product |
+| ~~`build-gdx.yml`~~ | **renamed** to `build-nvidia.yml` (PR #225, 2026-06-14) |
+| ~~`build-dx.yml`~~ | **deleted** — no DX variant in LTS |
 | ~~`build-dx-hwe.yml`~~ | **deleted** — no DX HWE variant |
 | ~~`build-gnome50.yml`~~ | **deleted 2026-05-30** — GNOME 50 is now the default |
 | ~~`reusable-build-image.yml`~~ | **deleted** — replaced by `projectbluefin/actions/.github/workflows/reusable-build.yml@v1` |
@@ -62,10 +63,10 @@ metadata:
 |---|---|---|---|
 | `main` | `bluefin-lts` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
 | `main` | `bluefin-lts-hwe` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
-| `main` | `bluefin-gdx` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
-| `lts` | `bluefin-lts` | `lts`, `lts-YYYYMMDD` | `workflow_dispatch` on `lts` only |
-| `lts` | `bluefin-lts-hwe` | `lts`, `lts-YYYYMMDD` | `workflow_dispatch` on `lts` only |
-| `lts` | `bluefin-gdx` | `lts`, `lts-YYYYMMDD` | `workflow_dispatch` on `lts` only |
+| `main` | `bluefin-lts-nvidia` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
+| `lts` | `bluefin-lts` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
+| `lts` | `bluefin-lts-hwe` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
+| `lts` | `bluefin-lts-nvidia` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
 
 `push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only `lifecycle-caller.yml`.
 
@@ -119,21 +120,21 @@ Common CI/CD logic lives in reusable GitHub Actions at **https://github.com/proj
 `projectbluefin/actions/.github/workflows/reusable-build.yml@v1`
 
 Inputs used by each caller:
-- `brand_name` — image name (`bluefin-lts`, `bluefin-lts-hwe`, `bluefin-gdx`)
+- `brand_name` — image name (`bluefin-lts`, `bluefin-lts-hwe`, `bluefin-lts-nvidia`)
 - `stream_name` — `testing` or `lts`
 - `image_flavors` — `'["main"]'`
 - `architecture` — `'["x86_64"]'`
 
-### HWE and GDX kernel selection
+### HWE and Nvidia kernel selection
 
-HWE (`bluefin-lts-hwe`) and GDX (`bluefin-gdx`) use the **Fedora CoreOS stable** kernel, not the CentOS kernel. The Justfile resolves the current Fedora CoreOS stable version at build time:
+HWE (`bluefin-lts-hwe`) and Nvidia (`bluefin-lts-nvidia`) use the **Fedora CoreOS stable** kernel, not the CentOS kernel. The Justfile resolves the current Fedora CoreOS stable version at build time:
 
 ```bash
 skopeo inspect docker://quay.io/fedora/fedora-coreos:stable
 # → derives Fedora version (e.g., 44) → selects coreos-stable-44 akmods
 ```
 
-This means HWE/GDX kernels automatically track upstream as CoreOS advances Fedora versions — no manual pin bumps needed. Set `COREOS_STABLE_VERSION=NN` to override for testing.
+This means HWE/Nvidia kernels automatically track upstream as CoreOS advances Fedora versions — no manual pin bumps needed. Set `COREOS_STABLE_VERSION=NN` to override for testing.
 
 Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kernel.
 
@@ -321,6 +322,7 @@ bluefin-lts uses different paths from bluefin. **Always pass the `filters` input
         - 'Containerfile'
         - 'build_scripts/**'
         - 'system_files/**'
+        - 'system_files_overrides/**'
         - 'image-versions.yaml'
         - 'Justfile'
       nvidia:
@@ -328,6 +330,8 @@ bluefin-lts uses different paths from bluefin. **Always pass the `filters` input
 ```
 
 Using the default (bluefin paths: `build_files/**`, `image-versions.yml`) would silently skip builds when real image changes land.
+
+**Always include `system_files_overrides/**`** — variant-specific system files (Nvidia presets, VS Code hooks) live here. Without it, changes to `system_files_overrides/nvidia/` do not trigger the nvidia build on PRs. This gap caused a real missed trigger that was fixed in PR #225.
 
 ### validate-pr glob override
 
@@ -373,7 +377,7 @@ Three GHCR packages must be linked to `projectbluefin/bluefin-lts` and grant Act
 |---|---|
 | `bluefin-lts` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts/settings |
 | `bluefin-lts-hwe` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-hwe/settings |
-| `bluefin-gdx` | https://github.com/orgs/projectbluefin/packages/container/bluefin-gdx/settings |
+| `bluefin-lts-nvidia` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-nvidia/settings |
 
 On each settings page:
 1. **Connected repository** → set to `projectbluefin/bluefin-lts`
@@ -381,9 +385,10 @@ On each settings page:
 
 Once done, `github.token` from any `bluefin-lts` workflow has full package read/write — no PAT needed.
 
-> **Note:** `bluefin-lts` is currently (incorrectly) linked to `projectbluefin/bluefin` and `bluefin-gdx`
-> has no linked repo. Until an org admin fixes this, GHCR pushes from `bluefin-lts` workflows will fail
-> with `DENIED`. The fix is the two-step UI action above — not a new secret.
+> **Note:** `bluefin-lts-nvidia` is a new package (created 2026-06-14, PR #225). New GHCR packages in an org
+> are **private by default** — `skopeo list-tags` returns `name unknown` until the package is published AND
+> linked to the repo. Link it via the settings page above. `bluefin-lts` may still be linked to
+> `projectbluefin/bluefin` rather than `bluefin-lts` — verify and correct if GHCR pushes fail with `DENIED`.
 
 ## SBOM rules
 
@@ -587,7 +592,7 @@ This rebases the branch onto main (which has the `@main` fix) and re-triggers CI
 
 ## Trivy scan FATAL — CentOS 10 CPE indices missing
 
-**Symptom:** All three build jobs (`Build Bluefin LTS`, `Build Bluefin LTS HWE`, `Build Bluefin GDX`) fail at the `image (main, …, testing, x86_64)` step with exit code 1 and no obvious container build error. The actual error is Trivy crashing at the very end of the job (after a successful container build):
+**Symptom:** All three build jobs (`Build Bluefin LTS`, `Build Bluefin LTS HWE`, `Build Bluefin Nvidia`) fail at the `image (main, …, testing, x86_64)` step with exit code 1 and no obvious container build error. The actual error is Trivy crashing at the very end of the job (after a successful container build):
 
 ```
 FATAL  Fatal error  run error: image scan error: … unable to find CPE indices.
@@ -628,4 +633,4 @@ All consuming repos (`bluefin-lts`, `bluefin`, `dakota`) pick up the fix immedia
 **When modifying `changelogs.py`:**
 - Tests live in `tests/test_changelogs.py` (pytest, run via `.github/workflows/pytest.yml`)
 - `MINIMAL_CONFIG` in the test file must mirror the production `changelog_config.yaml` schema exactly — divergence creates false-green tests where production code paths are never exercised
-- Verify `sections` keys (`all`, `base`, `dx`, `gdx`) and `templates` keys (including `changelog_format`) match `changelog_config.yaml`
+- Verify `sections` keys (`all`, `base`, `dx`, `nvidia`) and `templates` keys (including `changelog_format`) match `changelog_config.yaml`
