@@ -17,17 +17,14 @@ Releases are cut by merging the always-open `auto/promote-testing-to-main` PR.
 1. `promote-testing-to-main.yml` runs on every push to `main` (via `Sync main → testing` completion) and on a nightly cron. It calls `reusable-promote-squash.yml@v1` with `source_branch=main, target_branch=lts`. When `main` and `lts` trees differ it rebuilds the squash branch and upserts the promotion PR.
 2. The gate job verifies cosign signatures, resolves digests, and checks for a passing post-merge E2E run. Results are posted as a live checklist in the PR body.
 3. **2 approvals from `@projectbluefin/maintainers`** are required — branch protection on `lts` enforces this.
-4. Merge with a regular merge commit. `execute-release.yml` fires on merge, re-verifies cosign, skopeo-copies `:testing` → `:lts`, fast-forwards the `lts` branch, creates a GitHub release with changelog via `reusable-release.yml@v1`.
+4. The promotion PR **auto-merges with squash** once 2 approvals land and all gate checks pass (`allow_auto_merge` is enabled by `reusable-promote-squash.yml`). Do not click merge manually. `execute-release.yml` fires on the resulting push to `lts`, re-verifies cosign, skopeo-copies `:testing` → `:lts`, and creates a GitHub release with changelog via `reusable-release.yml@v1`.
 
 ```bash
 # Check the gate status
 gh pr list --repo projectbluefin/bluefin-lts --head auto/promote-testing-to-main
 
-# Merge when gate is green (requires 2 maintainer approvals)
-gh pr merge <pr-number> --repo projectbluefin/bluefin-lts --merge
-
-# Force merge — emergency bypass of branch protection
-gh pr merge <pr-number> --repo projectbluefin/bluefin-lts --merge --admin
+# Force merge — emergency bypass of branch protection (2-approval gate)
+gh pr merge <pr-number> --repo projectbluefin/bluefin-lts --squash --admin
 ```
 
 ## Branch protection
