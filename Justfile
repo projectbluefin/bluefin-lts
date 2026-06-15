@@ -79,19 +79,19 @@ sudoif command *args:
 #   $target_image - The tag you want to apply to the image (default: bluefin).
 #   $tag - The tag for the image (default: lts).
 #   $dx - Enable DX (default: "0").
-#   $gdx - Enable GDX (default: "0").
+#   $nvidia - Enable Nvidia drivers (default: "0").
 #
 # DX:
 #   Developer Experience (DX) is a feature that allows you to install the latest developer tools for your system.
 #   Packages include VScode, Docker, Distrobox, and more.
-# GDX: https://docs.projectbluefin.io/gdx/
-#   GPU Developer Experience (GDX) creates a base as an AI and Graphics platform.
+# Nvidia: https://docs.projectbluefin.io/nvidia/
+#   Nvidia image creates a base as an AI and Graphics platform.
 #   Installs Nvidia drivers, CUDA, and other tools.
 #
 # The script constructs the version string using the tag and the current date.
 # If the git working directory is clean, it also includes the short SHA of the current HEAD.
 #
-# just build $target_image $tag $dx $gdx $hwe
+# just build $target_image $tag $dx $nvidia $hwe
 #
 # Example usage:
 #   just build bluefin lts 1 0 1
@@ -109,7 +109,7 @@ _ensure-yq:
     fi
 
 # Build the image using the specified parameters
-build $target_image=image_name $tag=default_tag $dx="0" $gdx="0" $hwe="0" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43": _ensure-yq
+build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $hwe="0" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43": _ensure-yq
     #!/usr/bin/env bash
 
     # Get Version
@@ -127,12 +127,12 @@ build $target_image=image_name $tag=default_tag $dx="0" $gdx="0" $hwe="0" $kerne
     BUILD_ARGS+=("--build-arg" "IMAGE_NAME=${image_name}")
     BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR=${repo_organization}")
     BUILD_ARGS+=("--build-arg" "ENABLE_DX=${dx}")
-    BUILD_ARGS+=("--build-arg" "ENABLE_GDX=${gdx}")
+    BUILD_ARGS+=("--build-arg" "ENABLE_NVIDIA=${nvidia}")
     BUILD_ARGS+=("--build-arg" "ENABLE_HWE=${hwe}")
     BUILD_ARGS+=("--build-arg" "GNOME_VERSION=${gnome_version}")
     # Select akmods source tag for mounted ZFS/NVIDIA images
     ARCH=$(uname -m)
-    if [[ "${hwe}" -eq "1" || "${gdx}" -eq "1" ]]; then
+    if [[ "${hwe}" -eq "1" || "${nvidia}" -eq "1" ]]; then
         # Dynamically follow Fedora CoreOS stable; override with COREOS_STABLE_VERSION env if set
         if [[ -n "${coreos_stable_version:-}" ]]; then
             coreos_fedora_ver="${coreos_stable_version}"
@@ -290,8 +290,8 @@ build-iso $target_image=("localhost/" + image_name) $tag=default_tag:
     if [[ "{{ target_image }}" =~ -dx ]]; then
         FLAVOR="dx"
     fi
-    if [[ "{{ target_image }}" =~ -gdx ]]; then
-        FLAVOR="gdx"
+    if [[ "{{ target_image }}" =~ -nvidia ]]; then
+        FLAVOR="nvidia"
     fi
 
     echo "Delegating to projectbluefin/iso..."
@@ -447,7 +447,7 @@ setup-cache base="bluefin-lts" stream="lts" ghcr="0" event="push":
     echo "{{ base }}-stream10 ${ALLOW_CACHE_WRITE}"
 
 # Build image for GHCR publication — called with sudo by reusable-build.yml.
-# Maps brand_name suffix to ENABLE_HWE / ENABLE_GDX build args.
+# Maps brand_name suffix to ENABLE_HWE / ENABLE_NVIDIA build args.
 [group('Image')]
 build-ghcr base="bluefin-lts" stream="lts" flavor="main" kernel_pin="":
     #!/usr/bin/bash
@@ -457,10 +457,10 @@ build-ghcr base="bluefin-lts" stream="lts" flavor="main" kernel_pin="":
         exit 1
     fi
     HWE=0
-    GDX=0
+    NVIDIA=0
     [[ "{{ base }}" == *"-hwe"* ]] && HWE=1
-    [[ "{{ base }}" == *"gdx"* ]] && GDX=1
-    {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${GDX}" "${HWE}" "{{ kernel_pin }}"
+    [[ "{{ base }}" == *"nvidia"* ]] && NVIDIA=1
+    {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${NVIDIA}" "${HWE}" "{{ kernel_pin }}"
 
 # Generate space-separated alias tags (dated + CentOS version aliases for production).
 [group('Utility')]
@@ -510,3 +510,8 @@ gen-sbom base="bluefin-lts" stream="lts" flavor="main" syft_cmd="syft":
 [group('Utility')]
 secureboot base="bluefin-lts" tag="lts" flavor="main":
     echo "Secureboot check: LTS is CentOS bootc-based (TPM2/Verity). UKI check not applicable."
+
+# Run unit tests for build scripts
+[group('Just')]
+unit-tests:
+    bats tests/unit/

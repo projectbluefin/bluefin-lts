@@ -2,6 +2,7 @@ name: PR E2E Gate (advisory)
 
 # Composes system_files/ changes from the PR on top of bluefin-lts:testing
 # and runs the smoke suite. Non-blocking — informational coverage only.
+# The :testing publish gate lives in post-merge-e2e.yml (post-build smoke).
 # See: issue #68, ACMM Level 3 bridge gap.
 #
 # Does NOT rebuild packages from build_scripts/ — that coverage comes from
@@ -73,7 +74,7 @@ jobs:
           oci: true
 
       - name: Login to GHCR
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

@@ -39,7 +39,7 @@ dnf -y upgrade glib2 fontconfig
 # Please, dont remove this as it will break everything GNOME related
 dnf versionlock add glib2 fontconfig
 
-# This fixes a lot of skew issues on GDX because kernel-devel wont update then
+# This fixes a lot of skew issues on nvidia because kernel-devel wont update then
 dnf versionlock add kernel kernel-devel kernel-devel-matched kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-uki-virt
 
 dnf -y install "https://dl.fedoraproject.org/pub/epel/epel-release-latest-${MAJOR_VERSION_NUMBER}.noarch.rpm"
