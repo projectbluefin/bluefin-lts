@@ -46,14 +46,16 @@ done
 
 # /boot and /var/tmp are separate tmpfs mounts inside the container build RUN layer;
 # rename(2) across two different devices fails with EXDEV (os error 18).
-# Setting DRACUT_TMPDIR=/boot tells rpm-ostree's 05-rpmostree.install to pass
-# --tmpdir /boot to dracut, keeping staging and final initramfs on the same device.
+# Using a dracut.conf.d file is more reliable than DRACUT_TMPDIR: the env var is
+# read by rpm-ostree's 05-rpmostree.install hook, but newer centos-bootc versions
+# no longer forward it correctly. A conf.d file is read directly by dracut regardless
+# of which code path invokes it.
 #
-# This was previously present (removed in 791b9623) when the base image included
-# kernel-uki-virt.  centos-bootc:c10s ≥ 6.12.0-233 no longer pre-installs it,
-# so kernel-swap reinstalls kernel-core from scratch, re-triggering the POSTTRANS
+# centos-bootc:c10s ≥ 6.12.0-233 no longer pre-installs kernel-uki-virt, so
+# kernel-swap reinstalls kernel-core from scratch, re-triggering the POSTTRANS
 # scriptlet and the EXDEV regression.
-export DRACUT_TMPDIR=/boot
+mkdir -p /etc/dracut.conf.d
+echo 'tmpdir="/boot"' > /etc/dracut.conf.d/01-tmpdir.conf
 
 dnf -y install "${RPM_NAMES[@]}"
 
