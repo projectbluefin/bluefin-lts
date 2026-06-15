@@ -59,8 +59,6 @@ echo 'tmpdir="/boot"' > /etc/dracut.conf.d/01-tmpdir.conf
 
 dnf -y install "${RPM_NAMES[@]}"
 
-rm -f /etc/dracut.conf.d/01-tmpdir.conf
-
 # HWE-specific: Install common akmods
 # These are not in the base mounts, so we download them via skopeo
 if [[ "${ENABLE_HWE:-0}" -eq 1 || "${ENABLE_NVIDIA:-0}" -eq 1 ]]; then
@@ -120,6 +118,9 @@ if [[ "${ENABLE_HWE:-0}" -eq 1 || "${ENABLE_NVIDIA:-0}" -eq 1 ]]; then
 else
   echo "Standard mode - common akmods not installed"
 fi
+
+# Remove build-time dracut tmpdir config — must not ship in the final image
+rm -f /etc/dracut.conf.d/01-tmpdir.conf
 
 # /*
 ### Version Lock kernel packages
