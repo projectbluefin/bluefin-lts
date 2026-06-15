@@ -510,3 +510,8 @@ gen-sbom base="bluefin-lts" stream="lts" flavor="main" syft_cmd="syft":
 [group('Utility')]
 secureboot base="bluefin-lts" tag="lts" flavor="main":
     echo "Secureboot check: LTS is CentOS bootc-based (TPM2/Verity). UKI check not applicable."
+
+# Run unit tests for build scripts
+[group('Just')]
+unit-tests:
+    bats tests/unit/
