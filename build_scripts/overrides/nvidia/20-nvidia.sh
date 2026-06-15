@@ -81,3 +81,13 @@ sed -i 's@ nvidia @ i915 amdgpu nvidia @g' /usr/lib/dracut/dracut.conf.d/99-nvid
 
 # Make sure initramfs is rebuilt after nvidia drivers or kernel replacement
 /usr/bin/dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --reproducible --zstd -v --add ostree -f "/lib/modules/$QUALIFIED_KERNEL/initramfs.img"
+
+### CDI configuration for rootless Podman GPU access
+# nvidia-container-toolkit is already installed above; configure it for rootless use.
+# --in-place patches /etc/nvidia-container-runtime/config.toml directly into the image
+# so no-cgroups is active on every boot (required for bootc — cgroup device delegation
+# is not available in unprivileged containers).
+# nvidia-cdi-refresh.{path,service} is enabled unconditionally for all nvidia builds via
+# system_files_overrides/nvidia/80-nvidia-container-toolkit.preset and generates
+# /var/run/cdi/nvidia.yaml at first boot from the loaded driver.
+nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place

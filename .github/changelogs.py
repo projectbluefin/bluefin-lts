@@ -174,7 +174,7 @@ class ChangelogGenerator:
                 break
 
             # Add experience suffix if it's not empty
-            if experience:  # experience is like "", "-dx", "-gdx"
+            if experience:  # experience is like "", "-dx", "-nvidia"
                 img += experience
 
             images.append((img, target))  # Use target instead of experience

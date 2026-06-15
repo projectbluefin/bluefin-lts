@@ -1,22 +1,28 @@
 name: Promote main to lts
 
 # Opens and maintains a squash promotion PR from main → lts.
-# Runs daily and on every push to testing so maintainers always have a
+# Runs daily and on every push to main so maintainers always have a
 # current, ready-to-merge PR showing the delta since the last promotion.
 #
 # Branch model for bluefin-lts: source_branch=main, target_branch=lts.
 # Compares main vs lts trees and opens auto/promote-testing-to-main → lts
 # when they differ.
+#
+# Triggers:
+#   - push to main (direct)
+#   - workflow_run on Post-Merge E2E (re-evaluates gate after E2E completes)
+#   - workflow_run on Sync main → testing (runs after every main push)
+#   - daily schedule as a fallback
 
 on:
   push:
     branches:
-      - testing
+      - main
   schedule:
     - cron: '0 23 * * *'
   workflow_dispatch:
   workflow_run:
-    workflows: ["Post-Merge E2E — Testing Parity", "Sync main → testing"]
+    workflows: ["Post-Merge E2E — Testing Gate", "Sync main → testing"]
     types: [completed]
     branches: [main]
 
@@ -33,10 +39,10 @@ permissions:
 
 jobs:
   promote:
-    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@efa19f2c3efdcbef1c55a1730229891d781fd11b # v1
+    uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
-        [{"image":"bluefin-lts"},{"image":"bluefin-lts-hwe"},{"image":"bluefin-gdx"}]
+        [{"image":"bluefin-lts"},{"image":"bluefin-lts-hwe"},{"image":"bluefin-lts-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
       run_e2e: true

@@ -69,7 +69,7 @@ Do NOT trust "the fix is in main" as evidence the fix is published. Verify:
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
-for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
+for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
   skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:lts \
     | python3 -c "import json,sys; d=json.load(sys.stdin); print('${IMAGE}:lts', d['Digest'][:22], d['Labels'].get('org.opencontainers.image.created','?')[:10])"
 done
@@ -78,7 +78,7 @@ done
 A fix is published when:
 1. The `:lts` digest differs from the last known digest
 2. The `org.opencontainers.image.created` date is after the fix merged
-3. All three variants (lts, lts-hwe, gdx) are updated
+3. All three variants (bluefin-lts, bluefin-lts-hwe, bluefin-lts-nvidia) are updated
 
 ## Build cascade — rapid commits cancel in-progress builds
 
@@ -97,13 +97,13 @@ gh run list --repo projectbluefin/bluefin-lts \
 gh auth token | skopeo login ghcr.io -u castrojo --password-stdin
 skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts
 skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts-hwe
-skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-gdx
+skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts-nvidia
 ```
 
 Images publish to:
 - `ghcr.io/projectbluefin/bluefin-lts`
 - `ghcr.io/projectbluefin/bluefin-lts-hwe`
-- `ghcr.io/projectbluefin/bluefin-gdx`
+- `ghcr.io/projectbluefin/bluefin-lts-nvidia`
 
 ## Emergency rollback
 
@@ -122,11 +122,12 @@ Rollback all three variants, then verify digest/created time.
 
 1. Push fix to `main` — builds trigger automatically.
 2. Wait for all 3 builds to complete (~45-90 min). Never promote before builds finish.
-3. Skopeo-copy `:testing` → `:lts` by digest:
+3. Verify the new `:testing` image has a fresh initramfs (see Verifying images below).
+4. Skopeo-copy `:testing` → `:lts` by digest:
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
-for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
+for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
   DIGEST=$(skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:testing \
     | python3 -c "import json,sys; print(json.load(sys.stdin)['Digest'])")
   skopeo copy \
@@ -138,6 +139,68 @@ done
 ```
 
 Always copy by digest, not tag — prevents races with concurrent pushes.
+
+## Verifying images
+
+### `:stable` is a floating alias for `:lts`
+
+After every release, `execute-release.yml` runs a `tag-stable` job that `skopeo copy`s `:lts` → `:stable`
+by digest for all three variants. Use `:stable` when you want the production tag without knowing the
+`lts`-branch naming convention.
+
+```bash
+# Verify :stable matches :lts
+for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
+  LTS=$(skopeo inspect --no-tags --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:lts | jq -er '.Digest')
+  STABLE=$(skopeo inspect --no-tags --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:stable | jq -er '.Digest')
+  [ "$LTS" = "$STABLE" ] && echo "✅ ${IMAGE}: stable == lts" || echo "⚠️  ${IMAGE}: stable != lts"
+done
+```
+
+`:stable` may lag `:lts` by a few minutes after a release (the `tag-stable` job runs in parallel with
+`post-release-variants`). It is never more than one release behind.
+
+### `:testing` is NOT published directly by the build
+
+The build job does **not** push the `:testing` stream tag on push events.
+`post-merge-e2e.yml` gates it: runs after `Build Bluefin LTS HWE` completes, runs E2E smoke,
+and only promotes `:testing` on pass. If smoke fails, `:testing` is not updated and a GitHub
+issue is opened automatically.
+
+PR builds validate that the image builds but do not push to GHCR. A new package name will show
+`name unknown` in `skopeo list-tags` until the first post-merge push completes.
+
+### `/boot/` is intentionally empty in the OCI image
+
+bootc stores the kernel and initramfs under `/usr/lib/modules/<kver>/`, not `/boot/`. An empty `/boot/` in the container layer is **expected and correct**. bootc populates the real `/boot` partition from `/usr/lib/modules/` during deployment.
+
+```bash
+# Correct way to verify kernel/initramfs health:
+podman run --rm ghcr.io/projectbluefin/bluefin-lts:lts bash -c '
+  sha256sum /usr/lib/modules/*/initramfs.img
+  ls -la /usr/lib/modules/*/vmlinuz
+  grep BUILD_ID /etc/os-release
+'
+```
+
+### OCI label vs BUILD_ID
+
+`org.opencontainers.image.revision` in the OCI manifest may show the `testing` branch SHA rather than the `main` branch commit that built the image (the reusable build workflow in `projectbluefin/actions` uses `github.sha` which resolves to the triggering branch HEAD). Use `BUILD_ID` from `/etc/os-release` inside the container as the authoritative commit reference.
+
+### Initramfs must differ from the previous broken build
+
+After a dracut-related fix, verify the initramfs SHA changed:
+
+```bash
+# Before promotion: record old SHA
+OLD=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:lts bash -c 'sha256sum /usr/lib/modules/*/initramfs.img' 2>/dev/null | awk '{print $1}')
+
+# After promotion: pull fresh and compare
+podman pull ghcr.io/projectbluefin/bluefin-lts:lts
+NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:lts bash -c 'sha256sum /usr/lib/modules/*/initramfs.img' 2>/dev/null | awk '{print $1}')
+
+[ "$OLD" != "$NEW" ] && echo "✅ initramfs changed" || echo "❌ same initramfs — promotion may be a no-op"
+```
 
 ## ISO status
 
