@@ -1,8 +1,12 @@
 name: Sync main → testing
 
-# After each squash-merge promotion (testing→main), the squash commit lands
-# on main but not in testing, leaving testing BEHIND. This workflow merges
-# main back into testing automatically so the next promotion PR is not blocked.
+# In bluefin-lts the promotion flow is main→lts (not testing→main), so
+# this workflow serves two purposes:
+# 1. Keeps the git testing branch mirrored from main so it stays available
+#    for the planned migration to the testing-first model.
+# 2. Acts as a timing signal: promote-testing-to-main.yml (main→lts)
+#    listens for this workflow_run completion instead of push: main to
+#    avoid racing the e2e gate on a new main push.
 #
 # Reusable logic lives in projectbluefin/actions. This is a thin caller.
 
