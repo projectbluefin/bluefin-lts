@@ -46,7 +46,7 @@ metadata:
 | `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
 | `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; use `@main` (never SHA-pin — see below) |
 | `renovate-automerge.yml` | auto-merges Renovate/mergeraptor PRs when pr-testsuite passes |
-| `post-merge-e2e.yml` | runs E2E smoke+common suites after a successful build on `main`; informational only |
+| `post-merge-e2e.yml` | **gates `:testing` promotion** — runs smoke+common suites after every successful build on `main`; digests are only promoted to `:testing` if smoke passes; if it fails, a GH issue is auto-filed and `:testing` is not updated |
 | `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
 | `skill-drift.yml` | warns on PRs that change CI/build/system files without updating docs/skills |
 | `validate-renovate.yaml` | validates `.github/renovate.json5` on relevant PRs and pushes |
@@ -78,11 +78,11 @@ metadata:
 
 1. PRs squash-merge to `main`.
 2. `sync-main-to-testing.yml` mirrors `main → testing`, triggering the promote workflow.
-3. `promote-testing-to-main.yml` also fires on `push: main` and on `workflow_run` completion of `Post-Merge E2E — Testing Gate` (correct name — not "Testing Parity", which was a dead trigger).
+3. `promote-testing-to-main.yml` fires on `workflow_run` completion of `Sync main → testing` and `Post-Merge E2E — Testing Gate`, and on the nightly schedule. (The direct `push: main` trigger was removed — it raced the gate and produced noisy READY=false failures on every merge.)
 4. Promote workflow compares `main` vs `lts` trees; rebuilds squash branch if different.
-5. Maintainers merge promotion PR (2 approvals required) → `execute-release.yml` fires → `:testing` copied to `:lts`.
+5. Promotion PR **auto-merges with squash** once 2 approvals land and gate passes — `allow_auto_merge` is enabled by the reusable workflow. `execute-release.yml` fires on the resulting push to `lts` → `:testing` copied to `:lts`.
 
-**Never squash-merge the promotion PR** — breaks merge base for future promotions.
+**The promotion PR is squash-merge by design** — `reusable-promote-squash.yml` rebuilds the branch fresh from `lts` on every run. Do not manually merge it.
 **Never merge `lts→main`.**
 
 ## `stream_name` — how tags are determined
