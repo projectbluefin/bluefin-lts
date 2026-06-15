@@ -37,12 +37,22 @@ just check && just lint
 - `just check` validates Just syntax (<30s).
 - `just lint` runs shellcheck (<10s).
 
+## Unit tests
+
+| Command | What it tests | Time |
+|---|---|---|
+| `just unit-tests` | bats tests for `build_scripts/` | <5s |
+| `pytest tests/test_changelogs.py -v` | pytest tests for `.github/changelogs.py` | <1s |
+
+Both run in CI on changes to `build_scripts/**` and `tests/**`. Use them to verify build script
+behaviour locally before pushing.
+
 ## Core builds
 
 | Goal | Command | Typical time |
 |---|---|---|
 | Regular | `just build bluefin lts 0 0 0` | 45-90 min |
-| GDX | `just build bluefin lts 0 1 0` | 45-90 min |
+| Nvidia | `just build bluefin-lts-nvidia lts 0 1 0` | 45-90 min |
 | HWE | `just build bluefin lts 0 0 1` | 45-90 min |
 
 The `gnome_version` parameter defaults to `"50"`. Override only if testing a future GNOME version.
@@ -50,7 +60,7 @@ The `gnome_version` parameter defaults to `"50"`. Override only if testing a fut
 **HWE and GDX kernel tracking:** For HWE and GDX builds, the Fedora CoreOS stable version is resolved dynamically at build time via `skopeo inspect docker://quay.io/fedora/fedora-coreos:stable`. This version is used to select the matching `coreos-stable-<version>` akmods image tag and is passed as `FEDORA_AKMODS_VERSION` (controls negativo17 Fedora repo for NVIDIA drivers). Override with `COREOS_STABLE_VERSION` env var if you need to pin:
 
 ```bash
-COREOS_STABLE_VERSION=44 just build bluefin lts 0 1 0   # GDX, force Fedora 44 akmods
+COREOS_STABLE_VERSION=44 just build bluefin-lts-nvidia lts 0 1 0   # Nvidia, force Fedora 44 akmods
 COREOS_STABLE_VERSION=44 just build bluefin lts 0 0 1   # HWE, force Fedora 44 akmods
 ```
 
@@ -58,15 +68,30 @@ Regular builds continue to use `centos-10` akmods and the `fedora_akmods_version
 
 **Never cancel builds.** Use 120+ minute timeouts.
 
-## Variant map
-
 | Variant | What changes |
 |---|---|
-| Regular | base LTS image |
-| GDX | GPU / AI tooling (NVIDIA) |
-| HWE | newer hardware enablement |
+| Regular (`bluefin-lts`) | base LTS image |
+| Nvidia (`bluefin-lts-nvidia`) | Nvidia drivers, CUDA toolkit, AI/GPU tooling; uses CoreOS stable kernel via `ENABLE_NVIDIA=1` |
+| HWE (`bluefin-lts-hwe`) | newer hardware enablement via CoreOS stable kernel |
 
-## VM / disk artifacts
+## Nvidia build internals
+
+The Nvidia variant (`bluefin-lts-nvidia`) is built from the same `Containerfile` as the other variants
+with `ENABLE_NVIDIA=1` passed as a build arg. Key differences from Regular:
+
+- **Kernel:** CoreOS stable (same as HWE) via `coreos-stable-<fedora_ver>` akmods — NOT CentOS 10 akmods
+- **Driver source:** negativo17 `fedora-nvidia.repo` (versioned to match the akmods Fedora version)
+- **Override directories:** `build_scripts/overrides/nvidia/` + arch-specific `aarch64/nvidia/`, `x86_64/nvidia/`
+- **System files:** `system_files_overrides/nvidia/` + arch-specific `aarch64-nvidia/`, `x86_64-nvidia/`
+- **Kernel args:** `kargs.d/00-nvidia.toml` written inline in `20-nvidia.sh` (blacklists nouveau, enables nvidia-drm.modeset)
+- **CDI:** `nvidia-container-toolkit` configured for rootless Podman access; `ublue-nvctk-cdi.service` enabled via preset
+- **FLAVOR label:** `nvidia`; `IMAGE_NAME`: `bluefin-lts-nvidia`
+
+**When renaming internal build flags or override directories**, always search ALL build scripts including
+arch-specific subdirectories (`build_scripts/overrides/aarch64/`, `build_scripts/overrides/x86_64/`) and
+scripts like `kernel-swap.sh` that consume the flag. The rename of `ENABLE_GDX` → `ENABLE_NVIDIA`
+revealed that `kernel-swap.sh` had been silently dead (checking `ENABLE_GDX` which Containerfile
+never passed) — caught by `grep -rn ENABLE_GDX build_scripts/`.
 
 | Command | Purpose | Time |
 |---|---|---|
@@ -118,7 +143,8 @@ When adding new services from common, always check whether they arrive via a pre
 | package pulls fail | repo/network timeout; retry after failure completes naturally |
 | storage errors | run `just clean`, verify free disk |
 | permission issues | some build paths require sudo/root; `gen-sbom` runs as root — `sbom_out/` is chowned back to runner after write |
-| NVIDIA driver version mismatch in GDX | Set `COREOS_STABLE_VERSION=NN` to pin; or let it auto-resolve from CoreOS stable |
+| **build script `Permission denied` (exit 126)** | A script in `build_scripts/` was committed without the execute bit (`100644` instead of `100755`). Fix: `git update-index --chmod=+x build_scripts/path/to/script.sh && git commit`. Verify with `git ls-tree HEAD build_scripts/` — all `.sh` files must show `100755`. |
+| NVIDIA driver version mismatch in Nvidia build | Set `COREOS_STABLE_VERSION=NN` to pin; or let it auto-resolve from CoreOS stable |
 
 Recovery loop:
 
@@ -127,3 +153,55 @@ just clean
 just check && just lint
 just build bluefin lts
 ```
+
+## Unit testing build scripts
+
+`tests/unit/` contains bats tests for `build_scripts/`. Run with:
+
+```bash
+just unit-tests        # runs bats tests/unit/
+bats tests/unit/       # direct
+```
+
+CI runs on `pull_request` via `.github/workflows/unit-tests.yml` (triggers on `build_scripts/**` or `tests/**` changes).
+
+### Bats test authoring patterns
+
+**Always use `BATS_TEST_TMPDIR` for sandbox dirs:**
+
+```bash
+setup() {
+    TEST_ROOT="${BATS_TEST_TMPDIR}/sandbox"   # bats-managed, unique per test
+    STUB_BIN="${TEST_ROOT}/stub-bin"
+    mkdir -p "${STUB_BIN}"
+    export TEST_ROOT STUB_BIN PATCHED_SCRIPT
+}
+```
+
+Never use `${SCRIPT_DIR}/.bats-sandbox/name.${BATS_TEST_NUMBER:-0}.$$` — `$$` behaviour across bats versions is unreliable and causes non-deterministic failures.
+
+**Pass PATH explicitly via `env` for stub isolation:**
+
+When the script under test uses external commands (e.g. `ghcurl`, `jq`, `numfmt`), pass PATH explicitly rather than relying on `export PATH` surviving bats subprocess boundaries:
+
+```bash
+run env PATH="${STUB_BIN}:${PATH}" IMAGE_NAME=bluefin ... bash "${PATCHED_SCRIPT}"
+```
+
+This is more reliable than `run my_function` where the function internally calls `bash`. The latter can drop exported PATH depending on bats version.
+
+**Use `#!/usr/bin/env bash` in stubs** (not `#!/usr/bin/bash`) for portability across distros where `/usr/bin/bash` may not be a symlink.
+
+**Neutralise `set -euo pipefail` network calls in patched scripts:**
+
+If the script under test has `set -o pipefail` and ends with optional network calls (badge fetching, API calls), add `|| true` to those lines in the patched script to prevent SIGPIPE from bats' output-capture mechanism killing the test:
+
+```bash
+# In setup(), after the main sed patching:
+sed -i \
+    -e '/ghcurl/s/$/ || true/' \
+    -e '/bazaar-install-count/s/$/ || true/' \
+    "${PATCHED_SCRIPT}"
+```
+
+SIGPIPE occurs when bats closes its capture pipe before all pipeline stages finish writing. With `set -o pipefail`, a killed pipeline stage propagates as non-zero exit, and `[ "$status" -eq 0 ]` fails non-deterministically.

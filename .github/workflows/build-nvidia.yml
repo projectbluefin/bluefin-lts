@@ -1,4 +1,4 @@
-name: Build Bluefin GDX
+name: Build Bluefin Nvidia
 
 permissions:
   contents: read
@@ -17,6 +17,7 @@ on:
       - Justfile
       - build_scripts/**
       - system_files/**
+      - system_files_overrides/**
       - image-versions.yaml
   push:
     branches:
@@ -48,13 +49,14 @@ jobs:
               - 'Containerfile'
               - 'build_scripts/**'
               - 'system_files/**'
+              - 'system_files_overrides/**'
               - 'image-versions.yaml'
               - 'Justfile'
             nvidia:
               - 'Containerfile'
 
   build:
-    name: Build bluefin-gdx image
+    name: Build bluefin-lts-nvidia image
     needs: [detect-changes]
     if: |
       always() &&
@@ -70,7 +72,7 @@ jobs:
       issues: write
     secrets: inherit
     with:
-      brand_name: bluefin-gdx
+      brand_name: bluefin-lts-nvidia
       stream_name: ${{ github.ref == 'refs/heads/lts' && 'lts' || 'testing' }}
       image_flavors: '["main"]'
       architecture: '["x86_64"]'

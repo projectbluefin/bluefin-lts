@@ -3,7 +3,7 @@
 
 # Basic configuration
 os_name: "bluefin-lts"
-targets: ["lts", "dx", "gdx"]
+targets: ["lts", "dx", "nvidia"]
 registry_url: "ghcr.io/ublue-os"
 
 # Package blacklist - packages to exclude from changelog
@@ -25,7 +25,7 @@ package_blacklist:
 image_variants:
   - ""
   - "-dx"
-  - "-gdx"
+  - "-nvidia"
 
 # Regex patterns
 patterns:
@@ -74,7 +74,7 @@ templates:
     | **VSCode** | {pkgrel:code} |
     | **Ramalama** | {pkgrel:ramalama} |
 
-    ### Major GDX packages
+    ### Major Nvidia packages
     | Name | Version |
     | --- | --- |
     | **Nvidia** | {pkgrel:nvidia-driver} |
@@ -106,7 +106,7 @@ sections:
   all: "All Images"
   base: "Base Images"
   dx: "[Developer Experience Images](https://docs.projectbluefin.io/bluefin-dx)"
-  gdx: "[Graphical Developer Experience Images](https://docs.projectbluefin.io/gdx)"
+  nvidia: "[Nvidia Images](https://docs.projectbluefin.io/nvidia)"
 
 # Default configuration values
 defaults:
