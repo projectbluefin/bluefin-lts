@@ -9,15 +9,16 @@ name: Promote main to lts
 # when they differ.
 #
 # Triggers:
-#   - push to main (direct)
 #   - workflow_run on Post-Merge E2E (re-evaluates gate after E2E completes)
-#   - workflow_run on Sync main → testing (runs after every main push)
+#   - workflow_run on Sync main → testing (fires after every push to main — covers the
+#     direct-push case without racing the gate, since E2E is underway by then)
 #   - daily schedule as a fallback
+#
+# The direct push: main trigger was removed because it fired before E2E completed,
+# producing a READY=false race on every merge. workflow_run on Sync main → testing
+# provides equivalent coverage without the noise.
 
 on:
-  push:
-    branches:
-      - main
   schedule:
     - cron: '0 23 * * *'
   workflow_dispatch:

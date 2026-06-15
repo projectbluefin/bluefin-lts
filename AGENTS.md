@@ -172,7 +172,7 @@ See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task
 ## Hard rules
 
 - **NEVER cancel builds** — 45–90 min, set 120+ min timeout
-- **NEVER squash-merge** promotion PRs (`main→lts`) — breaks merge base permanently
+- **Promotion PRs (`main→lts`) squash-merge by design** — `reusable-promote-squash.yml` rebuilds the squash branch fresh from `lts` on every run. Do NOT manually merge the promotion PR; `allow_auto_merge` is enabled and the PR merges itself once 2 approvals land and all gate checks pass.
 - **NEVER re-enable LTS ISO builds** — Anaconda is broken on CentOS Stream base
 - **NEVER commit directly to `lts` branch** — land in `main` first
 - **NEVER merge `lts→main`** — flow is one-way: `main→lts` only
@@ -182,12 +182,13 @@ See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task
 
 When production is bricking machines, skip the release gate:
 
-1. Push fix to `testing` branch → builds trigger automatically
-2. Open PR to `main` in parallel
-3. Wait for builds to finish, then skopeo-copy by digest:
+1. Push fix to `main` — builds trigger automatically on `main` and `testing`.
+2. Wait for all 3 builds to finish (~45–90 min). Never promote before builds finish.
+3. Verify the new `:testing` image has a fresh initramfs (see `docs/skills/release.md`).
+4. Skopeo-copy `:testing` → `:lts` by digest:
    ```bash
    GHCR_TOKEN=$(gh auth token)
-   for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
+   for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
      DIGEST=$(skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:testing | python3 -c "import json,sys; print(json.load(sys.stdin)['Digest'])")
      skopeo copy \
        --src-creds "castrojo:${GHCR_TOKEN}" \
@@ -196,7 +197,7 @@ When production is bricking machines, skip the release gate:
        docker://ghcr.io/projectbluefin/${IMAGE}:lts
    done
    ```
-4. Merge PR to `main` after the emergency resolves
+5. The PR you opened for the fix will go through normal review and auto-merge to `main`.
 
 Full runbook: `docs/skills/release.md` — "Emergency promotion for production-bricking bugs"
 
