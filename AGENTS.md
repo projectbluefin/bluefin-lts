@@ -101,18 +101,22 @@ If a task requires touching upstream `ublue-os` repos → **stop and tell the hu
 common ──────────────────────────┐
 (shared OCI layer)               │
                                  ▼
-bluefin  (main→stable)       ←── images ──→ testsuite (e2e gate)
-bluefin-lts (main→lts)       ←── images ──→ testsuite (e2e gate)
-dakota  (main→stable)        ←── images ──→ testsuite (e2e gate)
+bluefin  (PRs→testing; testing→main; main→:stable)   ←── testsuite (e2e gate)
+bluefin-lts (PRs→testing*; testing→main; main→:lts)  ←── testsuite (e2e gate)
+dakota  (PRs→testing; testing→main; main→:stable)    ←── testsuite (e2e gate)
                                  │
                                  ▼
                                 iso (installation media)
 ```
 
-**Release model (as of 2026-06-09):** All three repos use a PR-as-gate promotion model.
-`promote-testing-to-main.yml` maintains an always-open `auto/promote-testing-to-main` PR.
-Merging it (requires 2 `projectbluefin/maintainers` approvals) cuts a release.
-`execute-release.yml` fires on merge, re-verifies cosign, copies `:testing` → target tag.
+(*) bluefin-lts currently targets `main` for PRs; migration to `testing` is the factory standard
+and is tracked in the branch model section below.
+
+**Release model:** All three repos use a PR-as-gate promotion model.
+`promote-testing-to-main.yml` (calling `reusable-promote-squash.yml@v1`) maintains an
+always-open `auto/promote-testing-to-main` PR. Merging it (requires 2 `projectbluefin/maintainers`
+approvals plus passing gate checks) cuts a release. `execute-release.yml` fires on merge,
+re-verifies cosign, and copies `:testing` → target tag.
 
 ### Issue lifecycle
 
@@ -140,15 +144,15 @@ When in doubt, post nothing.
 
 ### Mandatory gates
 
-- `just check && just lint` before every commit
+- `just check && pre-commit run --all-files` before every commit
 - **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/` refs (`@v1`, `@main`) are intentional managed tags and are exempted.
 - PR title: Conventional Commits format
 - Attribution on every AI-authored commit: `Assisted-by: <Model> via <Tool>`
 - Max 4 open PRs at a time per agent
 - No WIP PRs
 - **Agents MUST NOT push directly to `main`.** All changes via PR. Branch protection enforces this (requires 2 `projectbluefin/maintainers` approvals).
-- **Agents MUST NOT push directly to `lts`.** Land in `main` first; `execute-release.yml` fast-forwards `lts` on promotion PR merge.
-- **Releases** are cut by merging the `auto/promote-testing-to-main` PR. `scheduled-lts-release.yml` has been deleted — do not reference it.
+- **Agents MUST NOT push directly to `lts`.** Land in `main` first; `execute-release.yml` handles copying `:testing`→`:lts` on promotion PR merge.
+- **Releases** are cut by merging the `auto/promote-testing-to-main` PR. No `scheduled-lts-release.yml` workflow exists — do not reference it.
 - **bluefin-lts workflow path overrides are intentional:** use `build_scripts/` and `image-versions.yaml`, not bluefin's `build_files/` and `image-versions.yml`.
 - **`.github/workflows/`, `Justfile`, and `build_scripts/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
 
@@ -166,39 +170,52 @@ See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task
 
 ## Branch model
 
-- `main` — active development (default). All PRs target `main`.
+### Current state
+
+- `main` — active development. All PRs currently target `main`.
 - `lts` — production releases only. Promotion is one-way: `main → lts`.
+
+### Target state (factory alignment — in progress)
+
+bluefin and dakota use `testing` as the PR target with `testing→main` promotion. bluefin-lts
+currently diverges by targeting `main` directly. The factory standard requires all three repos
+to align on the same model. **Migration tasks (tracked in projectbluefin/bluefin-lts):**
+
+1. Create `testing` branch in bluefin-lts (from current `main`)
+2. Change branch protection: `testing` becomes the PR target; `main` receives promotion commits only
+3. Update `promote-testing-to-main.yml` to use the `reusable-promote-squash.yml` defaults (source=testing, target=main)
+4. Update `post-merge-e2e.yml` to trigger on `testing` branch builds
+5. Keep a separate `main→lts` promotion step for the stable release
+6. Update `sync-main-to-testing.yml` to function as a pure post-promotion sync
+
+Until migration is complete, use `main` as the PR target for bluefin-lts. Do not target `lts` directly.
 
 ## Hard rules
 
 - **NEVER cancel builds** — 45–90 min, set 120+ min timeout
-- **NEVER squash-merge** promotion PRs (`main→lts`) — breaks merge base permanently
+- **Promotion PRs squash-merge by design** — `reusable-promote-squash.yml` rebuilds the squash branch fresh from the target branch on every run. Do NOT manually merge the promotion PR; the PR merges itself once 2 approvals land and all gate checks pass.
 - **NEVER re-enable LTS ISO builds** — Anaconda is broken on CentOS Stream base
 - **NEVER commit directly to `lts` branch** — land in `main` first
 - **NEVER merge `lts→main`** — flow is one-way: `main→lts` only
 - **ALWAYS explicitly enable services from common** — systemd presets shipped from `projectbluefin/common` are NOT auto-applied in Containerfile builds. Every service must have `systemctl enable <service>` in `build_scripts/40-services.sh`. Missing this causes silent failures or unbootable images (e.g. `rechunker-group-fix.service`).
 
+> ⚠️ **Known automation gap in `reusable-promote-squash.yml`:** The reusable resolves the
+> e2e gate `head_sha` from the hardcoded `main` branch instead of `inputs.source_branch`.
+> For the current bluefin-lts model (source=main), this happens to be correct.
+> After migration to source=testing, this bug will affect bluefin-lts too. Track:
+> projectbluefin/actions#[issue].
+
 ## Emergency production promotion
 
 When production is bricking machines, skip the release gate:
 
-1. Push fix to `testing` branch → builds trigger automatically
-2. Open PR to `main` in parallel
-3. Wait for builds to finish, then skopeo-copy by digest:
-   ```bash
-   GHCR_TOKEN=$(gh auth token)
-   for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-gdx; do
-     DIGEST=$(skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:testing | python3 -c "import json,sys; print(json.load(sys.stdin)['Digest'])")
-     skopeo copy \
-       --src-creds "castrojo:${GHCR_TOKEN}" \
-       --dest-creds "castrojo:${GHCR_TOKEN}" \
-       docker://ghcr.io/projectbluefin/${IMAGE}@${DIGEST} \
-       docker://ghcr.io/projectbluefin/${IMAGE}:lts
-   done
-   ```
-4. Merge PR to `main` after the emergency resolves
-
-Full runbook: `docs/skills/release.md` — "Emergency promotion for production-bricking bugs"
+1. Push fix to `main` — builds trigger automatically on `main` and `testing`.
+2. Wait for all 3 builds to finish (~45–90 min). Never promote before builds finish.
+3. Verify the new `:testing` image has a fresh initramfs (see `docs/skills/release.md`).
+4. Skopeo-copy `:testing` → `:lts` by digest using the credentials in your local keychain.
+   Do not hardcode registry credentials in code or documentation.
+   Full skopeo runbook: `docs/skills/release.md` — "Emergency promotion for production-bricking bugs"
+5. The PR you opened for the fix will go through normal review and merge to `main`.
 
 ## Commit standards
 
@@ -215,7 +232,7 @@ feat(ci): add container build optimization
 
 Optimize multi-stage build to reduce image size.
 
-Assisted-by: Claude Sonnet 4.6 via GitHub Copilot
+Assisted-by: Claude Sonnet 4.5 via pi
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 ```
 
@@ -230,6 +247,6 @@ comment. Never use floating `@main` or `@vN` tags for third-party actions.
 ## Quick commands
 
 ```bash
-just check && just lint     # validate before every commit
-just build bluefin lts      # full build (120+ min timeout)
+just check && pre-commit run --all-files   # validate before every commit
+just build bluefin lts                     # full build (120+ min timeout)
 ```
