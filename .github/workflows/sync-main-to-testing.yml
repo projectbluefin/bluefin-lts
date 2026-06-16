@@ -23,5 +23,6 @@ jobs:
   sync:
     name: Keep testing up-to-date with main
     uses: projectbluefin/actions/.github/workflows/reusable-sync-branches.yml@v1
+    secrets: inherit
     permissions:
       contents: write
