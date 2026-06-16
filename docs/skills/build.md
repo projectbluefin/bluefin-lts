@@ -93,6 +93,39 @@ scripts like `kernel-swap.sh` that consume the flag. The rename of `ENABLE_GDX` 
 revealed that `kernel-swap.sh` had been silently dead (checking `ENABLE_GDX` which Containerfile
 never passed) — caught by `grep -rn ENABLE_GDX build_scripts/`.
 
+**dracut cross-device (`Invalid cross-device link / os error 18 / EXDEV`) — known recurring failure:**
+
+`/boot` and `/var/tmp` are separate tmpfs mounts in a container `RUN` layer. Any `dnf install` of kernel
+packages triggers rpm-ostree's POSTTRANS scriptlet, which calls dracut. Without intervention dracut stages
+in `/var/tmp` and tries `rename(2)` to `/boot` → EXDEV.
+
+`DRACUT_TMPDIR` env var **no longer works** in centos-bootc ≥ 6.12.0-233 — the rpm-ostree hook was updated
+and no longer reads it. Use the conf.d approach instead:
+
+```bash
+# In kernel-swap.sh, BEFORE the first dnf install:
+mkdir -p /etc/dracut.conf.d
+echo 'tmpdir="/boot"' > /etc/dracut.conf.d/01-tmpdir.conf
+
+dnf -y install "${RPM_NAMES[@]}"
+
+# ... HWE akmods dnf install (also triggers dracut — conf.d still needed here) ...
+
+# AFTER ALL dnf installs — remove so it does not ship in the final image:
+rm -f /etc/dracut.conf.d/01-tmpdir.conf
+```
+
+For **explicit** `dracut` calls (e.g. `build_scripts/overrides/nvidia/20-nvidia.sh`), add `--tmpdir /boot`
+directly to the command line — conf.d is not needed for explicit calls:
+
+```bash
+/usr/bin/dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --reproducible --tmpdir /boot --zstd ...
+```
+
+See PRs #174, #248 for history. The regression recurs whenever centos-bootc is updated and `kernel-uki-virt`
+is absent from the base image — check for EXDEV errors in HWE and nvidia build logs whenever a centos-bootc
+digest bump lands.
+
 | Command | Purpose | Time |
 |---|---|---|
 | `just build-qcow2` | QCOW2 disk from existing local image | 45-90 min |
