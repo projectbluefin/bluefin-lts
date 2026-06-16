@@ -66,6 +66,10 @@ echo 'tmpdir="/boot"' > /etc/dracut.conf.d/01-tmpdir.conf
 
 dnf -y install --setopt=tsflags=noscripts "${RPM_NAMES[@]}"
 
+# tsflags=noscripts skips %posttrans, so modules.dep is never generated.
+# Run depmod explicitly before dracut — dracut aborts with "modules.dep is missing" without it.
+depmod -a "${CACHED_VERSION}"
+
 # Generate initramfs explicitly — mirrors the approach used in 20-nvidia.sh.
 # Direct -f output avoids the cross-device rename that kernel-install uses internally.
 dracut --no-hostonly --kver "${CACHED_VERSION}" --reproducible --tmpdir /boot --zstd -v --add ostree -f "/lib/modules/${CACHED_VERSION}/initramfs.img"
