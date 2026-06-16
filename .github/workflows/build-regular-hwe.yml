@@ -74,3 +74,6 @@ jobs:
       stream_name: ${{ github.ref == 'refs/heads/lts' && 'lts' || 'testing' }}
       image_flavors: '["main"]'
       architecture: '["x86_64"]'
+      # Hold :testing back — post-merge-e2e.yml promotes to :testing only after smoke passes.
+      # :lts builds (on the lts branch) publish their tag directly via execute-release.yml.
+      publish_stream_tag: ${{ (github.ref == 'refs/heads/lts' || github.event_name == 'pull_request') && 'true' || 'false' }}
