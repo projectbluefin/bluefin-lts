@@ -46,18 +46,29 @@ done
 
 # /boot and /var/tmp are separate tmpfs mounts inside the container build RUN layer;
 # rename(2) across two different devices fails with EXDEV (os error 18).
-# Using a dracut.conf.d file is more reliable than DRACUT_TMPDIR: the env var is
-# read by rpm-ostree's 05-rpmostree.install hook, but newer centos-bootc versions
-# no longer forward it correctly. A conf.d file is read directly by dracut regardless
-# of which code path invokes it.
 #
-# centos-bootc:c10s ≥ 6.12.0-233 no longer pre-installs kernel-uki-virt, so
+# The dracut.conf.d tmpdir approach (PR #248) sets tmpdir=/boot but does NOT fix the
+# EXDEV when the kernel-install hook uses its own internal rename: rpm-ostree's
+# 05-rpmostree.install calls dracut via kernel-install which internally renames a
+# temp file from the tmpfs to the overlay filesystem, triggering EXDEV regardless
+# of the tmpdir setting.
+#
+# Fix: install kernel RPMs with tsflags=noscripts to skip the %posttrans
+# kernel-install scriptlet entirely, then generate the initramfs with an explicit
+# dracut call. The explicit -f write goes directly to the destination (no
+# cross-device rename), so tmpdir=/boot and output on the overlay work fine.
+#
+# centos-bootc:c10s >= 6.12.0-233 no longer pre-installs kernel-uki-virt, so
 # kernel-swap reinstalls kernel-core from scratch, re-triggering the POSTTRANS
-# scriptlet and the EXDEV regression.
+# scriptlet and the EXDEV regression. This noscripts approach is immune to that.
 mkdir -p /etc/dracut.conf.d
 echo 'tmpdir="/boot"' > /etc/dracut.conf.d/01-tmpdir.conf
 
-dnf -y install "${RPM_NAMES[@]}"
+dnf -y install --setopt=tsflags=noscripts "${RPM_NAMES[@]}"
+
+# Generate initramfs explicitly — mirrors the approach used in 20-nvidia.sh.
+# Direct -f output avoids the cross-device rename that kernel-install uses internally.
+dracut --no-hostonly --kver "${CACHED_VERSION}" --reproducible --tmpdir /boot --zstd -v --add ostree -f "/lib/modules/${CACHED_VERSION}/initramfs.img"
 
 # HWE-specific: Install common akmods
 # These are not in the base mounts, so we download them via skopeo
