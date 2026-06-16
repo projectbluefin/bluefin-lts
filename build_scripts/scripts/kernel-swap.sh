@@ -9,7 +9,7 @@ set ${CI:+-x} -euo pipefail
 ### Kernel Swap - Install kernel from mounted akmods containers
 ### Containerfile provides the correct kernel via AKMODS_VERSION:
 ###   - centos-10 for standard builds
-###   - coreos-stable-<version> for HWE/GDX builds (follows Fedora CoreOS stable)
+###   - coreos-stable-<version> for HWE/nvidia builds (follows Fedora CoreOS stable)
 # */
 
 KERNEL_NAME="kernel"
@@ -59,7 +59,7 @@ dnf -y install "${RPM_NAMES[@]}"
 
 # HWE-specific: Install common akmods
 # These are not in the base mounts, so we download them via skopeo
-if [[ "${ENABLE_HWE:-0}" -eq 1 || "${ENABLE_GDX:-0}" -eq 1 ]]; then
+if [[ "${ENABLE_HWE:-0}" -eq 1 || "${ENABLE_NVIDIA:-0}" -eq 1 ]]; then
   echo "HWE mode enabled - installing common akmods..."
 
   # Detect kernel version from installed kernel
