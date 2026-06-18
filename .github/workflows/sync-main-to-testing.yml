@@ -6,8 +6,8 @@ name: Sync main → testing
 #
 # Reusable logic lives in projectbluefin/actions. This is a thin caller.
 #
-# testing is not a protected branch so github.token has sufficient push rights.
-# No GitHub App token is required.
+# testing is not a protected branch; the reusable falls back to github.token
+# when GH_TOKEN is not supplied, so no GitHub App token is needed here.
 
 on:
   push:
@@ -24,8 +24,6 @@ jobs:
     uses: projectbluefin/actions/.github/workflows/reusable-sync-branches.yml@v1
     permissions:
       contents: write
-    secrets:
-      GH_TOKEN: ${{ github.token }}
 
   cleanup-squash-branch:
     name: Delete squash promotion branch
