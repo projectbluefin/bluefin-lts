@@ -145,7 +145,7 @@ When in doubt, post nothing.
 ### Mandatory gates
 
 - `just check && pre-commit run --all-files` before every commit
-- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/` refs (`@v1`, `@main`) are intentional managed tags and are exempted.
+- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/actions/` and `projectbluefin/bonedigger/` refs are intentional managed tags and are exempted. `projectbluefin/testsuite` is SHA-pinned in `run-testsuite.yml` and managed by Renovate.
 - PR title: Conventional Commits format
 - Attribution on every AI-authored commit: `Assisted-by: <Model> via <Tool>`
 - Max 4 open PRs at a time per agent
@@ -199,12 +199,6 @@ Until migration is complete, use `main` as the PR target for bluefin-lts. Do not
 - **NEVER merge `lts→main`** — flow is one-way: `main→lts` only
 - **ALWAYS explicitly enable services from common** — systemd presets shipped from `projectbluefin/common` are NOT auto-applied in Containerfile builds. Every service must have `systemctl enable <service>` in `build_scripts/40-services.sh`. Missing this causes silent failures or unbootable images (e.g. `rechunker-group-fix.service`).
 
-> ⚠️ **Known automation gap in `reusable-promote-squash.yml`:** The reusable resolves the
-> e2e gate `head_sha` from the hardcoded `main` branch instead of `inputs.source_branch`.
-> For the current bluefin-lts model (source=main), this happens to be correct.
-> After migration to source=testing, this bug will affect bluefin-lts too. Track:
-> projectbluefin/actions#[issue].
-
 ## Emergency production promotion
 
 When production is bricking machines, skip the release gate:
@@ -240,7 +234,9 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 
 All `uses:` references to **external** actions must be pinned to a full commit SHA with a version
 comment. Never use floating `@main` or `@vN` tags for third-party actions.
-`projectbluefin/` refs (`@v1`, `@main`) are intentional managed tags and are exempt.
+`projectbluefin/actions` refs (`@v1`) are intentional managed tags and are exempt.
+`projectbluefin/testsuite` refs are SHA-pinned in `run-testsuite.yml`; Renovate keeps
+the pin current.
 
 ---
 

@@ -56,7 +56,7 @@ jobs:
               - 'Containerfile'
 
   build:
-    name: Build bluefin-lts-nvidia image
+    name: Build bluefin-lts-hwe-nvidia image
     needs: [detect-changes]
     if: |
       always() &&
@@ -72,7 +72,7 @@ jobs:
       issues: write
     secrets: inherit
     with:
-      brand_name: bluefin-lts-nvidia
+      brand_name: bluefin-lts-hwe-nvidia
       stream_name: ${{ github.ref == 'refs/heads/lts' && 'lts' || 'testing' }}
       image_flavors: '["main"]'
       architecture: '["x86_64"]'

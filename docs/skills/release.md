@@ -66,7 +66,7 @@ Do NOT trust "the fix is in main" as evidence the fix is published. Verify:
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
-for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
+for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
   skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:lts \
     | python3 -c "import json,sys; d=json.load(sys.stdin); print('${IMAGE}:lts', d['Digest'][:22], d['Labels'].get('org.opencontainers.image.created','?')[:10])"
 done
@@ -75,7 +75,7 @@ done
 A fix is published when:
 1. The `:lts` digest differs from the last known digest
 2. The `org.opencontainers.image.created` date is after the fix merged
-3. All three variants (bluefin-lts, bluefin-lts-hwe, bluefin-lts-nvidia) are updated
+3. All three variants (bluefin-lts, bluefin-lts-hwe, bluefin-lts-hwe-nvidia) are updated
 
 ## Build cascade — rapid commits cancel in-progress builds
 
@@ -94,13 +94,13 @@ gh run list --repo projectbluefin/bluefin-lts \
 gh auth token | skopeo login ghcr.io -u castrojo --password-stdin
 skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts
 skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts-hwe
-skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts-nvidia
+skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia
 ```
 
 Images publish to:
 - `ghcr.io/projectbluefin/bluefin-lts`
 - `ghcr.io/projectbluefin/bluefin-lts-hwe`
-- `ghcr.io/projectbluefin/bluefin-lts-nvidia`
+- `ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia`
 
 ## Emergency rollback
 
@@ -124,7 +124,7 @@ Rollback all three variants, then verify digest/created time.
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
-for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
+for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
   DIGEST=$(skopeo inspect --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:testing \
     | python3 -c "import json,sys; print(json.load(sys.stdin)['Digest'])")
   skopeo copy \
@@ -147,7 +147,7 @@ by digest for all three variants. Use `:stable` when you want the production tag
 
 ```bash
 # Verify :stable matches :lts
-for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
+for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
   LTS=$(skopeo inspect --no-tags --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:lts | jq -er '.Digest')
   STABLE=$(skopeo inspect --no-tags --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:stable | jq -er '.Digest')
   [ "$LTS" = "$STABLE" ] && echo "✅ ${IMAGE}: stable == lts" || echo "⚠️  ${IMAGE}: stable != lts"

@@ -33,7 +33,7 @@ metadata:
 |---|---|
 | `build-regular.yml` | caller for `bluefin-lts` |
 | `build-regular-hwe.yml` | caller for `bluefin-lts-hwe` (HWE kernel) |
-| `build-nvidia.yml` | caller for `bluefin-lts-nvidia` (NVIDIA/AI) |
+| `build-nvidia.yml` | caller for `bluefin-lts-hwe-nvidia` (NVIDIA/AI) |
 | `sync-main-to-testing.yml` | force-syncs `main → testing` on every push to `main`; thin caller to `projectbluefin/actions/reusable-sync-branches.yml@v1` |
 | `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`main → lts`); calls `reusable-promote-squash.yml@v1` with `source_branch=main, target_branch=lts` |
 | `execute-release.yml` | fires on promotion PR merge; cosign re-verify, skopeo `:testing` → `:lts`, fast-forward `lts`, GitHub release |
@@ -44,7 +44,7 @@ metadata:
 | `pr-testsuite.yml` | runs **`validate-pr@v1`** (just check, shellcheck, hadolint, pre-commit) + **e2e smoke** on every PR; only `Lint & syntax` is a required check |
 | `pr-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
 | `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
-| `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; use `@main` (never SHA-pin — see below) |
+| `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; SHA-pinned to a specific commit, managed by Renovate (see below) |
 | `renovate-automerge.yml` | auto-merges Renovate/mergeraptor PRs when pr-testsuite passes |
 | `post-merge-e2e.yml` | **gates `:testing` promotion** — runs smoke+common suites after every successful build on `main`; digests are only promoted to `:testing` if smoke passes; if it fails, a GH issue is auto-filed and `:testing` is not updated |
 | `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
@@ -63,10 +63,10 @@ metadata:
 |---|---|---|---|
 | `main` | `bluefin-lts` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
 | `main` | `bluefin-lts-hwe` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
-| `main` | `bluefin-lts-nvidia` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
+| `main` | `bluefin-lts-hwe-nvidia` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
 | `lts` | `bluefin-lts` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
 | `lts` | `bluefin-lts-hwe` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
-| `lts` | `bluefin-lts-nvidia` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
+| `lts` | `bluefin-lts-hwe-nvidia` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
 
 `push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only `lifecycle-caller.yml`.
 
@@ -120,14 +120,14 @@ Common CI/CD logic lives in reusable GitHub Actions at **https://github.com/proj
 `projectbluefin/actions/.github/workflows/reusable-build.yml@v1`
 
 Inputs used by each caller:
-- `brand_name` — image name (`bluefin-lts`, `bluefin-lts-hwe`, `bluefin-lts-nvidia`)
+- `brand_name` — image name (`bluefin-lts`, `bluefin-lts-hwe`, `bluefin-lts-hwe-nvidia`)
 - `stream_name` — `testing` or `lts`
 - `image_flavors` — `'["main"]'`
 - `architecture` — `'["x86_64"]'`
 
 ### HWE and Nvidia kernel selection
 
-HWE (`bluefin-lts-hwe`) and Nvidia (`bluefin-lts-nvidia`) use the **Fedora CoreOS stable** kernel, not the CentOS kernel. The Justfile resolves the current Fedora CoreOS stable version at build time:
+HWE (`bluefin-lts-hwe`) and Nvidia (`bluefin-lts-hwe-nvidia`) use the **Fedora CoreOS stable** kernel, not the CentOS kernel. The Justfile resolves the current Fedora CoreOS stable version at build time:
 
 ```bash
 skopeo inspect docker://quay.io/fedora/fedora-coreos:stable
@@ -183,13 +183,13 @@ jobs:
 
 **Do not add `base_branch: main`.** That was tried and reverted (#216 → #218). It looks like a fix but causes every automerge to silently fail because `github-actions[bot]` lacks merge rights on `main`.
 
-**Never add `projectbluefin/` refs to the automerge `pin` rule.** The `matchUpdateTypes: ["pin"]` Renovate rule generates PRs that SHA-pin `@v1`/`@main` managed tags to commit hashes. The `no-sha-pins-for-internal-actions` pre-commit hook then rejects them permanently (exit 1). The fix is to exclude all `projectbluefin/` refs entirely:
+**Never add `projectbluefin/actions` refs to the automerge `pin` rule.** The `matchUpdateTypes: ["pin"]` Renovate rule generates PRs that SHA-pin `@v1` managed tags to commit hashes. The `no-sha-pins-for-internal-actions` pre-commit hook rejects those for `projectbluefin/actions` permanently (exit 1). The fix is to exclude `projectbluefin/actions` refs:
 
 ```json
 {
-  "description": "Never SHA-pin projectbluefin/ refs — use @v1/@main managed tags",
+  "description": "Never SHA-pin projectbluefin/actions refs — use @v1 managed tags",
   "matchManagers": ["github-actions"],
-  "matchDepNames": ["/^projectbluefin\\//"],
+  "matchDepNames": ["/^projectbluefin\/actions/"],
   "pinDigests": false,
   "enabled": false
 }
@@ -197,17 +197,17 @@ jobs:
 
 If a stuck `chore(deps): pin dependencies` PR appears targeting `projectbluefin/actions`, close it — it can never pass lint. Add the rule above to `renovate.json` to prevent recurrence.
 
-### projectbluefin/* refs — always use managed tags, never SHA-pin
+`projectbluefin/testsuite` is intentionally SHA-pinned in `run-testsuite.yml` and managed by Renovate. Renovate keeps the pin current; do not change it to `@main`.
 
-All `projectbluefin/` refs in `.github/workflows/` must use managed tags (`@v1` or `@main`). **Never SHA-pin any `projectbluefin/` repo**, including `projectbluefin/testsuite`.
+### projectbluefin/* refs — tag and pin policy
 
-- **`projectbluefin/actions`** → `@v1`
-- **`projectbluefin/testsuite`** → `@main`
-- SHA-pinned internal refs trigger the `validate-pr` action's tag checker, causing `Lint & syntax` to fail with exit code 1 — this blocks the Renovate automerge pipeline entirely
-- AGENTS.md explicitly exempts `projectbluefin/` refs from the SHA-pin requirement: *"projectbluefin/ refs (@v1, @main) are intentional managed tags and are exempted."*
-- A pre-commit hook (`no-sha-pins-for-internal-actions` in `.pre-commit-config.yaml`) blocks future SHA pins on `projectbluefin/` actions at commit time
+| Ref | Policy | Why |
+|---|---|---|
+| `projectbluefin/actions` | `@v1` managed tag — never SHA-pin | `no-sha-pins-for-internal-actions` pre-commit hook blocks SHA pins; Renovate is disabled for this ref |
+| `projectbluefin/bonedigger` | `@v1` managed tag — never SHA-pin | Convention; no hook enforces this, but managed tags are the factory standard |
+| `projectbluefin/testsuite` | SHA-pinned in `run-testsuite.yml` — Renovate keeps it current | Reproducible E2E; hook narrowed to `actions` only so pin passes lint |
 
-**Temporary workaround SHAs** (e.g. pinned to a pre-merge fix): remove as soon as the fix lands in the target branch's `main`. If you're unsure, check whether the referenced PR has merged — if yes, switch back to the managed tag immediately.
+SHA-pinning `projectbluefin/actions` triggers `Lint & syntax` failure (the `no-sha-pins-for-internal-actions` hook — regex: `uses:.*projectbluefin/actions.*@[0-9a-f]{40}`). SHA-pinning `projectbluefin/bonedigger` is not caught by any hook but is wrong by convention. SHA-pinning `projectbluefin/testsuite` is correct and intentional.
 
 ### Handling stale Renovate SHA-bump branches after a bulk @v1 conversion
 
@@ -377,7 +377,7 @@ Three GHCR packages must be linked to `projectbluefin/bluefin-lts` and grant Act
 |---|---|
 | `bluefin-lts` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts/settings |
 | `bluefin-lts-hwe` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-hwe/settings |
-| `bluefin-lts-nvidia` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-nvidia/settings |
+| `bluefin-lts-hwe-nvidia` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-hwe-nvidia/settings |
 
 On each settings page:
 1. **Connected repository** → set to `projectbluefin/bluefin-lts`
@@ -385,7 +385,7 @@ On each settings page:
 
 Once done, `github.token` from any `bluefin-lts` workflow has full package read/write — no PAT needed.
 
-> **Note:** `bluefin-lts-nvidia` is a new package (created 2026-06-14, PR #225). New GHCR packages in an org
+> **Note:** `bluefin-lts-hwe-nvidia` is a new package (created 2026-06-14, PR #225). New GHCR packages in an org
 > are **private by default** — `skopeo list-tags` returns `name unknown` until the package is published AND
 > linked to the repo. Link it via the settings page above. `bluefin-lts` may still be linked to
 > `projectbluefin/bluefin` rather than `bluefin-lts` — verify and correct if GHCR pushes fail with `DENIED`.
@@ -578,15 +578,9 @@ The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
 | `systemd-udev-settle.service` | Waits for udev to settle real hardware; times out (~125s) in QEMU with no physical devices. Manifests as `"No failed systemd units at boot"` smoke test failure. | projectbluefin/testsuite#419 |
 | `bootloader-update.service` | Updates the EFI bootloader on boot; fails in QEMU VMs that have no EFI boot entry to update. Appears in VM serial log as `FAILED`. Currently not caught by the smoke test assertion — no open fix PR. |
 
-**After a testsuite fix merges** the workaround is already live — `run-testsuite.yml` uses `@main`, which always tracks the head of the testsuite's default branch. No SHA bump needed. Remove any temporary KERNEL_ARGS mask in the testsuite if the fix makes it obsolete, but no action is required in bluefin-lts itself.
+**After a testsuite fix merges**, Renovate will open a PR to bump the SHA pin in `run-testsuite.yml`. The automerge pipeline handles it — no manual action needed. Remove any temporary KERNEL_ARGS mask in the testsuite if the fix makes it obsolete.
 
-**Never SHA-pin `projectbluefin/testsuite`.** Even as a temporary workaround, a SHA pin in `run-testsuite.yml` will cause `Lint & syntax` to fail permanently (the `no-sha-pins-for-internal-actions` hook catches it), blocking the entire Renovate automerge pipeline. If you need to pin to a specific testsuite commit while waiting for a fix to merge, hold off on merging PRs that trigger E2E instead.
-
-If stale SHA pins from a previous workaround are present on Renovate branches, update those branches with:
-```bash
-gh pr update-branch <PR_NUMBER> --repo projectbluefin/bluefin-lts
-```
-This rebases the branch onto main (which has the `@main` fix) and re-triggers CI.
+**`run-testsuite.yml` is SHA-pinned, not `@main`.** The pin is managed by Renovate. Do not change it back to `@main` — the SHA pin gives reproducible E2E runs and the `no-sha-pins-for-internal-actions` hook only blocks SHA pins on `projectbluefin/actions`, not `projectbluefin/testsuite`.
 
 ---
 
