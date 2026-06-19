@@ -47,7 +47,7 @@ jobs:
         [
           {"image":"bluefin-lts","source_tag":"testing","target_tag":"lts"},
           {"image":"bluefin-lts-hwe","source_tag":"testing","target_tag":"lts"},
-          {"image":"bluefin-lts-nvidia","source_tag":"testing","target_tag":"lts"}
+          {"image":"bluefin-lts-hwe-nvidia","source_tag":"testing","target_tag":"lts"}
         ]
       fast_forward_branch: lts
       cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
@@ -99,7 +99,7 @@ jobs:
         id: digests
         run: |
           set -euo pipefail
-          for image in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
+          for image in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
             digest=$(skopeo inspect --no-tags "docker://ghcr.io/projectbluefin/${image}:lts" \
               | jq -r '.Digest' | cut -c1-19)
             echo "${image}=${digest}" >> "$GITHUB_OUTPUT"
@@ -109,7 +109,7 @@ jobs:
         env:
           LTS_DIGEST: ${{ steps.digests.outputs.bluefin-lts }}
           HWE_DIGEST: ${{ steps.digests.outputs.bluefin-lts-hwe }}
-          NVIDIA_DIGEST: ${{ steps.digests.outputs.bluefin-lts-nvidia }}
+          NVIDIA_DIGEST: ${{ steps.digests.outputs.bluefin-lts-hwe-nvidia }}
         run: |
           set -euo pipefail
           TAG=$(gh release list --repo "${{ github.repository }}" --limit 1 --json tagName --jq '.[0].tagName')
@@ -122,9 +122,9 @@ jobs:
             '|---|---|---|' \
             "| \`bluefin-lts\` | \`:lts\` | \`${LTS_DIGEST}\` |" \
             "| \`bluefin-lts-hwe\` | \`:lts\` | \`${HWE_DIGEST}\` |" \
-            "| \`bluefin-lts-nvidia\` | \`:lts\` | \`${NVIDIA_DIGEST}\` |" \
+            "| \`bluefin-lts-hwe-nvidia\` | \`:lts\` | \`${NVIDIA_DIGEST}\` |" \
             '' \
-            '> **bluefin-lts-hwe** and **bluefin-lts-nvidia** use the Fedora CoreOS stable kernel. The **Kernel (HWE)** version above applies to both.' \
+            '> **bluefin-lts-hwe** and **bluefin-lts-hwe-nvidia** use the Fedora CoreOS stable kernel. The **Kernel (HWE)** version above applies to both.' \
             '' \
             '---' \
             '')
@@ -155,7 +155,7 @@ jobs:
       - name: Copy :lts → :stable for all variants
         run: |
           set -euo pipefail
-          for image in bluefin-lts bluefin-lts-hwe bluefin-lts-nvidia; do
+          for image in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
             DIGEST=$(skopeo inspect --no-tags "docker://${REGISTRY}/${image}:lts" \
               | jq -er '.Digest')
             echo "Tagging ${image}@${DIGEST} as :stable"

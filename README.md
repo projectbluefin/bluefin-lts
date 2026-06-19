@@ -28,7 +28,7 @@ Long-term support Bluefin stream built on CentOS Stream 10.
 # LTS — recommended
 sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:lts --enforce-container-sigpolicy
 # LTS — NVIDIA
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-nvidia-open:lts --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia-open:lts --enforce-container-sigpolicy
 ```
 
 ### Bluefin DX LTS
