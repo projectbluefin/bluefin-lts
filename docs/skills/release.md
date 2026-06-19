@@ -79,7 +79,7 @@ A fix is published when:
 
 ## Build cascade — rapid commits cancel in-progress builds
 
-Each push to `main` triggers new builds which cancel in-progress builds via concurrency groups. GDX is slowest (60-90 min). Stop committing to `main` while builds are in progress.
+Each push to `main` triggers new builds which cancel in-progress builds via concurrency groups. `bluefin-lts-hwe-nvidia` is slowest (60-90 min). Stop committing to `main` while builds are in progress.
 
 ```bash
 SHA=<commit-sha>
@@ -106,11 +106,15 @@ Images publish to:
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
-skopeo copy \
-  --src-no-creds \
-  --dest-creds "castrojo:${GHCR_TOKEN}" \
-  docker://ghcr.io/projectbluefin/IMAGE:lts-YYYYMMDD \
-  docker://ghcr.io/projectbluefin/IMAGE:lts
+# Use a date-stamped testing tag as the rollback source (e.g. testing.20260618)
+# No lts-YYYYMMDD tags exist — execute-release only creates the floating :lts tag.
+for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
+  skopeo copy \
+    --src-creds "castrojo:${GHCR_TOKEN}" \
+    --dest-creds "castrojo:${GHCR_TOKEN}" \
+    docker://ghcr.io/projectbluefin/${IMAGE}:testing.YYYYMMDD \
+    docker://ghcr.io/projectbluefin/${IMAGE}:lts
+done
 ```
 
 Rollback all three variants, then verify digest/created time.

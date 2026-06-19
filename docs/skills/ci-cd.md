@@ -64,9 +64,11 @@ metadata:
 | `main` | `bluefin-lts` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
 | `main` | `bluefin-lts-hwe` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
 | `main` | `bluefin-lts-hwe-nvidia` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
-| `lts` | `bluefin-lts` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
-| `lts` | `bluefin-lts-hwe` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
-| `lts` | `bluefin-lts-hwe-nvidia` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
+| `lts` | `bluefin-lts` | `lts`, `stable` | on promotion PR merge (execute-release.yml) |
+| `lts` | `bluefin-lts-hwe` | `lts`, `stable` | on promotion PR merge (execute-release.yml) |
+| `lts` | `bluefin-lts-hwe-nvidia` | `lts`, `stable` | on promotion PR merge (execute-release.yml) |
+
+> **No `lts-YYYYMMDD` date-stamped tag is created.** `execute-release.yml` uses `reusable-execute-release.yml@v1` which skopeo-copies `:testing → :lts` (floating). The only date-stamped tags that persist are the `testing-YYYYMMDD` / `testing.YYYYMMDD` tags from main branch builds. Use these as rollback anchors.
 
 `push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only `lifecycle-caller.yml`.
 
@@ -96,7 +98,7 @@ stream_name: ${{ github.ref == 'refs/heads/lts' && 'lts' || 'testing' }}
 | `stream_name` | Tags published |
 |---|---|
 | `testing` | `testing`, `testing-YYYYMMDD` |
-| `lts` | `lts`, `lts-YYYYMMDD` |
+| `lts` | `lts` (floating only — execute-release skopeo-copies `:testing→:lts`, no date-stamped tag) |
 
 There is no separate `publish: false` gate. Callers always publish when they run. On PRs, the `detect-changes` job may skip the build entirely if no image-relevant files changed.
 
@@ -107,7 +109,7 @@ There is no separate `publish: false` gate. Callers always publish when they run
 | `push` | `main` | `testing`, `testing-YYYYMMDD` | normal CI after merge |
 | `push` | `lts` | nothing | no build callers trigger on lts push |
 | `workflow_dispatch` | `main` | `testing`, `testing-YYYYMMDD` | manual re-run |
-| `workflow_dispatch` | `lts` | `lts`, `lts-YYYYMMDD` | triggered by `execute-release.yml` on promotion merge |
+| `workflow_dispatch` | `lts` | `lts` | triggered by `execute-release.yml` on promotion merge (skopeo copy, no build) |
 | `pull_request` | `main` | nothing | CI only; detect-changes may skip build entirely |
 | `merge_group` | `main` | nothing | CI only |
 
@@ -143,7 +145,7 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 | Action | Where used | LTS-specific override |
 |---|---|---|
 | `bootc-build/validate-pr` | `pr-testsuite.yml` | `shellcheck-glob: "build_scripts/**/*.sh"` (lts uses `build_scripts/`, not `build_files/`) |
-| `bootc-build/detect-changes` | `build-regular.yml`, `build-gdx.yml`, `build-regular-hwe.yml` | filters for `build_scripts/**` and `image-versions.yaml` |
+| `bootc-build/detect-changes` | `build-regular.yml`, `build-nvidia.yml`, `build-regular-hwe.yml` | filters for `build_scripts/**` and `image-versions.yaml` |
 | `bootc-build/sign-and-publish` | called internally by `reusable-build.yml@v1` | `signing-mode: keyless` |
 
 ## Schedule ownership
