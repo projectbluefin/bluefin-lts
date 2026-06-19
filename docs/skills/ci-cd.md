@@ -1,16 +1,98 @@
 ---
 name: bluefin-lts-ci-cd
 description: >-
-  CI/CD workflow map, publish logic, tag namespaces, and release pipeline for
-  projectbluefin/bluefin-lts. Use when debugging build triggers, understanding stream_name tag
-  routing, fixing the release pipeline, authoring new workflows, or investigating why images
-  were not published. Contains critical pitfalls for cosign, GitHub Actions propagation, and
-  lts branch management.
+  CI/CD workflow map, publish logic, tag namespaces, promotion flow, and pitfalls for
+  projectbluefin/bluefin-lts. Use when debugging build triggers, understanding why images were
+  not published, fixing the release pipeline, authoring new workflows, or investigating
+  cosign/E2E gate failures.
 metadata:
-  type: reference
+  type: skill
 ---
 
 # CI/CD
+
+## When to Use
+
+- Debugging why a build didn't trigger or images weren't published
+- Understanding the workflow map (which file does what)
+- Fixing or authoring a GitHub Actions workflow
+- Investigating cosign verification failures
+- Understanding the promotion flow (`main → lts`)
+- Diagnosing E2E gate failures or Renovate auto-merge issues
+- Checking tag/stream_name routing for a given branch
+
+## When NOT to Use
+
+- Cutting a release or verifying published images → `release.md`
+- Adding/removing packages or changing the Containerfile → `build.md`
+- Making CentOS vs Fedora package decisions → `centos-vs-fedora.md`
+
+## Core Process
+
+### Debug: why didn't my build trigger?
+
+1. Check the event truth table (Reference below) for the branch + event combination.
+2. Verify `detect-changes` didn't skip the build (only fires when image-relevant paths change).
+3. Check for zombie runs holding the concurrency group:
+   ```bash
+   gh run list --repo projectbluefin/bluefin-lts --status in_progress \
+     --json databaseId,name,createdAt --jq '.[] | [.name, .createdAt, .databaseId] | @tsv'
+   # Cancel zombies:
+   gh run cancel <id> --repo projectbluefin/bluefin-lts
+   ```
+
+### Debug: why isn't `:testing` updated?
+
+`post-merge-e2e.yml` gates `:testing` promotion. If E2E fails, `:testing` is not updated.
+
+```bash
+# Check last post-merge E2E result
+gh run list --repo projectbluefin/bluefin-lts \
+  --workflow "Post-Merge E2E" --limit 5 \
+  --json conclusion,headBranch,createdAt,url \
+  --jq '.[] | [.conclusion, .headBranch, .createdAt, .url] | @tsv'
+```
+
+If E2E was skipped (CI-only commits), dispatch it manually:
+```bash
+gh workflow run "Post-Merge E2E — Testing Parity" --repo projectbluefin/bluefin-lts
+```
+
+### Debug: cosign verification failure
+
+See Reference — Cosign verification section below. The cert identity regexp must match
+`^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/`.
+
+### Add a new workflow
+
+1. Create the caller in `.github/workflows/` using one of the existing callers as a template.
+2. All third-party `uses:` must be SHA-pinned with a version comment.
+3. `projectbluefin/actions` refs use `@v1` (managed tags, not SHA-pinned).
+4. Update the workflow map in this file (`ci-cd.md`) Reference section.
+5. Run `actionlint .github/workflows/<new-file>.yml` before committing.
+
+## Red Flags
+
+- **Floating third-party action tags** (`@main`, `@v2`) — `no-floating-action-tags` pre-commit hook blocks these. `projectbluefin/actions@v1` is exempt.
+- **Adding `workflows: write` to a job** — not a valid `GITHUB_TOKEN` scope; causes silent failures.
+- **Triggering on `push: lts`** — pushes to `lts` do not build images. Only `execute-release.yml` uses lts push events.
+- **Calling the testsuite `e2e.yml` directly** — always call via `run-testsuite.yml`; never call the testsuite directly.
+- **`stream_name: lts` in a build caller** — the build callers do not run on `lts`; `execute-release.yml` uses skopeo copy, not reusable-build.
+- **`startup_failure` with no log** — means a permission scope required by a nested reusable workflow is not granted by the caller job. See Reference — startup_failure diagnosis.
+
+## Verification
+
+After any workflow change:
+
+- [ ] `actionlint .github/workflows/<changed>.yml` passes
+- [ ] `just check && pre-commit run --all-files` passes
+- [ ] No floating third-party action tags (pre-commit guard catches this)
+- [ ] New workflow added to the workflow map in this file
+- [ ] If workflow touches the release pipeline → `release.md` updated too
+
+---
+
+## Reference
 
 ## Contents
 - [Workflow map](#workflow-map)
