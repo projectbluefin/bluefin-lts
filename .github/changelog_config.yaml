@@ -25,7 +25,7 @@ package_blacklist:
 image_variants:
   - ""
   - "-dx"
-  - "-nvidia"
+  - "-hwe-nvidia"
 
 # Regex patterns
 patterns:

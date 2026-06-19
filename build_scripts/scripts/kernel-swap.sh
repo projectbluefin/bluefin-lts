@@ -46,16 +46,33 @@ done
 
 # /boot and /var/tmp are separate tmpfs mounts inside the container build RUN layer;
 # rename(2) across two different devices fails with EXDEV (os error 18).
-# Setting DRACUT_TMPDIR=/boot tells rpm-ostree's 05-rpmostree.install to pass
-# --tmpdir /boot to dracut, keeping staging and final initramfs on the same device.
 #
-# This was previously present (removed in 791b9623) when the base image included
-# kernel-uki-virt.  centos-bootc:c10s ≥ 6.12.0-233 no longer pre-installs it,
-# so kernel-swap reinstalls kernel-core from scratch, re-triggering the POSTTRANS
-# scriptlet and the EXDEV regression.
-export DRACUT_TMPDIR=/boot
+# The dracut.conf.d tmpdir approach (PR #248) sets tmpdir=/boot but does NOT fix the
+# EXDEV when the kernel-install hook uses its own internal rename: rpm-ostree's
+# 05-rpmostree.install calls dracut via kernel-install which internally renames a
+# temp file from the tmpfs to the overlay filesystem, triggering EXDEV regardless
+# of the tmpdir setting.
+#
+# Fix: install kernel RPMs with tsflags=noscripts to skip the %posttrans
+# kernel-install scriptlet entirely, then generate the initramfs with an explicit
+# dracut call. The explicit -f write goes directly to the destination (no
+# cross-device rename), so tmpdir=/boot and output on the overlay work fine.
+#
+# centos-bootc:c10s >= 6.12.0-233 no longer pre-installs kernel-uki-virt, so
+# kernel-swap reinstalls kernel-core from scratch, re-triggering the POSTTRANS
+# scriptlet and the EXDEV regression. This noscripts approach is immune to that.
+mkdir -p /etc/dracut.conf.d
+echo 'tmpdir="/boot"' > /etc/dracut.conf.d/01-tmpdir.conf
 
-dnf -y install "${RPM_NAMES[@]}"
+dnf -y install --setopt=tsflags=noscripts "${RPM_NAMES[@]}"
+
+# tsflags=noscripts skips %posttrans, so modules.dep is never generated.
+# Run depmod explicitly before dracut — dracut aborts with "modules.dep is missing" without it.
+depmod -a "${CACHED_VERSION}"
+
+# Generate initramfs explicitly — mirrors the approach used in 20-nvidia.sh.
+# Direct -f output avoids the cross-device rename that kernel-install uses internally.
+dracut --no-hostonly --kver "${CACHED_VERSION}" --reproducible --tmpdir /boot --zstd -v --add ostree -f "/lib/modules/${CACHED_VERSION}/initramfs.img"
 
 # HWE-specific: Install common akmods
 # These are not in the base mounts, so we download them via skopeo
@@ -116,6 +133,9 @@ if [[ "${ENABLE_HWE:-0}" -eq 1 || "${ENABLE_NVIDIA:-0}" -eq 1 ]]; then
 else
   echo "Standard mode - common akmods not installed"
 fi
+
+# Remove build-time dracut tmpdir config — must not ship in the final image
+rm -f /etc/dracut.conf.d/01-tmpdir.conf
 
 # /*
 ### Version Lock kernel packages
