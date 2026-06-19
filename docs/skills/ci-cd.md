@@ -33,7 +33,7 @@ metadata:
 |---|---|
 | `build-regular.yml` | caller for `bluefin-lts` |
 | `build-regular-hwe.yml` | caller for `bluefin-lts-hwe` (HWE kernel) |
-| `build-nvidia.yml` | caller for `bluefin-lts-nvidia` (NVIDIA/AI) |
+| `build-nvidia.yml` | caller for `bluefin-lts-hwe-nvidia` (NVIDIA/AI) |
 | `sync-main-to-testing.yml` | force-syncs `main → testing` on every push to `main`; thin caller to `projectbluefin/actions/reusable-sync-branches.yml@v1` |
 | `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`main → lts`); calls `reusable-promote-squash.yml@v1` with `source_branch=main, target_branch=lts` |
 | `execute-release.yml` | fires on promotion PR merge; cosign re-verify, skopeo `:testing` → `:lts`, fast-forward `lts`, GitHub release |
@@ -63,10 +63,10 @@ metadata:
 |---|---|---|---|
 | `main` | `bluefin-lts` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
 | `main` | `bluefin-lts-hwe` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
-| `main` | `bluefin-lts-nvidia` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
+| `main` | `bluefin-lts-hwe-nvidia` | `testing`, `testing-YYYYMMDD` | every push/merge to `main` |
 | `lts` | `bluefin-lts` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
 | `lts` | `bluefin-lts-hwe` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
-| `lts` | `bluefin-lts-nvidia` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
+| `lts` | `bluefin-lts-hwe-nvidia` | `lts`, `lts-YYYYMMDD`, `stable` | on promotion PR merge (execute-release.yml) |
 
 `push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only `lifecycle-caller.yml`.
 
@@ -120,14 +120,14 @@ Common CI/CD logic lives in reusable GitHub Actions at **https://github.com/proj
 `projectbluefin/actions/.github/workflows/reusable-build.yml@v1`
 
 Inputs used by each caller:
-- `brand_name` — image name (`bluefin-lts`, `bluefin-lts-hwe`, `bluefin-lts-nvidia`)
+- `brand_name` — image name (`bluefin-lts`, `bluefin-lts-hwe`, `bluefin-lts-hwe-nvidia`)
 - `stream_name` — `testing` or `lts`
 - `image_flavors` — `'["main"]'`
 - `architecture` — `'["x86_64"]'`
 
 ### HWE and Nvidia kernel selection
 
-HWE (`bluefin-lts-hwe`) and Nvidia (`bluefin-lts-nvidia`) use the **Fedora CoreOS stable** kernel, not the CentOS kernel. The Justfile resolves the current Fedora CoreOS stable version at build time:
+HWE (`bluefin-lts-hwe`) and Nvidia (`bluefin-lts-hwe-nvidia`) use the **Fedora CoreOS stable** kernel, not the CentOS kernel. The Justfile resolves the current Fedora CoreOS stable version at build time:
 
 ```bash
 skopeo inspect docker://quay.io/fedora/fedora-coreos:stable
@@ -377,7 +377,7 @@ Three GHCR packages must be linked to `projectbluefin/bluefin-lts` and grant Act
 |---|---|
 | `bluefin-lts` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts/settings |
 | `bluefin-lts-hwe` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-hwe/settings |
-| `bluefin-lts-nvidia` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-nvidia/settings |
+| `bluefin-lts-hwe-nvidia` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-hwe-nvidia/settings |
 
 On each settings page:
 1. **Connected repository** → set to `projectbluefin/bluefin-lts`
@@ -385,7 +385,7 @@ On each settings page:
 
 Once done, `github.token` from any `bluefin-lts` workflow has full package read/write — no PAT needed.
 
-> **Note:** `bluefin-lts-nvidia` is a new package (created 2026-06-14, PR #225). New GHCR packages in an org
+> **Note:** `bluefin-lts-hwe-nvidia` is a new package (created 2026-06-14, PR #225). New GHCR packages in an org
 > are **private by default** — `skopeo list-tags` returns `name unknown` until the package is published AND
 > linked to the repo. Link it via the settings page above. `bluefin-lts` may still be linked to
 > `projectbluefin/bluefin` rather than `bluefin-lts` — verify and correct if GHCR pushes fail with `DENIED`.

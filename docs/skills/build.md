@@ -52,7 +52,7 @@ behaviour locally before pushing.
 | Goal | Command | Typical time |
 |---|---|---|
 | Regular | `just build bluefin lts 0 0 0` | 45-90 min |
-| Nvidia | `just build bluefin-lts-nvidia lts 0 1 0` | 45-90 min |
+| Nvidia | `just build bluefin-lts-hwe-nvidia lts 0 1 0` | 45-90 min |
 | HWE | `just build bluefin lts 0 0 1` | 45-90 min |
 
 The `gnome_version` parameter defaults to `"50"`. Override only if testing a future GNOME version.
@@ -60,7 +60,7 @@ The `gnome_version` parameter defaults to `"50"`. Override only if testing a fut
 **HWE and GDX kernel tracking:** For HWE and GDX builds, the Fedora CoreOS stable version is resolved dynamically at build time via `skopeo inspect docker://quay.io/fedora/fedora-coreos:stable`. This version is used to select the matching `coreos-stable-<version>` akmods image tag and is passed as `FEDORA_AKMODS_VERSION` (controls negativo17 Fedora repo for NVIDIA drivers). Override with `COREOS_STABLE_VERSION` env var if you need to pin:
 
 ```bash
-COREOS_STABLE_VERSION=44 just build bluefin-lts-nvidia lts 0 1 0   # Nvidia, force Fedora 44 akmods
+COREOS_STABLE_VERSION=44 just build bluefin-lts-hwe-nvidia lts 0 1 0   # Nvidia, force Fedora 44 akmods
 COREOS_STABLE_VERSION=44 just build bluefin lts 0 0 1   # HWE, force Fedora 44 akmods
 ```
 
@@ -71,12 +71,12 @@ Regular builds continue to use `centos-10` akmods and the `fedora_akmods_version
 | Variant | What changes |
 |---|---|
 | Regular (`bluefin-lts`) | base LTS image |
-| Nvidia (`bluefin-lts-nvidia`) | Nvidia drivers, CUDA toolkit, AI/GPU tooling; uses CoreOS stable kernel via `ENABLE_NVIDIA=1` |
+| Nvidia (`bluefin-lts-hwe-nvidia`) | Nvidia drivers, CUDA toolkit, AI/GPU tooling; uses CoreOS stable kernel via `ENABLE_NVIDIA=1` |
 | HWE (`bluefin-lts-hwe`) | newer hardware enablement via CoreOS stable kernel |
 
 ## Nvidia build internals
 
-The Nvidia variant (`bluefin-lts-nvidia`) is built from the same `Containerfile` as the other variants
+The Nvidia variant (`bluefin-lts-hwe-nvidia`) is built from the same `Containerfile` as the other variants
 with `ENABLE_NVIDIA=1` passed as a build arg. Key differences from Regular:
 
 - **Kernel:** CoreOS stable (same as HWE) via `coreos-stable-<fedora_ver>` akmods — NOT CentOS 10 akmods
@@ -85,7 +85,7 @@ with `ENABLE_NVIDIA=1` passed as a build arg. Key differences from Regular:
 - **System files:** `system_files_overrides/nvidia/` + arch-specific `aarch64-nvidia/`, `x86_64-nvidia/`
 - **Kernel args:** `kargs.d/00-nvidia.toml` written inline in `20-nvidia.sh` (blacklists nouveau, enables nvidia-drm.modeset)
 - **CDI:** `nvidia-container-toolkit` configured for rootless Podman access; `ublue-nvctk-cdi.service` enabled via preset
-- **FLAVOR label:** `nvidia`; `IMAGE_NAME`: `bluefin-lts-nvidia`
+- **FLAVOR label:** `nvidia`; `IMAGE_NAME`: `bluefin-lts-hwe-nvidia`
 
 **When renaming internal build flags or override directories**, always search ALL build scripts including
 arch-specific subdirectories (`build_scripts/overrides/aarch64/`, `build_scripts/overrides/x86_64/`) and
