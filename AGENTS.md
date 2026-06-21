@@ -135,7 +135,7 @@ When in doubt, post nothing.
 - Max 4 open PRs at a time per agent
 - No WIP PRs
 - **Agents MUST NOT push directly to `main`.** All changes via PR. Branch protection enforces this (requires 2 `projectbluefin/maintainers` approvals).
-- **Agents MUST NOT push directly to `lts`.** Land in `main` first; `execute-release.yml` handles copying `:testing`→`:lts` on promotion PR merge.
+- **Agents MUST NOT push directly to `lts`.** Land in `main` first; `execute-release.yml` handles copying `:testing`→`:lts` on promotion PR auto-merge.
 - **Releases** are cut by merging the `auto/promote-testing-to-main` PR. No `scheduled-lts-release.yml` workflow exists — do not reference it.
 - **bluefin-lts workflow path overrides are intentional:** use `build_scripts/` and `image-versions.yaml`, not bluefin's `build_files/` and `image-versions.yml`.
 - **`.github/workflows/`, `Justfile`, and `build_scripts/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
@@ -177,7 +177,7 @@ Until migration is complete, use `main` as the PR target for bluefin-lts. Do not
 ## Hard rules
 
 - **NEVER cancel builds** — 45–90 min, set 120+ min timeout
-- **Promotion PRs squash-merge by design** — `reusable-promote-squash.yml` rebuilds the squash branch fresh from the target branch on every run. Do NOT manually merge the promotion PR; the PR merges itself once 2 approvals land and all gate checks pass.
+- **Promotion PRs squash-merge by design** — `reusable-promote-squash.yml` rebuilds the squash branch fresh from the target branch on every run. Do NOT manually merge the promotion PR; the PR auto-merges once all gate checks pass (`lts` requires 0 approvals — gate checks are the only gate).
 - **NEVER re-enable LTS ISO builds** — Anaconda is broken on CentOS Stream base
 - **NEVER commit directly to `lts` branch** — land in `main` first
 - **NEVER merge `lts→main`** — flow is one-way: `main→lts` only
