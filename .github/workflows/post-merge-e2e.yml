@@ -1,8 +1,9 @@
-name: Post-Merge E2E — Testing Gate
+name: Post-Merge Testing Gate
 
-# Runs e2e smoke tests after every successful push build on main or testing.
-# Gates :testing — the stream tag is NOT published by the build (publish_stream_tag: false
-# in build-regular-hwe.yml). This workflow promotes :testing only after smoke passes.
+# Promotes :testing immediately after a successful build — no post-merge E2E.
+# PR validation (pr-testsuite.yml) already gates every change before merge.
+# :testing is NOT published by the build itself (publish_stream_tag: false in
+# build-regular-hwe.yml); this workflow does the promotion.
 on:
   workflow_run:
     workflows:
@@ -15,59 +16,17 @@ on:
 permissions: read-all
 
 concurrency:
-  group: post-merge-e2e-${{ github.event.workflow_run.head_sha || github.sha }}
+  group: post-merge-testing-gate-${{ github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
-  get-image:
-    name: Resolve test image
+  promote-to-testing:
+    name: Promote verified digests to :testing
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
        (github.event.workflow_run.head_branch == 'main' ||
         github.event.workflow_run.head_branch == 'testing'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      image: ${{ steps.get-digest.outputs.image }}
-    steps:
-      - name: Download build digest
-        id: get-digest
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            # Manual re-run: test the currently published :testing image
-            echo "image=ghcr.io/${{ github.repository_owner }}/bluefin-lts-hwe:testing" >> "$GITHUB_OUTPUT"
-            echo "Manual run: testing ghcr.io/${{ github.repository_owner }}/bluefin-lts-hwe:testing"
-          else
-            gh run download "${{ github.event.workflow_run.id }}" \
-              --repo "${{ github.repository }}" \
-              --name "image-digest-testing-bluefin-lts-hwe-main-x86_64" \
-              --dir /tmp/digest
-            DIGEST=$(grep "^bluefin-lts-hwe=" /tmp/digest/*.txt | head -1 | cut -d= -f2-)
-            echo "image=ghcr.io/${{ github.repository_owner }}/bluefin-lts-hwe@${DIGEST}" >> "$GITHUB_OUTPUT"
-            echo "Testing image: ghcr.io/${{ github.repository_owner }}/bluefin-lts-hwe@${DIGEST}"
-          fi
-
-  e2e-smoke:
-    name: E2E smoke + common
-    needs: [get-image]
-    if: needs.get-image.outputs.image != ''
-    permissions:
-      contents: read
-      packages: write
-    uses: ./.github/workflows/run-testsuite.yml
-    with:
-      image: ${{ needs.get-image.outputs.image }}
-      suites: smoke,common
-    secrets: inherit
-
-  promote-to-testing:
-    name: Promote verified digests to :testing
-    needs: [get-image, e2e-smoke]
-    if: needs.e2e-smoke.result == 'success' && github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
