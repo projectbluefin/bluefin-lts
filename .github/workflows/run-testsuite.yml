@@ -25,4 +25,7 @@ jobs:
     with:
       image: ${{ inputs.image }}
       suites: ${{ inputs.suites }}
+      # Keep the checked-out tests aligned with the managed workflow tag.
+      # Defaulting to testsuite/main can gate bluefin-lts on unreleased test changes.
+      test_ref: v1
     secrets: inherit
