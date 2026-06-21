@@ -6,15 +6,45 @@ description: >-
   skopeo, managing the lts branch, verifying published images, or checking ISO status.
 metadata:
   type: runbook
+  context7-sources:
+    - /websites/github_en_actions
 ---
 
 # Release
+
+## When to Use
+
+- Editing `.github/workflows/promote-testing-to-main.yml`
+- Changing weekly `main → lts` promotion cadence
+- Debugging why a promotion PR updated but did not enqueue
+- Verifying manual `workflow_dispatch` stable cuts
+
+## When NOT to Use
+
+- Package or image-content changes → `docs/skills/build.md`
+- Non-promotion CI failures → `docs/skills/ci-cd.md`
+- Hardware-specific image issues → `docs/skills/hardware.md`
+
+## Core Process
+
+1. Let `workflow_run` events keep the promotion PR fresh after `main` changes.
+2. Use the weekly fallback schedule on **Thursday 04:00 UTC** for automatic
+   `main → lts` release evaluation.
+3. Keep `use_merge_queue` conditional so only `schedule` and
+   `workflow_dispatch` enqueue; `workflow_run` should refresh the PR without
+   forcing it into the queue.
+4. Preserve `source_branch: main` and `target_branch: lts`.
+5. Treat `do-not-merge` as a hard stop for auto-merge.
 
 ## Production release flow
 
 Releases are cut by merging the always-open `auto/promote-testing-to-main` PR.
 
-1. `promote-testing-to-main.yml` runs on every push to `main` (via `Sync main → testing` completion) and on a nightly cron. It calls `reusable-promote-squash.yml@v1` with `source_branch=main, target_branch=lts`. When `main` and `lts` trees differ it rebuilds the squash branch and upserts the promotion PR.
+1. `promote-testing-to-main.yml` runs on `workflow_run` after `main` moves, on
+   Thursday at `04:00 UTC`, and on manual dispatch. It calls
+   `reusable-promote-squash.yml` with `source_branch: main` and
+   `target_branch: lts`. When `main` and `lts` trees differ it rebuilds the
+   squash branch and upserts the promotion PR.
 2. The gate job verifies cosign signatures, resolves digests, and checks for a passing post-merge E2E run. Results are posted as a live checklist in the PR body.
 3. **2 approvals from `@projectbluefin/maintainers`** are required — branch protection on `lts` enforces this.
 4. The promotion PR **auto-merges with squash** once 2 approvals land and all gate checks pass (`allow_auto_merge` is enabled by `reusable-promote-squash.yml`). Do not click merge manually. `execute-release.yml` fires on the resulting push to `lts`, re-verifies cosign, skopeo-copies `:testing` → `:lts`, and creates a GitHub release with changelog via `reusable-release.yml@v1`.
@@ -39,7 +69,15 @@ When recent commits to `main` are CI-only (no image changes), `Post-Merge E2E �
 gh workflow run "Post-Merge E2E — Testing Parity" --repo projectbluefin/bluefin-lts
 ```
 
-The gate reruns automatically when the promotion workflow next fires (nightly cron or next push to main).
+The gate reruns automatically when the promotion workflow next fires
+(Thursday fallback schedule, manual dispatch, or next qualifying `workflow_run`).
+
+## Weekly cadence
+
+- Automatic fallback promotion cadence: **Thursday 04:00 UTC**
+- Intent: keep bluefin-lts stable two days behind bluefin stable
+- `workflow_dispatch` is the supported mid-week release path and must enqueue
+  through the merge queue
 
 ## Branch model
 
@@ -212,3 +250,25 @@ The reusable workflow:
 - Does a sparse checkout of `projectbluefin/actions` into `.workflow-scripts/` to access `scripts/render_pr_body.py`
 - Creates PR via `gh pr create` and extracts the PR number from the returned URL (`--json` flag not available in runner's gh version)
 - Assigns review to `@projectbluefin/maintainers` team on create
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "workflow_run should auto-enqueue too." | No. It should refresh the PR after `main` moves, not push every delta into the queue. |
+| "Manual dispatch is only break-glass." | It is also the supported mid-week release path, so queue behavior must match schedule runs. |
+| "Thursday timing does not matter." | It intentionally trails bluefin by two days. |
+
+## Red Flags
+
+- unconditional `use_merge_queue: true`
+- removing `source_branch: main` or `target_branch: lts`
+- describing the schedule as nightly or daily
+- changing queue behavior without considering `workflow_run`
+
+## Verification
+
+- [ ] `promote-testing-to-main.yml` schedules Thursday at `0 4 * * 4`
+- [ ] `use_merge_queue` is conditional on `schedule || workflow_dispatch`
+- [ ] `workflow_run` remains enabled for main-driven PR refreshes
+- [ ] `source_branch: main` and `target_branch: lts` remain intact
