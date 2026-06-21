@@ -13,9 +13,9 @@
       "automergeStrategy": "squash"
     },
     {
-      "description": "Never SHA-pin projectbluefin/actions refs — use @v1 managed tags; SHA pins break the no-sha-pins-for-internal-actions pre-commit hook and block automerge",
+      "description": "Never SHA-pin projectbluefin/actions or projectbluefin/testsuite refs — use @v1 managed tags; SHA pins break the no-sha-pins-for-internal-actions pre-commit hook and block automerge",
       "matchManagers": ["github-actions"],
-      "matchDepNames": ["/^projectbluefin\/actions/"],
+      "matchDepNames": ["/^projectbluefin\/(actions|testsuite)/"],
       "pinDigests": false,
       "enabled": false
     }
