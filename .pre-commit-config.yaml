@@ -24,8 +24,8 @@ repos:
         types: [yaml]
         files: '^\.github/workflows/'
       - id: no-sha-pins-for-internal-actions
-        name: Block SHA pins for projectbluefin/actions refs (use @v1)
+        name: Block SHA pins for projectbluefin/actions and projectbluefin/testsuite refs (use @v1)
         language: pygrep
-        entry: 'uses:.*projectbluefin/actions.*@[0-9a-f]{40}'
+        entry: 'uses:.*projectbluefin/(actions|testsuite).*@[0-9a-f]{40}'
         types: [yaml]
         files: '(^\.github/workflows/.*\.yml$|action\.yml$)'

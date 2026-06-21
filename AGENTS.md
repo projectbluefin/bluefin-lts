@@ -129,7 +129,7 @@ When in doubt, post nothing.
 ### Mandatory gates
 
 - `just check && pre-commit run --all-files` before every commit
-- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/actions/` and `projectbluefin/bonedigger/` refs are intentional managed tags and are exempted. `projectbluefin/testsuite` is SHA-pinned in `run-testsuite.yml` and managed by Renovate.
+- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/actions/`, `projectbluefin/bonedigger/`, and `projectbluefin/testsuite/` refs are intentional managed tags and are exempted. `no-sha-pins-for-internal-actions` blocks SHA pins on `projectbluefin/actions` and `projectbluefin/testsuite` — both use `@v1` managed tags.
 - PR title: Conventional Commits format
 - Attribution on every AI-authored commit: `Assisted-by: <Model> via <Tool>`
 - Max 4 open PRs at a time per agent
@@ -219,8 +219,8 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 All `uses:` references to **external** actions must be pinned to a full commit SHA with a version
 comment. Never use floating `@main` or `@vN` tags for third-party actions.
 `projectbluefin/actions` refs (`@v1`) are intentional managed tags and are exempt.
-`projectbluefin/testsuite` refs are SHA-pinned in `run-testsuite.yml`; Renovate keeps
-the pin current.
+`projectbluefin/testsuite` refs use `@v1` in `run-testsuite.yml`; the testsuite's
+`update-v1-tag.yml` auto-tracks `v1` to main on every merge — no manual SHA bumps needed.
 
 ---
 

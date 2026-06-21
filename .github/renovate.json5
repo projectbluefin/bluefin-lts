@@ -39,6 +39,12 @@
       "pinDigests": true
     },
     {
+      "description": "Never SHA-pin projectbluefin/testsuite refs — use @v1 managed tag",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["projectbluefin/testsuite"],
+      "enabled": false
+    },
+    {
       "automerge": true,
       "matchManagers": ["github-actions"],
       "matchDepTypes": ["action"],
