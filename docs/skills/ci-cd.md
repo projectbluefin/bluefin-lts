@@ -806,3 +806,57 @@ currently commented out ("centos countme data is broken"). Once data starts
 flowing, open a PR there to re-enable it, then update the `ghcurl` line in
 `build_scripts/90-image-info.sh` to use `bluefin-lts.json` instead of
 `bluefin.json`.
+
+## Merging PRs as repo admin
+
+### Merge queue + CODEOWNERS blocks all PRs
+
+`main` has a merge queue enabled. `gh pr merge --auto` has no effect when a merge queue is
+active — it silently sets the GitHub auto-merge flag but the PR stays BLOCKED. PRs must enter
+the queue explicitly, and the queue requires CODEOWNERS approval first.
+
+CODEOWNERS has a `*` wildcard:
+```
+* @projectbluefin/maintainers
+```
+This catches **every** PR including docs-only. Before any PR can enter the queue,
+`projectbluefin/maintainers` must approve. Since castrojo is the PR author and GitHub blocks
+self-approval, all PRs get stuck.
+
+**Fix as repo admin:**
+```bash
+gh pr merge <number> --admin --squash
+```
+The `--admin` flag bypasses branch protection, including CODEOWNERS and the merge queue.
+Use squash — the ruleset only allows squash merges (attempts with `--merge` or `--rebase` fail).
+
+**Diagnosis commands:**
+```bash
+# See why a PR is BLOCKED
+gh pr view <number> --json mergeStateStatus,mergeable,reviewDecision
+
+# Check ruleset (merge queue config, required approvals)
+gh api repos/projectbluefin/bluefin-lts/rules/branches/main | python3 -c "import json,sys; [print(r['type'], json.dumps(r.get('parameters',{}))[:200]) for r in json.load(sys.stdin)]"
+```
+
+### Renovate PRs: rebasing
+
+Renovate targets `testing`, not `main`. Its PRs accumulate all intermediate squash commits
+from testing history, so a rebase onto current `testing` will replay many commits and hit
+multiple conflicts. Common conflicts:
+
+- `image-versions.yaml` — competing digest bumps; keep the **newer** (HEAD) digest
+- `.github/workflows/run-testsuite.yml` — testsuite SHA pin; keep **theirs** (the Renovate commit)
+- `.github/workflows/bonedigger.yml` — Renovate's pin-dependencies tries to SHA-pin this; **keep `@v1`** — bonedigger is an intentional managed tag, exempt from SHA pinning
+
+Fastest resolution pattern when conflicts cascade:
+```bash
+while git diff --name-only --diff-filter=U | grep -q .; do
+  for f in $(git diff --name-only --diff-filter=U); do
+    git checkout --theirs "$f"
+    git add "$f"
+  done
+  GIT_EDITOR=true git rebase --continue
+done
+```
+Then manually fix `image-versions.yaml` if the brew/common digest was newer in HEAD than theirs.
