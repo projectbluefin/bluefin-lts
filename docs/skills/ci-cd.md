@@ -667,6 +667,26 @@ The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
 
 **`run-testsuite.yml` uses `@v1`, not a SHA pin.** Do not convert it to a SHA — the `no-sha-pins-for-internal-actions` hook blocks SHA pins on both `projectbluefin/actions` and `projectbluefin/testsuite`, and Renovate is disabled for this ref.
 
+**`test_ref: v1` must be explicitly passed.** `run-testsuite.yml` must pass `test_ref: v1` to the reusable testsuite workflow, otherwise the workflow checks out test code from `main` even though the workflow itself is pinned to `@v1`. This causes bluefin-lts to be gated by unreleased test changes and is the most common cause of E2E failures after a `@v1` migration.
+
+```yaml
+# run-testsuite.yml — required
+with:
+  image: ${{ inputs.image }}
+  suites: ${{ inputs.suites }}
+  test_ref: v1   # must match the workflow tag — omitting this defaults to main
+```
+
+**`common_dconf` E2E suite requires a gschema override for `enabled-extensions`.** The `custom-command-list extension is in distribution defaults` scenario checks that bundled GNOME extensions appear in the `org.gnome.shell` gsettings schema default. Bundling an extension in `system_files/usr/share/gnome-shell/extensions/` is not enough — it must also be listed in a gschema override:
+
+```
+system_files/usr/share/glib-2.0/schemas/zz1-bluefin-lts-shell.gschema.override
+[org.gnome.shell]
+enabled-extensions = ['<ext1>', '<ext2>', ...]
+```
+
+Include only extensions that are physically present in `system_files/usr/share/gnome-shell/extensions/`. Extensions that come from `common` or packages should not be listed here.
+
 ---
 
 ## Trivy scan FATAL — CentOS 10 CPE indices missing
