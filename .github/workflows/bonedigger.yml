@@ -22,4 +22,3 @@ jobs:
       brand_name: "Bluefin LTS"
       brand_emoji: "🦕"
     secrets: inherit
-
