@@ -126,7 +126,7 @@ After any workflow change:
 | `pr-testsuite.yml` | runs **`validate-pr@v1`** (just check, shellcheck, hadolint, pre-commit) + **e2e smoke** on every PR; only `Lint & syntax` is a required check |
 | `pr-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
 | `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
-| `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; SHA-pinned to a specific commit, managed by Renovate (see below) |
+| `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; uses `@v1` managed tag, auto-tracked to main by testsuite's `update-v1-tag.yml` (see below) |
 | `renovate-automerge.yml` | auto-merges Renovate/mergeraptor PRs when pr-testsuite passes |
 | `post-merge-e2e.yml` | **gates `:testing` promotion** — runs smoke+common suites after every successful build on `main`; digests are only promoted to `:testing` if smoke passes; if it fails, a GH issue is auto-filed and `:testing` is not updated |
 | `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
@@ -279,7 +279,7 @@ jobs:
 
 If a stuck `chore(deps): pin dependencies` PR appears targeting `projectbluefin/actions`, close it — it can never pass lint. Add the rule above to `renovate.json` to prevent recurrence.
 
-`projectbluefin/testsuite` is intentionally SHA-pinned in `run-testsuite.yml` and managed by Renovate. Renovate keeps the pin current; do not change it to `@main`.
+`projectbluefin/testsuite` uses `@v1` in `run-testsuite.yml`. The testsuite repo's `update-v1-tag.yml` workflow force-pushes the `v1` tag to HEAD on every merge to main — consumers always get the latest fixes without manual SHA bumps. Do not SHA-pin this ref; Renovate is disabled for it.
 
 ### projectbluefin/* refs — tag and pin policy
 
@@ -287,9 +287,9 @@ If a stuck `chore(deps): pin dependencies` PR appears targeting `projectbluefin/
 |---|---|---|
 | `projectbluefin/actions` | `@v1` managed tag — never SHA-pin | `no-sha-pins-for-internal-actions` pre-commit hook blocks SHA pins; Renovate is disabled for this ref |
 | `projectbluefin/bonedigger` | `@v1` managed tag — never SHA-pin | Convention; no hook enforces this, but managed tags are the factory standard |
-| `projectbluefin/testsuite` | SHA-pinned in `run-testsuite.yml` — Renovate keeps it current | Reproducible E2E; hook narrowed to `actions` only so pin passes lint |
+| `projectbluefin/testsuite` | `@v1` managed tag — never SHA-pin | `update-v1-tag.yml` in the testsuite repo force-pushes `v1` to HEAD on every main push; `no-sha-pins-for-internal-actions` hook blocks SHA pins; Renovate is disabled for this ref |
 
-SHA-pinning `projectbluefin/actions` triggers `Lint & syntax` failure (the `no-sha-pins-for-internal-actions` hook — regex: `uses:.*projectbluefin/actions.*@[0-9a-f]{40}`). SHA-pinning `projectbluefin/bonedigger` is not caught by any hook but is wrong by convention. SHA-pinning `projectbluefin/testsuite` is correct and intentional.
+SHA-pinning `projectbluefin/actions` or `projectbluefin/testsuite` triggers `Lint & syntax` failure (the `no-sha-pins-for-internal-actions` hook — regex: `uses:.*projectbluefin/(actions|testsuite).*@[0-9a-f]{40}`). SHA-pinning `projectbluefin/bonedigger` is not caught by any hook but is wrong by convention.
 
 ### Handling stale Renovate SHA-bump branches after a bulk @v1 conversion
 
@@ -660,9 +660,9 @@ The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
 | `systemd-udev-settle.service` | Waits for udev to settle real hardware; times out (~125s) in QEMU with no physical devices. Manifests as `"No failed systemd units at boot"` smoke test failure. | projectbluefin/testsuite#419 |
 | `bootloader-update.service` | Updates the EFI bootloader on boot; fails in QEMU VMs that have no EFI boot entry to update. Appears in VM serial log as `FAILED`. Currently not caught by the smoke test assertion — no open fix PR. |
 
-**After a testsuite fix merges**, Renovate will open a PR to bump the SHA pin in `run-testsuite.yml`. The automerge pipeline handles it — no manual action needed. Remove any temporary KERNEL_ARGS mask in the testsuite if the fix makes it obsolete.
+**After a testsuite fix merges**, `run-testsuite.yml` picks it up immediately — `@v1` is automatically advanced to HEAD by the testsuite's `update-v1-tag.yml`. No Renovate SHA bump PR needed. Remove any temporary KERNEL_ARGS mask in the testsuite if the fix makes it obsolete.
 
-**`run-testsuite.yml` is SHA-pinned, not `@main`.** The pin is managed by Renovate. Do not change it back to `@main` — the SHA pin gives reproducible E2E runs and the `no-sha-pins-for-internal-actions` hook only blocks SHA pins on `projectbluefin/actions`, not `projectbluefin/testsuite`.
+**`run-testsuite.yml` uses `@v1`, not a SHA pin.** Do not convert it to a SHA — the `no-sha-pins-for-internal-actions` hook blocks SHA pins on both `projectbluefin/actions` and `projectbluefin/testsuite`, and Renovate is disabled for this ref.
 
 ---
 
@@ -846,7 +846,7 @@ from testing history, so a rebase onto current `testing` will replay many commit
 multiple conflicts. Common conflicts:
 
 - `image-versions.yaml` — competing digest bumps; keep the **newer** (HEAD) digest
-- `.github/workflows/run-testsuite.yml` — testsuite SHA pin; keep **theirs** (the Renovate commit)
+- `.github/workflows/run-testsuite.yml` — uses `@v1`; no SHA conflicts expected (Renovate is disabled for this ref)
 - `.github/workflows/bonedigger.yml` — Renovate's pin-dependencies tries to SHA-pin this; **keep `@v1`** — bonedigger is an intentional managed tag, exempt from SHA pinning
 
 Fastest resolution pattern when conflicts cascade:
