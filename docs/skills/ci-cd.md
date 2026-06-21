@@ -669,3 +669,39 @@ suitable for LTS migration testing:
 
 Use podman headless (see `docs/skills/testing.md`) for variant mapping smoke tests,
 and KubeVirt VM for end-to-end reboot verification.
+
+## countme: rpm-ostree-countme is broken on CentOS — replaced with dnf5 service
+
+### Root cause
+
+`rpm-ostree-countme.service` uses an old libdnf4 snapshot that cannot expand
+shell-style variable syntax. EPEL 10's metalink URL requires this:
+
+  metalink=https://mirrors.fedoraproject.org/metalink?repo=epel${releasever_minor:+-z}-${releasever}&arch=${basearch}
+
+On CentOS, `releasever_minor` is intentionally undefined. dnf5 expands the
+expression to empty → `epel-10` (correct). rpm-ostree's libdnf4 sends the literal
+`${releasever_minor:+-z}` → HTTP 404.
+
+Upstream: coreos/rpm-ostree#5464, projectbluefin/bluefin-lts#656
+
+### Workaround (shipped in bluefin-lts)
+
+- `rpm-ostree-countme.service` and `rpm-ostree-countme.timer` are **masked**
+  in `build_scripts/40-services.sh`.
+- `bluefin-lts-countme.service` + `bluefin-lts-countme.timer` are shipped in
+  `system_files/usr/lib/systemd/system/` and enabled at build time.
+- The service runs `dnf5 makecache` as root on a weekly schedule.
+  dnf5 handles the variable expansion correctly and reads `NAME="Bluefin LTS"`
+  from `/usr/lib/os-release` for the User-Agent, so pings are attributed
+  correctly in Fedora/EPEL mirror logs.
+- dnf5 countme cookie (`persistdir` per repo) enforces the 7-day window —
+  the timer firing weekly + `Persistent=true` is sufficient.
+
+### ublue-os/countme badge
+
+The `bluefin-lts` badge in `ublue-os/countme generate_badge_data.py` is
+currently commented out ("centos countme data is broken"). Once data starts
+flowing, open a PR there to re-enable it, then update the `ghcurl` line in
+`build_scripts/90-image-info.sh` to use `bluefin-lts.json` instead of
+`bluefin.json`.

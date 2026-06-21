@@ -1,0 +1,13 @@
+[Unit]
+Description=Weekly Bluefin LTS Count Me reporting
+Documentation=https://github.com/projectbluefin/bluefin-lts
+# Only run on bootc/ostree systems
+ConditionPathExists=/run/ostree-booted
+
+[Service]
+Type=oneshot
+# dnf5 correctly expands ${releasever_minor:+-z} (empty on CentOS → epel-10)
+# and reads NAME from /usr/lib/os-release, reporting as "Bluefin LTS".
+# Must run as root: dnf5 countme bails out when getuid() != 0.
+# Ref: coreos/rpm-ostree#5464 (rpm-ostree-countme broken on CentOS)
+ExecStart=/usr/bin/dnf5 makecache

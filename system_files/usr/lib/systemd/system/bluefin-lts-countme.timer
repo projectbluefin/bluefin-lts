@@ -1,0 +1,16 @@
+[Unit]
+Description=Weekly Bluefin LTS Count Me timer
+Documentation=https://github.com/projectbluefin/bluefin-lts
+ConditionPathExists=/run/ostree-booted
+
+[Timer]
+# Fire 5 minutes after boot (catches systems that were off at the scheduled time)
+OnBootSec=5m
+# Then weekly. dnf5's countme cookie (7-day window) prevents double-counting.
+OnUnitInactiveSec=7d
+Persistent=true
+AccuracySec=1h
+RandomizedDelaySec=1d
+
+[Install]
+WantedBy=timers.target
