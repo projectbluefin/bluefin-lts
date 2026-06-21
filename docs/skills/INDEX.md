@@ -44,6 +44,7 @@ Written as timeless rules, not session logs.
 | [`packages.md`](packages.md) | Package manifests, cadence intervals, package addition/removal patterns |
 | [`skill-improvement.md`](skill-improvement.md) | **The skill-improvement mandate** — how to write skill files, canonical format, commit procedure |
 | [`skill-drift.md`](skill-drift.md) | How the skill-drift CI coupling check works, path mapping, waiver process |
+| [`testing.md`](testing.md) | When to use ghost lab (KubeVirt VM) vs podman headless for testing changes |
 
 ## Task → Skill
 
@@ -61,5 +62,6 @@ Written as timeless rules, not session logs.
 | Work on OEM hardware hooks | `hardware.md` |
 | Write or update a skill file | `skill-improvement.md` |
 | Understand why the skill-drift CI check fired | `skill-drift.md` |
+| Test a change in the ghost lab or podman headless | `testing.md` |
 | Understand cross-repo rules or branch targets | `../factory/agentic-model.md` |
 | Understand what improvement is next for the factory | `../factory/IMPROVEMENTS.md` |

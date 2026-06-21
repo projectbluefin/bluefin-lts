@@ -74,11 +74,13 @@ See Reference — Cosign verification section below. The cert identity regexp mu
 ## Red Flags
 
 - **Floating third-party action tags** (`@main`, `@v2`) — `no-floating-action-tags` pre-commit hook blocks these. `projectbluefin/actions@v1` is exempt.
+- **SHA-pinning `projectbluefin/testsuite`** — use `@v1`; testsuite auto-tracks it. The `no-sha-pins-for-internal-actions` hook blocks SHA pins on both `actions` and `testsuite`.
 - **Adding `workflows: write` to a job** — not a valid `GITHUB_TOKEN` scope; causes silent failures.
 - **Triggering on `push: lts`** — pushes to `lts` do not build images. Only `execute-release.yml` uses lts push events.
 - **Calling the testsuite `e2e.yml` directly** — always call via `run-testsuite.yml`; never call the testsuite directly.
 - **`stream_name: lts` in a build caller** — the build callers do not run on `lts`; `execute-release.yml` uses skopeo copy, not reusable-build.
 - **`startup_failure` with no log** — means a permission scope required by a nested reusable workflow is not granted by the caller job. See Reference — startup_failure diagnosis.
+- **`use_merge_queue: true` on lts** — `lts` uses classic branch protection, not a merge queue ruleset; `enqueuePullRequest` silently fails and the PR never auto-merges. Always use `use_merge_queue: false` so `--auto` merge fires when gate checks pass.
 
 ## Verification
 
@@ -87,6 +89,7 @@ After any workflow change:
 - [ ] `actionlint .github/workflows/<changed>.yml` passes
 - [ ] `just check && pre-commit run --all-files` passes
 - [ ] No floating third-party action tags (pre-commit guard catches this)
+- [ ] `run-testsuite.yml` uses `@v1`, not a SHA pin — Renovate is disabled for this ref
 - [ ] New workflow added to the workflow map in this file
 - [ ] If workflow touches the release pipeline → `release.md` updated too
 
