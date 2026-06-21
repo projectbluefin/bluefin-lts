@@ -162,7 +162,7 @@ After any workflow change:
 2. `sync-main-to-testing.yml` mirrors `main → testing`, triggering the promote workflow.
 3. `promote-testing-to-main.yml` fires on `workflow_run` completion of `Sync main → testing` and `Post-Merge E2E — Testing Gate`, and on the nightly schedule. (The direct `push: main` trigger was removed — it raced the gate and produced noisy READY=false failures on every merge.)
 4. Promote workflow compares `main` vs `lts` trees; rebuilds squash branch if different.
-5. Promotion PR **auto-merges with squash** once 2 approvals land and gate passes — `allow_auto_merge` is enabled by the reusable workflow. `execute-release.yml` fires on the resulting push to `lts` → `:testing` copied to `:lts`.
+5. Promotion PR **auto-merges with squash** once gate passes — `allow_auto_merge` is enabled by the reusable workflow; `lts` requires 0 approvals so it merges as soon as checks pass. `execute-release.yml` fires on the resulting push to `lts` → `:testing` copied to `:lts`.
 
 **The promotion PR is squash-merge by design** — `reusable-promote-squash.yml` rebuilds the branch fresh from `lts` on every run. Do not manually merge it.
 **Never merge `lts→main`.**
@@ -540,7 +540,7 @@ curl -fsSL "${UUPD_RAW}/uupd.timer"   -o /usr/lib/systemd/system/uupd.timer
 
 ## PR-based release gate model
 
-**Design:** The always-open `auto/promote-testing-to-main` PR is the release gate. Merge it (requires 2 maintainers) to cut a release. Gate checks run automatically after each promotion update.
+**Design:** The always-open `auto/promote-testing-to-main` PR is the release gate. It auto-merges when all gate checks pass — no human approval required. Gate checks run automatically after each promotion update.
 
 **Key GITHUB_TOKEN limitations (both apply here):**
 1. `GITHUB_TOKEN` pushes to a branch do NOT fire `pull_request: synchronize` events — GitHub blocks this to prevent loops.

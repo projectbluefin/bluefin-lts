@@ -46,8 +46,7 @@ Releases are cut by merging the always-open `auto/promote-testing-to-main` PR.
    `target_branch: lts`. When `main` and `lts` trees differ it rebuilds the
    squash branch and upserts the promotion PR.
 2. The gate job verifies cosign signatures, resolves digests, and checks for a passing post-merge E2E run. Results are posted as a live checklist in the PR body.
-3. **2 approvals from `@projectbluefin/maintainers`** are required — branch protection on `lts` enforces this.
-4. The promotion PR **auto-merges with squash** once 2 approvals land and all gate checks pass (`allow_auto_merge` is enabled by `reusable-promote-squash.yml`). Do not click merge manually. `execute-release.yml` fires on the resulting push to `lts`, re-verifies cosign, skopeo-copies `:testing` → `:lts`, and creates a GitHub release with changelog via `reusable-release.yml@v1`.
+3. The promotion PR **auto-merges with squash** once all gate checks pass — `allow_auto_merge` is enabled by `reusable-promote-squash.yml` and the `lts` branch requires 0 approvals. Do not click merge manually. `execute-release.yml` fires on the resulting push to `lts`, re-verifies cosign, skopeo-copies `:testing` → `:lts`, and creates a GitHub release with changelog via `reusable-release.yml@v1`.
 
 ```bash
 # Check the gate status
@@ -59,7 +58,7 @@ gh pr merge <pr-number> --repo projectbluefin/bluefin-lts --squash --admin
 
 ## Branch protection
 
-`lts` branch requires 2 approvals from `@projectbluefin/maintainers`. `main` has the same rule. Both are enforced via GitHub branch protection (set 2026-06-12). `maintainers` team members can bypass with `--admin`.
+`lts` branch requires a PR but 0 approvals — the gate checks (cosign + E2E) are the only gate. `main` requires 2 approvals from `@projectbluefin/maintainers`. `maintainers` team members can bypass with `--admin`.
 
 ## Gate checklist — E2E skipped for CI-only commits
 
@@ -74,10 +73,9 @@ The gate reruns automatically when the promotion workflow next fires
 
 ## Weekly cadence
 
-- Automatic fallback promotion cadence: **Thursday 04:00 UTC**
-- Intent: keep bluefin-lts stable two days behind bluefin stable
-- `workflow_dispatch` is the supported mid-week release path and must enqueue
-  through the merge queue
+- Fully automated: **Thursday 04:00 UTC** (midnight ET) — cron fires, promote workflow updates the PR, auto-merge triggers, gate checks run, PR merges, execute-release publishes `:lts` and `:stable`
+- No human approval required — gate checks (cosign + E2E) are the only gate
+- `workflow_dispatch` is the supported mid-week release path
 
 ## Branch model
 
@@ -255,20 +253,21 @@ The reusable workflow:
 
 | Rationalization | Reality |
 |---|---|
-| "workflow_run should auto-enqueue too." | No. It should refresh the PR after `main` moves, not push every delta into the queue. |
-| "Manual dispatch is only break-glass." | It is also the supported mid-week release path, so queue behavior must match schedule runs. |
+| "workflow_run should auto-merge too." | No. It should refresh the PR after `main` moves; auto-merge is already set by `--auto` — no extra action needed. |
+| "Manual dispatch needs special handling." | It is the supported mid-week release path; `use_merge_queue: false` covers both schedule and dispatch identically. |
 | "Thursday timing does not matter." | It intentionally trails bluefin by two days. |
 
 ## Red Flags
 
-- unconditional `use_merge_queue: true`
+- `use_merge_queue: true` — lts uses classic branch protection, not a merge queue ruleset; use `--auto` instead
 - removing `source_branch: main` or `target_branch: lts`
 - describing the schedule as nightly or daily
-- changing queue behavior without considering `workflow_run`
+- adding required approvals back to `lts` branch protection
 
 ## Verification
 
 - [ ] `promote-testing-to-main.yml` schedules Thursday at `0 4 * * 4`
-- [ ] `use_merge_queue` is conditional on `schedule || workflow_dispatch`
+- [ ] `use_merge_queue: false` (always — enables `--auto` merge on gate pass)
 - [ ] `workflow_run` remains enabled for main-driven PR refreshes
 - [ ] `source_branch: main` and `target_branch: lts` remain intact
+- [ ] `lts` branch protection: `required_approving_review_count: 0`
