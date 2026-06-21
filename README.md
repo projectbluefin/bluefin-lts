@@ -51,11 +51,30 @@ AI-focused track with LTS roots.
 sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-gdx:lts --enforce-container-sigpolicy
 ```
 
+## Migrating from ublue-os/bluefin-lts
+
+Users on the previous `ghcr.io/ublue-os/bluefin*:lts` images will be migrated automatically via a systemd service shipped in the weekly build. No action required — your machine will switch on its next reboot after pulling the update.
+
+| Old image (ublue-os) | New image (projectbluefin) |
+|---|---|
+| `bluefin:lts` | `bluefin-lts:lts` |
+| `bluefin:lts-hwe` | `bluefin-lts-hwe:lts` |
+| `bluefin-dx:lts` | `bluefin-lts:lts` + run `ujust devmode` after reboot |
+| `bluefin-dx:lts-hwe` | `bluefin-lts-hwe:lts` + run `ujust devmode` after reboot |
+| `bluefin-gdx:lts` | `bluefin-lts-hwe-nvidia:lts` + run `ujust devmode` after reboot |
+| arm64 variants | No automatic migration — reinstall from new image |
+
+To migrate manually before the automatic migration ships:
+
+```bash
+sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:lts --enforce-container-sigpolicy
+```
+
 ## Getting Started
 
 Visit **[projectbluefin.io](https://projectbluefin.io/#scene-picker)** to download Bluefin LTS, or check the **[LTS Documentation](https://docs.projectbluefin.io/lts/)** for installation and upgrade instructions.
 
-Rebasing between the Bluefin and Bluefin LTS image families is not supported. Plan migrations as fresh installs or supported upgrade paths.
+Rebasing between the Bluefin (Fedora) and Bluefin LTS (CentOS) image families is not supported. Plan migrations as fresh installs or supported upgrade paths.
 
 ## Community
 
