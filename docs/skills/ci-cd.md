@@ -795,7 +795,9 @@ Upstream: coreos/rpm-ostree#5464, projectbluefin/bluefin-lts#656
   dnf5 handles the variable expansion correctly and reads `NAME="Bluefin LTS"`
   from `/usr/lib/os-release` for the User-Agent, so pings are attributed
   correctly in Fedora/EPEL mirror logs.
-- dnf5 countme cookie (`persistdir` per repo) enforces the 7-day window.
+- dnf5 countme cookie (`persistdir` per repo) enforces the 7-day window —
+  the timer fires every 3 days (matching Fedora's `rpm-ostree-countme.timer`)
+  so systems that are offline a few days still get counted within a week.
 
 ### ublue-os/countme badge
 
