@@ -1,7 +1,7 @@
 name: Promote main to lts
 
 # Opens and maintains a squash promotion PR from main → lts.
-# Runs daily and on every push to main so maintainers always have a
+# Runs weekly and on every push to main so maintainers always have a
 # current, ready-to-merge PR showing the delta since the last promotion.
 #
 # Branch model for bluefin-lts: source_branch=main, target_branch=lts.
@@ -12,7 +12,7 @@ name: Promote main to lts
 #   - workflow_run on Post-Merge E2E (re-evaluates gate after E2E completes)
 #   - workflow_run on Sync main → testing (fires after every push to main — covers the
 #     direct-push case without racing the gate, since E2E is underway by then)
-#   - daily schedule as a fallback
+#   - weekly schedule as a fallback
 #
 # The direct push: main trigger was removed because it fired before E2E completed,
 # producing a READY=false race on every merge. workflow_run on Sync main → testing
@@ -20,7 +20,7 @@ name: Promote main to lts
 
 on:
   schedule:
-    - cron: '0 23 * * *'
+    - cron: '0 4 * * 4'
   workflow_dispatch:
   workflow_run:
     workflows: ["Post-Merge E2E — Testing Gate", "Sync main → testing"]
@@ -51,4 +51,5 @@ jobs:
       e2e_image: ghcr.io/projectbluefin/bluefin-lts-hwe:testing
       source_branch: main
       target_branch: lts
+      use_merge_queue: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     secrets: inherit
