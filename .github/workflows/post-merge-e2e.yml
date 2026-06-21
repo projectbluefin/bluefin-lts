@@ -108,4 +108,3 @@ jobs:
           done < <(find /tmp/all-digests -name "*.txt" -print0)
 
           echo "✅ Promoted ${PROMOTED} flavor(s) to :testing"
-
