@@ -20,6 +20,8 @@ Load only the skill for the task at hand. Skill files live in `docs/skills/`.
 | GNOME Shell extensions: add, remove, build patterns | [`skills/gnome-extensions.md`](skills/gnome-extensions.md) |
 | Release pipeline, rollback, registry, ISO status | [`skills/release.md`](skills/release.md) |
 | OEM hardware hooks, Framework/Ampere setup, hook architecture | [`skills/hardware.md`](skills/hardware.md) |
+| Testing: podman headless vs KubeVirt VM, ghost lab decision tree | [`skills/testing.md`](skills/testing.md) |
+| Migrating users from ublue-os/bluefin:lts → projectbluefin/bluefin-lts | [`skills/migration.md`](skills/migration.md) |
 
 ## Self-improvement mandate
 

@@ -167,6 +167,7 @@ See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task
 | CentOS-vs-Fedora package/repo decisions | `docs/skills/centos-vs-fedora.md` |
 | GNOME Shell extensions (add/remove/build) | `docs/skills/gnome-extensions.md` |
 | Release, rollback, registry, ISO status | `docs/skills/release.md` |
+| Migrating users from ublue-os/bluefin:lts (full implementation spec) | `docs/skills/migration.md` |
 
 ## Branch model
 

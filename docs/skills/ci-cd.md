@@ -628,3 +628,44 @@ All consuming repos (`bluefin-lts`, `bluefin`, `dakota`) pick up the fix immedia
 - Tests live in `tests/test_changelogs.py` (pytest, run via `.github/workflows/pytest.yml`)
 - `MINIMAL_CONFIG` in the test file must mirror the production `changelog_config.yaml` schema exactly — divergence creates false-green tests where production code paths are never exercised
 - Verify `sections` keys (`all`, `base`, `dx`, `nvidia`) and `templates` keys (including `changelog_format`) match `changelog_config.yaml`
+
+## ublue-os → projectbluefin migration
+
+For the complete implementation spec (script, service unit, timer unit, file paths,
+build enablement, testing) see **[`docs/skills/migration.md`](migration.md)**.
+
+### Signing policy — verified 2026-06-21
+
+Inspected `/etc/containers/policy.json` on `ghcr.io/ublue-os/bluefin:lts` and
+`ghcr.io/projectbluefin/bluefin-lts:lts` — both images ship the same policy.json
+(from `projectbluefin/common`).
+
+- `ghcr.io/ublue-os` → `sigstoreSigned` with key-based verification (ublue-os.pub)
+- `ghcr.io/projectbluefin` → not listed → falls through to `""` catch-all → `insecureAcceptAnything`
+
+`bootc switch --enforce-container-sigpolicy ghcr.io/projectbluefin/bluefin-lts:lts` succeeds
+on the old image. No policy.json changes needed.
+
+### New LTS signing: keyless (OIDC/Fulcio)
+
+New LTS images are signed via `projectbluefin/actions` `sign-and-publish` action with
+`signing-mode: keyless`. Verification:
+```
+cosign verify \
+  --certificate-identity-regexp="https://github.com/projectbluefin/(bluefin|bluefin-lts|dakota|common|aurora|actions)/.github/workflows/" \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+  ghcr.io/projectbluefin/<image>:<tag>
+```
+The `cosign.pub` files in both repos are leftovers from before the switch to keyless — not
+used for new LTS images.
+
+### ghost lab migration testing
+
+The built-in Argo `bluefin-migration-test` and `migration-upgrade-test` templates are NOT
+suitable for LTS migration testing:
+- `run-bootc-switch` hardcodes `--enforce-container-sigpolicy` with no override
+- Golden disk cache is keyed by tag only — all `lts`-tagged variants collide
+- Tests the backward (new→old) direction
+
+Use podman headless (see `docs/skills/testing.md`) for variant mapping smoke tests,
+and KubeVirt VM for end-to-end reboot verification.
