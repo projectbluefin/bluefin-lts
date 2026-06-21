@@ -17,8 +17,9 @@ permissions:
 
 jobs:
   lifecycle:
-    uses: projectbluefin/bonedigger/.github/workflows/lifecycle.yml@main
+    uses: projectbluefin/bonedigger/.github/workflows/lifecycle.yml@v1
     with:
       brand_name: "Bluefin LTS"
       brand_emoji: "🦕"
     secrets: inherit
+
