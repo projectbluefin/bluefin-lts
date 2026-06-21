@@ -4,11 +4,11 @@ Documentation=https://github.com/projectbluefin/bluefin-lts
 ConditionPathExists=/run/ostree-booted
 
 [Timer]
-# Fire 5 minutes after boot (catches systems that were off at the scheduled time)
+# Matches Fedora's rpm-ostree-countme.timer exactly.
+# Fires every 3 days so systems offline for a few days don't miss a week.
+# dnf5's countme cookie (7-day window) prevents double-counting.
 OnBootSec=5m
-# Then weekly. dnf5's countme cookie (7-day window) prevents double-counting.
-OnUnitInactiveSec=7d
-Persistent=true
+OnUnitInactiveSec=3d
 AccuracySec=1h
 RandomizedDelaySec=1d
 
