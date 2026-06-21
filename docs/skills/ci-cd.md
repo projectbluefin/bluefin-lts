@@ -684,4 +684,3 @@ Timer retries daily (`OnUnitInactiveSec=24h`) until success. MOTD self-cleans on
 - Weak target verification (substring, not digest)
 
 Use `projectbluefin/actions/.github/workflows/migration-test.yml` via `workflow_dispatch` instead — it delegates to the testsuite and avoids these issues.
-
