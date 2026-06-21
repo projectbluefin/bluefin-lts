@@ -2,43 +2,50 @@
 name: bluefin-lts-index
 description: >-
   Index of skill files for projectbluefin/bluefin-lts. Routes agents to the correct skill for
-  build, CI/CD, CentOS-vs-Fedora package decisions, ghost homelab testing, and release/rollback
-  tasks. Load this file first, then load the relevant task skill.
+  any task. Load this file first, then load the relevant task skill.
 metadata:
   type: reference
 ---
 
-# Bluefin LTS — Skill Index
+# Bluefin LTS — Skill Router
 
-Load only the skill for the task at hand. Skill files live in `docs/skills/`.
+For the full skill catalog, see [`docs/skills/INDEX.md`](skills/INDEX.md).
 
-| Task | Skill file |
+For the canonical skill format and improvement mandate, see [`docs/skills/skill-improvement.md`](skills/skill-improvement.md).
+
+For cross-repo hard rules and branch targets, see [`docs/factory/agentic-model.md`](factory/agentic-model.md).
+
+## Agent fast path
+
+```
+1. docs/skills/INDEX.md          # find the skill for your task
+2. docs/factory/agentic-model.md # cross-repo rules if working across repos
+3. just check && pre-commit run --all-files  # before every commit
+```
+
+## Quick task routing
+
+| Task | Load |
 |---|---|
-| Local builds, validation, `just` recipes, variant map | [`skills/build.md`](skills/build.md) |
+| Local builds, validation, `just` recipes | [`skills/build.md`](skills/build.md) |
 | CI/CD workflows, publish logic, tag namespaces, pitfalls | [`skills/ci-cd.md`](skills/ci-cd.md) |
+| Release pipeline, rollback, registry, ISO status | [`skills/release.md`](skills/release.md) |
 | CentOS vs Fedora: packages, COPR, akmods, EPEL | [`skills/centos-vs-fedora.md`](skills/centos-vs-fedora.md) |
 | GNOME Shell extensions: add, remove, build patterns | [`skills/gnome-extensions.md`](skills/gnome-extensions.md) |
-| Release pipeline, rollback, registry, ISO status | [`skills/release.md`](skills/release.md) |
-| OEM hardware hooks, Framework/Ampere setup, hook architecture | [`skills/hardware.md`](skills/hardware.md) |
+| OEM hardware hooks, Framework/Ampere setup | [`skills/hardware.md`](skills/hardware.md) |
+| Package manifests, cadence, add/remove patterns | [`skills/packages.md`](skills/packages.md) |
+| Testing: podman headless vs KubeVirt VM, ghost lab | [`skills/testing.md`](skills/testing.md) |
+| Writing or updating a skill file | [`skills/skill-improvement.md`](skills/skill-improvement.md) |
+| skill-drift CI check failing | [`skills/skill-drift.md`](skills/skill-drift.md) |
+| Cross-repo rules, branch targets | [`factory/agentic-model.md`](factory/agentic-model.md) |
 
 ## Self-improvement mandate
 
 When you discover a non-obvious pattern, workaround, or convention:
 
 1. Find the relevant skill file in `docs/skills/`.
-2. Add the learning as a **canonical pattern** — not a session log. Write it as a rule or runbook entry a future agent would use directly.
+2. Add the learning as a **timeless rule** — not a session log.
 3. Remove or replace stale content that contradicts the new learning.
-4. Commit the skill update in the **same PR** as the change that prompted it.
+4. Commit the skill update in the **same PR** as the change (or push directly to `main` for doc-only changes).
 
-**Signs of a session log (don't do this):**
-- Section headers with `(added YYYY-MM-DD)` dates
-- "In this session we found..." narrative phrasing
-- Multiple versions of the same pattern coexisting
-
-**Signs of a good skill entry:**
-- Imperative runbook format: "When X, do Y"
-- The broken pattern is removed or marked wrong, not preserved alongside the fix
-- Commands are copy-pasteable and tested
-
-For skill file format conventions, see:
-[`projectbluefin/actions/.github/skills/skill-improvement/SKILL.md`](https://github.com/projectbluefin/actions/blob/main/.github/skills/skill-improvement/SKILL.md)
+See [`docs/skills/skill-improvement.md`](skills/skill-improvement.md) for the full mandate and canonical format.

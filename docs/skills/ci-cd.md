@@ -1,16 +1,101 @@
 ---
 name: bluefin-lts-ci-cd
 description: >-
-  CI/CD workflow map, publish logic, tag namespaces, and release pipeline for
-  projectbluefin/bluefin-lts. Use when debugging build triggers, understanding stream_name tag
-  routing, fixing the release pipeline, authoring new workflows, or investigating why images
-  were not published. Contains critical pitfalls for cosign, GitHub Actions propagation, and
-  lts branch management.
+  CI/CD workflow map, publish logic, tag namespaces, promotion flow, and pitfalls for
+  projectbluefin/bluefin-lts. Use when debugging build triggers, understanding why images were
+  not published, fixing the release pipeline, authoring new workflows, or investigating
+  cosign/E2E gate failures.
 metadata:
-  type: reference
+  type: skill
 ---
 
 # CI/CD
+
+## When to Use
+
+- Debugging why a build didn't trigger or images weren't published
+- Understanding the workflow map (which file does what)
+- Fixing or authoring a GitHub Actions workflow
+- Investigating cosign verification failures
+- Understanding the promotion flow (`main → lts`)
+- Diagnosing E2E gate failures or Renovate auto-merge issues
+- Checking tag/stream_name routing for a given branch
+
+## When NOT to Use
+
+- Cutting a release or verifying published images → `release.md`
+- Adding/removing packages or changing the Containerfile → `build.md`
+- Making CentOS vs Fedora package decisions → `centos-vs-fedora.md`
+
+## Core Process
+
+### Debug: why didn't my build trigger?
+
+1. Check the event truth table (Reference below) for the branch + event combination.
+2. Verify `detect-changes` didn't skip the build (only fires when image-relevant paths change).
+3. Check for zombie runs holding the concurrency group:
+   ```bash
+   gh run list --repo projectbluefin/bluefin-lts --status in_progress \
+     --json databaseId,name,createdAt --jq '.[] | [.name, .createdAt, .databaseId] | @tsv'
+   # Cancel zombies:
+   gh run cancel <id> --repo projectbluefin/bluefin-lts
+   ```
+
+### Debug: why isn't `:testing` updated?
+
+`post-merge-e2e.yml` gates `:testing` promotion. If E2E fails, `:testing` is not updated.
+
+```bash
+# Check last post-merge E2E result
+gh run list --repo projectbluefin/bluefin-lts \
+  --workflow "Post-Merge E2E" --limit 5 \
+  --json conclusion,headBranch,createdAt,url \
+  --jq '.[] | [.conclusion, .headBranch, .createdAt, .url] | @tsv'
+```
+
+If E2E was skipped (CI-only commits), dispatch it manually:
+```bash
+gh workflow run "Post-Merge E2E — Testing Parity" --repo projectbluefin/bluefin-lts
+```
+
+### Debug: cosign verification failure
+
+See Reference — Cosign verification section below. The cert identity regexp must match
+`^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/`.
+
+### Add a new workflow
+
+1. Create the caller in `.github/workflows/` using one of the existing callers as a template.
+2. All third-party `uses:` must be SHA-pinned with a version comment.
+3. `projectbluefin/actions` refs use `@v1` (managed tags, not SHA-pinned).
+4. Update the workflow map in this file (`ci-cd.md`) Reference section.
+5. Run `actionlint .github/workflows/<new-file>.yml` before committing.
+
+## Red Flags
+
+- **Floating third-party action tags** (`@main`, `@v2`) — `no-floating-action-tags` pre-commit hook blocks these. `projectbluefin/actions@v1` is exempt.
+- **SHA-pinning `projectbluefin/testsuite`** — use `@v1`; testsuite auto-tracks it. The `no-sha-pins-for-internal-actions` hook blocks SHA pins on both `actions` and `testsuite`.
+- **Adding `workflows: write` to a job** — not a valid `GITHUB_TOKEN` scope; causes silent failures.
+- **Triggering on `push: lts`** — pushes to `lts` do not build images. Only `execute-release.yml` uses lts push events.
+- **Calling the testsuite `e2e.yml` directly** — always call via `run-testsuite.yml`; never call the testsuite directly.
+- **`stream_name: lts` in a build caller** — the build callers do not run on `lts`; `execute-release.yml` uses skopeo copy, not reusable-build.
+- **`startup_failure` with no log** — means a permission scope required by a nested reusable workflow is not granted by the caller job. See Reference — startup_failure diagnosis.
+- **`use_merge_queue: true` on lts** — `lts` uses classic branch protection, not a merge queue ruleset; `enqueuePullRequest` silently fails and the PR never auto-merges. Always use `use_merge_queue: false` so `--auto` merge fires when gate checks pass.
+
+## Verification
+
+After any workflow change:
+
+- [ ] `actionlint .github/workflows/<changed>.yml` passes
+- [ ] `just check && pre-commit run --all-files` passes
+- [ ] No floating third-party action tags (pre-commit guard catches this)
+- [ ] `run-testsuite.yml` uses `@v1`, not a SHA pin — Renovate is disabled for this ref
+- [ ] New workflow added to the workflow map in this file
+- [ ] If workflow touches the release pipeline → `release.md` updated too
+
+---
+
+## Reference
 
 ## Contents
 - [Workflow map](#workflow-map)
@@ -44,7 +129,7 @@ metadata:
 | `pr-testsuite.yml` | runs **`validate-pr@v1`** (just check, shellcheck, hadolint, pre-commit) + **e2e smoke** on every PR; only `Lint & syntax` is a required check |
 | `pr-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
 | `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
-| `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; SHA-pinned to a specific commit, managed by Renovate (see below) |
+| `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; uses `@v1` managed tag, auto-tracked to main by testsuite's `update-v1-tag.yml` (see below) |
 | `renovate-automerge.yml` | auto-merges Renovate/mergeraptor PRs when pr-testsuite passes |
 | `post-merge-e2e.yml` | **gates `:testing` promotion** — runs smoke+common suites after every successful build on `main`; digests are only promoted to `:testing` if smoke passes; if it fails, a GH issue is auto-filed and `:testing` is not updated |
 | `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
@@ -80,7 +165,7 @@ metadata:
 2. `sync-main-to-testing.yml` mirrors `main → testing`, triggering the promote workflow.
 3. `promote-testing-to-main.yml` fires on `workflow_run` completion of `Sync main → testing` and `Post-Merge E2E — Testing Gate`, and on the nightly schedule. (The direct `push: main` trigger was removed — it raced the gate and produced noisy READY=false failures on every merge.)
 4. Promote workflow compares `main` vs `lts` trees; rebuilds squash branch if different.
-5. Promotion PR **auto-merges with squash** once 2 approvals land and gate passes — `allow_auto_merge` is enabled by the reusable workflow. `execute-release.yml` fires on the resulting push to `lts` → `:testing` copied to `:lts`.
+5. Promotion PR **auto-merges with squash** once gate passes — `allow_auto_merge` is enabled by the reusable workflow; `lts` requires 0 approvals so it merges as soon as checks pass. `execute-release.yml` fires on the resulting push to `lts` → `:testing` copied to `:lts`.
 
 **The promotion PR is squash-merge by design** — `reusable-promote-squash.yml` rebuilds the branch fresh from `lts` on every run. Do not manually merge it.
 **Never merge `lts→main`.**
@@ -197,7 +282,7 @@ jobs:
 
 If a stuck `chore(deps): pin dependencies` PR appears targeting `projectbluefin/actions`, close it — it can never pass lint. Add the rule above to `renovate.json` to prevent recurrence.
 
-`projectbluefin/testsuite` is intentionally SHA-pinned in `run-testsuite.yml` and managed by Renovate. Renovate keeps the pin current; do not change it to `@main`.
+`projectbluefin/testsuite` uses `@v1` in `run-testsuite.yml`. The testsuite repo's `update-v1-tag.yml` workflow force-pushes the `v1` tag to HEAD on every merge to main — consumers always get the latest fixes without manual SHA bumps. Do not SHA-pin this ref; Renovate is disabled for it.
 
 ### projectbluefin/* refs — tag and pin policy
 
@@ -205,9 +290,9 @@ If a stuck `chore(deps): pin dependencies` PR appears targeting `projectbluefin/
 |---|---|---|
 | `projectbluefin/actions` | `@v1` managed tag — never SHA-pin | `no-sha-pins-for-internal-actions` pre-commit hook blocks SHA pins; Renovate is disabled for this ref |
 | `projectbluefin/bonedigger` | `@v1` managed tag — never SHA-pin | Convention; no hook enforces this, but managed tags are the factory standard |
-| `projectbluefin/testsuite` | SHA-pinned in `run-testsuite.yml` — Renovate keeps it current | Reproducible E2E; hook narrowed to `actions` only so pin passes lint |
+| `projectbluefin/testsuite` | `@v1` managed tag — never SHA-pin | `update-v1-tag.yml` in the testsuite repo force-pushes `v1` to HEAD on every main push; `no-sha-pins-for-internal-actions` hook blocks SHA pins; Renovate is disabled for this ref |
 
-SHA-pinning `projectbluefin/actions` triggers `Lint & syntax` failure (the `no-sha-pins-for-internal-actions` hook — regex: `uses:.*projectbluefin/actions.*@[0-9a-f]{40}`). SHA-pinning `projectbluefin/bonedigger` is not caught by any hook but is wrong by convention. SHA-pinning `projectbluefin/testsuite` is correct and intentional.
+SHA-pinning `projectbluefin/actions` or `projectbluefin/testsuite` triggers `Lint & syntax` failure (the `no-sha-pins-for-internal-actions` hook — regex: `uses:.*projectbluefin/(actions|testsuite).*@[0-9a-f]{40}`). SHA-pinning `projectbluefin/bonedigger` is not caught by any hook but is wrong by convention.
 
 ### Handling stale Renovate SHA-bump branches after a bulk @v1 conversion
 
@@ -458,7 +543,7 @@ curl -fsSL "${UUPD_RAW}/uupd.timer"   -o /usr/lib/systemd/system/uupd.timer
 
 ## PR-based release gate model
 
-**Design:** The always-open `auto/promote-testing-to-main` PR is the release gate. Merge it (requires 2 maintainers) to cut a release. Gate checks run automatically after each promotion update.
+**Design:** The always-open `auto/promote-testing-to-main` PR is the release gate. It auto-merges when all gate checks pass — no human approval required. Gate checks run automatically after each promotion update.
 
 **Key GITHUB_TOKEN limitations (both apply here):**
 1. `GITHUB_TOKEN` pushes to a branch do NOT fire `pull_request: synchronize` events — GitHub blocks this to prevent loops.
@@ -578,9 +663,29 @@ The fix in each case is to add `systemd.mask=<unit>` to `KERNEL_ARGS` in
 | `systemd-udev-settle.service` | Waits for udev to settle real hardware; times out (~125s) in QEMU with no physical devices. Manifests as `"No failed systemd units at boot"` smoke test failure. | projectbluefin/testsuite#419 |
 | `bootloader-update.service` | Updates the EFI bootloader on boot; fails in QEMU VMs that have no EFI boot entry to update. Appears in VM serial log as `FAILED`. Currently not caught by the smoke test assertion — no open fix PR. |
 
-**After a testsuite fix merges**, Renovate will open a PR to bump the SHA pin in `run-testsuite.yml`. The automerge pipeline handles it — no manual action needed. Remove any temporary KERNEL_ARGS mask in the testsuite if the fix makes it obsolete.
+**After a testsuite fix merges**, `run-testsuite.yml` picks it up immediately — `@v1` is automatically advanced to HEAD by the testsuite's `update-v1-tag.yml`. No Renovate SHA bump PR needed. Remove any temporary KERNEL_ARGS mask in the testsuite if the fix makes it obsolete.
 
-**`run-testsuite.yml` is SHA-pinned, not `@main`.** The pin is managed by Renovate. Do not change it back to `@main` — the SHA pin gives reproducible E2E runs and the `no-sha-pins-for-internal-actions` hook only blocks SHA pins on `projectbluefin/actions`, not `projectbluefin/testsuite`.
+**`run-testsuite.yml` uses `@v1`, not a SHA pin.** Do not convert it to a SHA — the `no-sha-pins-for-internal-actions` hook blocks SHA pins on both `projectbluefin/actions` and `projectbluefin/testsuite`, and Renovate is disabled for this ref.
+
+**`test_ref: v1` must be explicitly passed.** `run-testsuite.yml` must pass `test_ref: v1` to the reusable testsuite workflow, otherwise the workflow checks out test code from `main` even though the workflow itself is pinned to `@v1`. This causes bluefin-lts to be gated by unreleased test changes and is the most common cause of E2E failures after a `@v1` migration.
+
+```yaml
+# run-testsuite.yml — required
+with:
+  image: ${{ inputs.image }}
+  suites: ${{ inputs.suites }}
+  test_ref: v1   # must match the workflow tag — omitting this defaults to main
+```
+
+**`common_dconf` E2E suite requires a gschema override for `enabled-extensions`.** The `custom-command-list extension is in distribution defaults` scenario checks that bundled GNOME extensions appear in the `org.gnome.shell` gsettings schema default. Bundling an extension in `system_files/usr/share/gnome-shell/extensions/` is not enough — it must also be listed in a gschema override:
+
+```
+system_files/usr/share/glib-2.0/schemas/zz1-bluefin-lts-shell.gschema.override
+[org.gnome.shell]
+enabled-extensions = ['<ext1>', '<ext2>', ...]
+```
+
+Include only extensions that are physically present in `system_files/usr/share/gnome-shell/extensions/`. Extensions that come from `common` or packages should not be listed here.
 
 ---
 
@@ -628,3 +733,153 @@ All consuming repos (`bluefin-lts`, `bluefin`, `dakota`) pick up the fix immedia
 - Tests live in `tests/test_changelogs.py` (pytest, run via `.github/workflows/pytest.yml`)
 - `MINIMAL_CONFIG` in the test file must mirror the production `changelog_config.yaml` schema exactly — divergence creates false-green tests where production code paths are never exercised
 - Verify `sections` keys (`all`, `base`, `dx`, `nvidia`) and `templates` keys (including `changelog_format`) match `changelog_config.yaml`
+
+## ublue-os → projectbluefin migration
+
+For the complete implementation spec (script, service unit, timer unit, file paths,
+build enablement, testing) see **[`docs/skills/migration.md`](migration.md)**.
+
+### Signing policy — verified 2026-06-21
+
+Inspected `/etc/containers/policy.json` on `ghcr.io/ublue-os/bluefin:lts` and `ghcr.io/projectbluefin/bluefin-lts:lts` — both images ship the **same** policy.json (from `projectbluefin/common`).
+
+- `ghcr.io/ublue-os` → `sigstoreSigned` with key-based verification (ublue-os.pub)
+- `ghcr.io/projectbluefin` → **not listed** → falls through to `""` catch-all → `insecureAcceptAnything`
+
+`bootc switch --enforce-container-sigpolicy ghcr.io/projectbluefin/bluefin-lts:lts` succeeds on the old image (insecureAcceptAnything). The new image's own ongoing updates are also unverified by the current policy — adding a `sigstoreSigned` keyless entry for `ghcr.io/projectbluefin` is a separate hardening task.
+
+### New LTS signing: keyless (OIDC/Fulcio)
+
+New LTS images are signed via `projectbluefin/actions` `sign-and-publish` action with `signing-mode: keyless`. Verification uses:
+```
+cosign verify \
+  --certificate-identity-regexp="https://github.com/projectbluefin/(bluefin|bluefin-lts|dakota|common|aurora|actions)/.github/workflows/" \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+  ghcr.io/projectbluefin/<image>:<tag>
+```
+The `cosign.pub` files in both repos are identical but are **not used** for new LTS images — they are leftovers from before the switch to keyless.
+
+### Migration service (ships in ublue-os/bluefin-lts)
+
+A `bluefin-lts-migration.timer` + `bluefin-lts-migration.service` ships in the old image's weekly build. The service:
+1. Checks for `/etc/bluefin-lts-migrated` stamp — exits 0 if present
+2. Reads current image from `bootc status --format=json`
+3. Exits 0 if already on `projectbluefin`; writes MOTD + exits 0 for arm64
+4. Maps variant to new image (gdx→hwe-nvidia, dx+hwe→lts-hwe, dx→lts, hwe→lts-hwe, *→lts)
+5. Writes `/etc/motd.d/50-bluefin-lts-migration` with next-reboot notice
+6. Runs `bootc switch --enforce-container-sigpolicy <new-image>` — non-destructive until reboot
+7. On success: touches stamp, disables timer; on failure: appends retry note to MOTD, exits 1
+
+Timer retries daily (`OnUnitInactiveSec=24h`) until success. MOTD self-cleans on reboot (not present on new image). dx/gdx users see a `ujust devmode` note.
+
+### Variant mapping (old → new)
+
+| Old (ublue-os) | New (projectbluefin) | Notes |
+|---|---|---|
+| `bluefin-gdx:lts*` | `bluefin-lts-hwe-nvidia:lts` | dx/gdx: ujust devmode |
+| `bluefin-dx:lts-hwe*` | `bluefin-lts-hwe:lts` | dx: ujust devmode |
+| `bluefin-dx:lts*` | `bluefin-lts:lts` | dx: ujust devmode |
+| `bluefin:lts-hwe*` | `bluefin-lts-hwe:lts` | |
+| `bluefin:lts*` (incl. GNOME50) | `bluefin-lts:lts` | |
+| arm64 | MOTD only, no switch | unsupported |
+
+### ghost lab migration workflow
+
+`bluefin-migration-test` and `migration-upgrade-test` Argo templates in the ghost lab are NOT suitable for LTS migration testing as-is. Known issues:
+- `run-bootc-switch` hardcodes `--enforce-container-sigpolicy` with no override
+- Golden disk cache keyed by tag only — all `lts`-tagged variants collide
+- Tests backward (new→old) direction which adds irrelevant failure modes
+- Weak target verification (substring, not digest)
+
+Use `projectbluefin/actions/.github/workflows/migration-test.yml` via `workflow_dispatch` instead — it delegates to the testsuite and avoids these issues.
+
+## countme: rpm-ostree-countme is broken on CentOS — replaced with dnf5 service
+
+### Root cause
+
+`rpm-ostree-countme.service` uses an old libdnf4 snapshot that cannot expand
+shell-style variable syntax. EPEL 10's metalink URL requires this:
+
+  metalink=https://mirrors.fedoraproject.org/metalink?repo=epel${releasever_minor:+-z}-${releasever}&arch=${basearch}
+
+On CentOS, `releasever_minor` is intentionally undefined. dnf5 expands the
+expression to empty → `epel-10` (correct). rpm-ostree's libdnf4 sends the literal
+`${releasever_minor:+-z}` → HTTP 404.
+
+Upstream: coreos/rpm-ostree#5464, projectbluefin/bluefin-lts#656
+
+### Workaround (shipped in bluefin-lts)
+
+- `rpm-ostree-countme.service` and `rpm-ostree-countme.timer` are **masked**
+  in `build_scripts/40-services.sh`.
+- `bluefin-lts-countme.service` + `bluefin-lts-countme.timer` are shipped in
+  `system_files/usr/lib/systemd/system/` and enabled at build time.
+- The service runs `dnf5 makecache` as root on a weekly schedule.
+  dnf5 handles the variable expansion correctly and reads `NAME="Bluefin LTS"`
+  from `/usr/lib/os-release` for the User-Agent, so pings are attributed
+  correctly in Fedora/EPEL mirror logs.
+- dnf5 countme cookie (`persistdir` per repo) enforces the 7-day window —
+  the timer fires every 3 days (matching Fedora's `rpm-ostree-countme.timer`)
+  so systems that are offline a few days still get counted within a week.
+
+### ublue-os/countme badge
+
+The `bluefin-lts` badge in `ublue-os/countme generate_badge_data.py` is
+currently commented out ("centos countme data is broken"). Once data starts
+flowing, open a PR there to re-enable it, then update the `ghcurl` line in
+`build_scripts/90-image-info.sh` to use `bluefin-lts.json` instead of
+`bluefin.json`.
+
+## Merging PRs as repo admin
+
+### Merge queue + CODEOWNERS blocks all PRs
+
+`main` has a merge queue enabled. `gh pr merge --auto` has no effect when a merge queue is
+active — it silently sets the GitHub auto-merge flag but the PR stays BLOCKED. PRs must enter
+the queue explicitly, and the queue requires CODEOWNERS approval first.
+
+CODEOWNERS has a `*` wildcard:
+```
+* @projectbluefin/maintainers
+```
+This catches **every** PR including docs-only. Before any PR can enter the queue,
+`projectbluefin/maintainers` must approve. Since castrojo is the PR author and GitHub blocks
+self-approval, all PRs get stuck.
+
+**Fix as repo admin:**
+```bash
+gh pr merge <number> --admin --squash
+```
+The `--admin` flag bypasses branch protection, including CODEOWNERS and the merge queue.
+Use squash — the ruleset only allows squash merges (attempts with `--merge` or `--rebase` fail).
+
+**Diagnosis commands:**
+```bash
+# See why a PR is BLOCKED
+gh pr view <number> --json mergeStateStatus,mergeable,reviewDecision
+
+# Check ruleset (merge queue config, required approvals)
+gh api repos/projectbluefin/bluefin-lts/rules/branches/main | python3 -c "import json,sys; [print(r['type'], json.dumps(r.get('parameters',{}))[:200]) for r in json.load(sys.stdin)]"
+```
+
+### Renovate PRs: rebasing
+
+Renovate targets `testing`, not `main`. Its PRs accumulate all intermediate squash commits
+from testing history, so a rebase onto current `testing` will replay many commits and hit
+multiple conflicts. Common conflicts:
+
+- `image-versions.yaml` — competing digest bumps; keep the **newer** (HEAD) digest
+- `.github/workflows/run-testsuite.yml` — uses `@v1`; no SHA conflicts expected (Renovate is disabled for this ref)
+- `.github/workflows/bonedigger.yml` — Renovate's pin-dependencies tries to SHA-pin this; **keep `@v1`** — bonedigger is an intentional managed tag, exempt from SHA pinning
+
+Fastest resolution pattern when conflicts cascade:
+```bash
+while git diff --name-only --diff-filter=U | grep -q .; do
+  for f in $(git diff --name-only --diff-filter=U); do
+    git checkout --theirs "$f"
+    git add "$f"
+  done
+  GIT_EDITOR=true git rebase --continue
+done
+```
+Then manually fix `image-versions.yaml` if the brew/common digest was newer in HEAD than theirs.
