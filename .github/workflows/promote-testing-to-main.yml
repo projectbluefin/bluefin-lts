@@ -1,25 +1,20 @@
-name: Promote main to lts
+name: Promote testing to main
 
-# Opens and maintains a squash promotion PR from main → lts.
+# Opens and maintains a squash promotion PR from testing → main.
 # Auto-merges via enablePullRequestAutoMerge (--auto) — no human approval required.
-# lts branch protection requires 0 reviews; gate checks are the only gate.
-#
-# Branch model for bluefin-lts: source_branch=main, target_branch=lts.
-# Compares main vs lts trees and opens auto/promote-testing-to-main → lts
-# when they differ.
+# main branch protection requires 0 reviews; gate checks are the only gate.
 #
 # Triggers:
-#   - workflow_run on Post-Merge Testing Gate (fires after :testing is promoted post-build)
-#   - weekly schedule Thursday 04:00 UTC as the guaranteed weekly release trigger
+#   - push to testing (fires on every merge, keeps the promotion PR fresh)
+#   - weekly schedule Tuesday 04:00 UTC as the guaranteed weekly release trigger
 
 on:
+  push:
+    branches:
+      - testing
   schedule:
-    - cron: '0 4 * * 4'
+    - cron: '0 4 * * 2'
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Post-Merge Testing Gate"]
-    types: [completed]
-    branches: [main]
 
 concurrency:
   group: promote-testing-to-main
@@ -41,7 +36,5 @@ jobs:
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
       run_e2e: false
-      source_branch: main
-      target_branch: lts
       use_merge_queue: false
     secrets: inherit
