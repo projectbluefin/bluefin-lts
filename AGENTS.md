@@ -134,6 +134,8 @@ When in doubt, post nothing.
 - **Releases** are cut by merging the `auto/promote-testing-to-main` PR (testing→main). `execute-release.yml` fires on the resulting push to `main` and copies `:testing`→`:stable`.
 - **bluefin-lts workflow path overrides are intentional:** use `build_scripts/` and `image-versions.yaml`, not bluefin's `build_files/` and `image-versions.yml`.
 - **`.github/workflows/`, `Justfile`, and `build_scripts/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
+- **After pushing, verify CI is green before claiming done:** `gh run list --repo projectbluefin/bluefin-lts --limit 5` — read the output; running or failing = not done. "Done" means CI green, not "I pushed."
+- **Never claim a task complete without verifying.** "I've updated the file" is not done. Run the checks. Read the output.
 
 ## Skills
 
