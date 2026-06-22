@@ -11,7 +11,7 @@ Home repo: [projectbluefin/bluefin-lts](https://github.com/projectbluefin/bluefi
 
 ```
 1. docs/SKILL.md                     # find the skill for your task
-2. docs/factory/agentic-model.md     # cross-repo hard rules, branch targets, PR policy
+2. https://github.com/projectbluefin/common/blob/main/docs/factory/agentic-model.md  # cross-repo hard rules, branch targets, PR policy (canonical — in common)
 3. just check && pre-commit run --all-files  # before every commit
 ```
 
@@ -35,7 +35,7 @@ See [`docs/SKILL.md`](docs/SKILL.md) for the task router and [`docs/skills/INDEX
 | OEM hardware hooks | `docs/skills/hardware.md` |
 | Writing or updating a skill file | `docs/skills/skill-improvement.md` |
 | skill-drift CI check failing | `docs/skills/skill-drift.md` |
-| Cross-repo rules, branch targets | `docs/factory/agentic-model.md` |
+| Cross-repo rules, branch targets | [`projectbluefin/common` docs/factory/agentic-model.md](https://github.com/projectbluefin/common/blob/main/docs/factory/agentic-model.md) |
 
 
 ## The Self-Improvement Loop
