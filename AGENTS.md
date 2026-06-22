@@ -137,15 +137,7 @@ When in doubt, post nothing.
 
 ## Skills
 
-See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task needs:
-
-| Task | Load |
-|---|---|
-| Local build, validation, packages | `docs/skills/build.md` |
-| CI/CD workflows, publish logic, tag namespaces | `docs/skills/ci-cd.md` |
-| CentOS-vs-Fedora package/repo decisions | `docs/skills/centos-vs-fedora.md` |
-| GNOME Shell extensions (add/remove/build) | `docs/skills/gnome-extensions.md` |
-| Release, rollback, registry, ISO status | `docs/skills/release.md` |
+See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task needs.
 
 ## Branch model
 
@@ -187,7 +179,7 @@ feat(ci): add container build optimization
 
 Optimize multi-stage build to reduce image size.
 
-Assisted-by: Claude Sonnet 4.5 via pi
+Assisted-by: Claude Sonnet 4.6 via GitHub Copilot
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 ```
 
