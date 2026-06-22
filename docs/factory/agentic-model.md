@@ -45,7 +45,7 @@ Change only what is necessary to accomplish the stated goal. Do not refactor, re
 | `common` | `main` | No testing branch — direct to main |
 | `bluefin` | `testing` | Never `main` |
 | `bluefin-lts` | `main` | `main→lts` is the promotion path |
-| `dakota` | `main` | `testing` is a Renovate staging branch only |
+| `dakota` | `testing` | Never `main` — testing-first model, same as bluefin |
 | `knuckle` | `main` | No testing branch |
 | `actions` | `main` | Shared actions — no testing branch |
 | `bonedigger` | `main` | Factory infrastructure |
