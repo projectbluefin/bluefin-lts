@@ -1,6 +1,6 @@
 name: Update package cadence intervals
 
-# Runs immediately after Execute Release pushes the new :lts image to GHCR.
+# Runs immediately after Execute Release publishes the new :stable image to GHCR.
 # workflow_run ensures we measure the version that users just received, not
 # whatever happened to be in the registry when a cron fired.
 
