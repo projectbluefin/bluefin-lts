@@ -28,7 +28,7 @@ jobs:
       )
     uses: projectbluefin/actions/.github/workflows/reusable-pkg-cadence.yml@v1
     with:
-      image: ghcr.io/projectbluefin/bluefin-lts:lts
+      image: ghcr.io/projectbluefin/bluefin-lts:stable
       repo: projectbluefin/bluefin-lts
       force_reclassify: ${{ inputs.force_reclassify || false }}
     secrets: inherit
