@@ -124,7 +124,6 @@ After any workflow change:
 | `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
 | `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; uses `@v1` managed tag, auto-tracked to main by testsuite's `update-v1-tag.yml` (see below) |
 | `renovate-automerge.yml` | auto-merges Renovate/mergeraptor PRs when pr-testsuite passes |
-| `post-merge-e2e.yml` | **gates `:testing` promotion** — runs smoke+common suites after every successful build on `main`; digests are only promoted to `:testing` if smoke passes; if it fails, a GH issue is auto-filed and `:testing` is not updated |
 | `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
 | `skill-drift.yml` | warns on PRs that change CI/build/system files without updating docs/skills |
 | `validate-renovate.yaml` | validates `.github/renovate.json5` on relevant PRs and pushes |
@@ -224,7 +223,7 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 | Action | Where used | LTS-specific override |
 |---|---|---|
 | `bootc-build/validate-pr` | `pr-testsuite.yml` | `shellcheck-glob: "build_scripts/**/*.sh"` (lts uses `build_scripts/`, not `build_files/`) |
-| `bootc-build/detect-changes` | `build-regular.yml`, `build-gdx.yml`, `build-regular-hwe.yml` | filters for `build_scripts/**` and `image-versions.yaml` |
+| `bootc-build/detect-changes` | `build-regular.yml`, `build-nvidia.yml`, `build-regular-hwe.yml` | filters for `build_scripts/**` and `image-versions.yaml` |
 | `bootc-build/sign-and-publish` | called internally by `reusable-build.yml@v1` | `signing-mode: keyless` |
 
 ## Schedule ownership
@@ -236,21 +235,13 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 `renovate-automerge.yml` triggers on `workflow_run: completed: "PR Validation — testsuite"` and only proceeds when `conclusion == 'success'`. `pr-testsuite` is lint-first, so it completes quickly and drives the bot flow.
 
 Flow:
-1. Renovate/Mergeraptor opens a PR against the branch model currently in use for bluefin-lts.
+1. Renovate/Mergeraptor opens a PR against `testing`.
 2. `renovate-automerge.yml` reacts to successful PR validation and calls `reusable-renovate-automerge.yml@v1`.
-3. While bluefin-lts remains main-first, merged bot changes land on `main` and `sync-main-to-testing.yml` keeps `testing` aligned for parity testing.
-4. Once issue #346 completes, bluefin-lts should match the canonical testing-first model in `/var/home/jorge/src/common/docs/factory/agentic-model.md`: Renovate targets `testing`, then promotion carries `testing → main → lts`.
+3. Promotion carries merged changes from `testing` to `main`, then `execute-release.yml` copies `:testing` to `:stable`.
 
 **Required status check** (ruleset 4940669): `Lint & syntax` only. Builds are informational.
 
 ### Renovate automerge pitfalls
-
-**Do not document bluefin-lts as permanently testing-first until issue #346 lands.** bluefin and dakota already use the canonical testing-first layout, but bluefin-lts is still migrating.
-
-While bluefin-lts remains main-first:
-- document `sync-main-to-testing.yml` as a temporary migration aid, not the target architecture
-- treat `/var/home/jorge/src/common/docs/factory/agentic-model.md` as the canonical description of the end state
-- avoid copy-pasting bluefin/dakota guidance that assumes content PRs already target `testing`
 
 **Never add `projectbluefin/actions` refs to the automerge `pin` rule.** The `matchUpdateTypes: ["pin"]` Renovate rule generates PRs that SHA-pin `@v1` managed tags to commit hashes. The `no-sha-pins-for-internal-actions` pre-commit hook rejects those for `projectbluefin/actions` permanently (exit 1). The fix is to exclude `projectbluefin/actions` refs:
 

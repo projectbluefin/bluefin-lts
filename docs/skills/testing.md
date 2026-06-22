@@ -47,7 +47,7 @@ spec:
   templates:
   - name: run
     container:
-      image: ghcr.io/projectbluefin/bluefin-lts:lts
+      image: ghcr.io/projectbluefin/bluefin-lts:testing
       command: [bash, -c]
       args:
       - |
@@ -100,17 +100,17 @@ spec:
         arguments:
           parameters:
           - name: image
-            value: "ghcr.io/ublue-os/bluefin:lts"
+            value: "ghcr.io/projectbluefin/bluefin-lts:testing"
           - name: expected_target
-            value: "ghcr.io/projectbluefin/bluefin-lts:lts"
+            value: "ghcr.io/projectbluefin/bluefin-lts:stable"
       - name: hwe
         template: smoke
         arguments:
           parameters:
           - name: image
-            value: "ghcr.io/ublue-os/bluefin:lts-hwe"
+            value: "ghcr.io/projectbluefin/bluefin-lts-hwe:testing"
           - name: expected_target
-            value: "ghcr.io/projectbluefin/bluefin-lts-hwe:lts"
+            value: "ghcr.io/projectbluefin/bluefin-lts-hwe:stable"
   - name: smoke
     inputs:
       parameters:
@@ -131,24 +131,17 @@ Images are cached in the cluster after first pull. Subsequent runs of the same t
 are ~5 seconds. Use pinned tags (`:stable`, `:testing`) not `:latest` — floating tags
 bypass the cache if the digest changes.
 
-## Real example: lts-migration-smoke (2026-06-21)
+## Variant-to-image mapping
 
-Tested the `bluefin-lts-migrate` service logic across all 5 old-LTS variants.
-All 5 tasks Succeeded in ~5 seconds each using cached images.
+| Source variant (old) | Target image |
+|---|---|
+| `bluefin-gdx` | `ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia:stable` |
+| `bluefin-lts` (base) | `ghcr.io/projectbluefin/bluefin-lts:stable` |
+| `bluefin-lts-hwe` | `ghcr.io/projectbluefin/bluefin-lts-hwe:stable` |
 
-**What was proven:**
-1. `python3` JSON parsing of `bootc status --format=json` works in the real old image
-2. All variant → target mappings are correct (`bluefin-gdx` → `bluefin-lts-hwe-nvidia`, etc.)
-3. Required tools (`python3`, `bootc`, `systemctl`) exist in `ghcr.io/ublue-os/bluefin:lts`
-4. `/etc/motd.d/` is writable at container start
-5. `/etc/containers/policy.json` has `insecureAcceptAnything` for `ghcr.io/projectbluefin`
-   (meaning `bootc switch --enforce-container-sigpolicy` will succeed)
-
-**Key finding on signing:** Both the old image (`ghcr.io/ublue-os/bluefin:lts`) and the
-new image (`ghcr.io/projectbluefin/bluefin-lts:lts`) ship the same `policy.json` from
-`projectbluefin/common`. The `ghcr.io/projectbluefin` registry is not listed explicitly
-and falls through to the `""` catch-all (`insecureAcceptAnything`). The migration
-`bootc switch --enforce-container-sigpolicy` call succeeds.
+Signing: `ghcr.io/projectbluefin` falls through to the catch-all `insecureAcceptAnything`
+in `policy.json` (shipped from `projectbluefin/common`). `bootc switch
+--enforce-container-sigpolicy` succeeds without additional policy changes.
 
 ## KubeVirt VMs (full boot test)
 
