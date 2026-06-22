@@ -119,7 +119,7 @@ After any workflow change:
 | `build-regular.yml` | caller for `bluefin-lts` |
 | `build-regular-hwe.yml` | caller for `bluefin-lts-hwe` (HWE kernel) |
 | `build-nvidia.yml` | caller for `bluefin-lts-hwe-nvidia` (NVIDIA/AI) |
-| `sync-main-to-testing.yml` | force-syncs `main → testing` on every push to `main`; thin caller to `projectbluefin/actions/reusable-sync-branches.yml@v1` |
+| `sync-main-to-testing.yml` | temporary migration aid that fast-forwards `testing` from `main` so bluefin-lts can keep a parity branch while issue #346 tracks the move to testing-first |
 | `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`main → lts`); calls `reusable-promote-squash.yml@v1` with `source_branch=main, target_branch=lts` |
 | `execute-release.yml` | fires on promotion PR merge; cosign re-verify, skopeo `:testing` → `:lts`, fast-forward `lts`, GitHub release |
 | ~~`sync-main-to-lts.yml`~~ | **deleted** — replaced by PR-as-gate promotion model |
@@ -155,17 +155,34 @@ After any workflow change:
 
 `push` to `lts` does **not** trigger any build workflow (no `push: lts` trigger exists in any caller). The merge itself fires only `lifecycle-caller.yml`.
 
+## Branch model
+
+### Current state
+
+- `main` — active development. All PRs currently target `main`.
+- `testing` — temporary parity branch kept in sync from `main` during the migration work.
+- `lts` — production releases only. Promotion is one-way: `main → lts`.
+
+### Target state (factory alignment — issue #346)
+
+The factory standard is documented canonically in `/var/home/jorge/src/common/docs/factory/agentic-model.md`:
+- content PRs target `testing`
+- `testing` promotes to `main`
+- `main` promotes to the release branch/tag
+
+bluefin and dakota already follow that testing-first layout. bluefin-lts is still migrating under issue #346, so use `main` as the PR target until that work lands. Do not target `lts` directly.
+
 ## Promotion flow (`main→lts`)
 
 `promote-testing-to-main.yml` maintains an always-open `auto/promote-testing-to-main` PR targeting `lts`. Merging it cuts a release — see `docs/skills/release.md`.
 
-**Critical:** The caller passes `source_branch: main` and `target_branch: lts`. Without these, the reusable workflow defaults to `testing → main`, trees are always identical, and no PR is ever created.
+**Critical:** The caller passes `source_branch: main` and `target_branch: lts`. Without these, the reusable workflow defaults to `testing → main`, which is the factory target state described in the canonical model at `/var/home/jorge/src/common/docs/factory/agentic-model.md`, not bluefin-lts's current branch flow.
 
-1. PRs squash-merge to `main`.
-2. `sync-main-to-testing.yml` mirrors `main → testing`, triggering the promote workflow.
-3. `promote-testing-to-main.yml` fires on `workflow_run` completion of `Sync main → testing` and `Post-Merge E2E — Testing Gate`, and on the nightly schedule. (The direct `push: main` trigger was removed — it raced the gate and produced noisy READY=false failures on every merge.)
-4. Promote workflow compares `main` vs `lts` trees; rebuilds squash branch if different.
-5. Promotion PR **auto-merges with squash** once gate passes — `allow_auto_merge` is enabled by the reusable workflow; `lts` requires 0 approvals so it merges as soon as checks pass. `execute-release.yml` fires on the resulting push to `lts` → `:testing` copied to `:lts`.
+1. PRs currently squash-merge to `main`.
+2. `sync-main-to-testing.yml` keeps `testing` aligned with `main` as a temporary migration aid, not as the permanent steady-state model.
+3. `promote-testing-to-main.yml` fires on `workflow_run` completion of `Post-Merge Testing Gate` and on the weekly schedule.
+4. Promote workflow compares `main` vs `lts` trees; rebuilds the squash branch if different.
+5. Promotion PR auto-merges with squash once the release gate passes; `execute-release.yml` then copies `:testing` to `:lts`.
 
 **The promotion PR is squash-merge by design** — `reusable-promote-squash.yml` rebuilds the branch fresh from `lts` on every run. Do not manually merge it.
 **Never merge `lts→main`.**
@@ -237,36 +254,24 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 
 ## Renovate auto-merge pipeline
 
-`renovate-automerge.yml` triggers on `workflow_run: completed: "PR Validation — testsuite"` and only proceeds when `conclusion == 'success'`. `pr-testsuite` is **lint-only** (COPR guard + validate-pr — no E2E smoke), so it completes in ~10 min and drives automerge reliably.
+`renovate-automerge.yml` triggers on `workflow_run: completed: "PR Validation — testsuite"` and only proceeds when `conclusion == 'success'`. `pr-testsuite` is lint-first, so it completes quickly and drives the bot flow.
 
 Flow:
-1. Renovate/Mergeraptor opens PR targeting `testing` → builds run + `pr-testsuite.yml` runs lint (~10 min)
-2. `renovate-automerge.yml` triggers on `workflow_run` success → calls `reusable-renovate-automerge.yml@v1`
-3. PR squash-merges to `testing` (no branch protection) → `sync-main-to-testing.yml` and build jobs pick up the change
+1. Renovate/Mergeraptor opens a PR against the branch model currently in use for bluefin-lts.
+2. `renovate-automerge.yml` reacts to successful PR validation and calls `reusable-renovate-automerge.yml@v1`.
+3. While bluefin-lts remains main-first, merged bot changes land on `main` and `sync-main-to-testing.yml` keeps `testing` aligned for parity testing.
+4. Once issue #346 completes, bluefin-lts should match the canonical testing-first model in `/var/home/jorge/src/common/docs/factory/agentic-model.md`: Renovate targets `testing`, then promotion carries `testing → main → lts`.
 
 **Required status check** (ruleset 4940669): `Lint & syntax` only. Builds are informational.
 
 ### Renovate automerge pitfalls
 
-**Renovate PRs must target `testing`, not `main`.** `main` requires 2 maintainer reviews; `github-actions[bot]` cannot bypass that. `testing` has no branch protection, so the reusable can squash-merge directly with `github.token`. This is the factory-wide pattern — `bluefin` and `dakota` both use it.
+**Do not document bluefin-lts as permanently testing-first until issue #346 lands.** bluefin and dakota already use the canonical testing-first layout, but bluefin-lts is still migrating.
 
-The `renovate.json` must include:
-```json
-"baseBranchPatterns": ["testing"]
-```
-
-The `renovate-automerge.yml` must NOT pass `base_branch: main` — let the reusable default to `testing`:
-```yaml
-# renovate-automerge.yml — correct factory shape
-jobs:
-  automerge:
-    uses: projectbluefin/actions/.github/workflows/reusable-renovate-automerge.yml@v1
-    with:
-      head_sha: ${{ github.event.workflow_run.head_sha }}
-      # no base_branch override — reusable defaults to 'testing' which is correct
-```
-
-**Do not add `base_branch: main`.** That was tried and reverted (#216 → #218). It looks like a fix but causes every automerge to silently fail because `github-actions[bot]` lacks merge rights on `main`.
+While bluefin-lts remains main-first:
+- document `sync-main-to-testing.yml` as a temporary migration aid, not the target architecture
+- treat `/var/home/jorge/src/common/docs/factory/agentic-model.md` as the canonical description of the end state
+- avoid copy-pasting bluefin/dakota guidance that assumes content PRs already target `testing`
 
 **Never add `projectbluefin/actions` refs to the automerge `pin` rule.** The `matchUpdateTypes: ["pin"]` Renovate rule generates PRs that SHA-pin `@v1` managed tags to commit hashes. The `no-sha-pins-for-internal-actions` pre-commit hook rejects those for `projectbluefin/actions` permanently (exit 1). The fix is to exclude `projectbluefin/actions` refs:
 
