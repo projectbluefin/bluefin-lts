@@ -1,0 +1,16 @@
+[Unit]
+Description=Weekly Bluefin LTS Count Me timer
+Documentation=https://github.com/projectbluefin/bluefin-lts
+ConditionPathExists=/run/ostree-booted
+
+[Timer]
+# Matches Fedora's rpm-ostree-countme.timer exactly.
+# Fires every 3 days so systems offline for a few days don't miss a week.
+# dnf5's countme cookie (7-day window) prevents double-counting.
+OnBootSec=5m
+OnUnitInactiveSec=3d
+AccuracySec=1h
+RandomizedDelaySec=1d
+
+[Install]
+WantedBy=timers.target

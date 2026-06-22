@@ -7,56 +7,40 @@ Home repo: [projectbluefin/bluefin-lts](https://github.com/projectbluefin/bluefi
 > Humans approve design, security-sensitive changes, and merge. See also the
 > [org-wide AGENTS.md](https://github.com/projectbluefin/.github/blob/main/AGENTS.md).
 
+## Agent fast path
+
+```
+1. docs/SKILL.md                     # find the skill for your task
+2. docs/factory/agentic-model.md     # cross-repo hard rules, branch targets, PR policy
+3. just check && pre-commit run --all-files  # before every commit
+```
+
+**Doc-only changes** (`docs/` and `AGENTS.md`) → push directly to `main`, no PR needed.
+Verify before using this exception:
+```bash
+git diff --cached --name-only  # must show only docs/* or AGENTS.md
+```
+
+## Skills
+
+See [`docs/SKILL.md`](docs/SKILL.md) for the task router and [`docs/skills/INDEX.md`](docs/skills/INDEX.md) for the full catalog.
+
+| Task | Load |
+|---|---|
+| Local build, validation, packages | `docs/skills/build.md` |
+| CI/CD workflows, publish logic, tag namespaces | `docs/skills/ci-cd.md` |
+| Release pipeline, rollback, registry, ISO status | `docs/skills/release.md` |
+| CentOS-vs-Fedora package/repo decisions | `docs/skills/centos-vs-fedora.md` |
+| GNOME Shell extensions (add/remove/build) | `docs/skills/gnome-extensions.md` |
+| OEM hardware hooks | `docs/skills/hardware.md` |
+| Writing or updating a skill file | `docs/skills/skill-improvement.md` |
+| skill-drift CI check failing | `docs/skills/skill-drift.md` |
+| Cross-repo rules, branch targets | `docs/factory/agentic-model.md` |
+
+
 ## The Self-Improvement Loop
 
-Every agent session produces two outputs:
-1. **The work** — the PR, fix, or improvement.
-2. **The learning** — what you discovered that a future agent should know.
-
-Output 1 without Output 2 leaves the system no smarter. **The loop only compounds if agents write back.**
-
-```
-Agent works on task
-  └─ discovers pattern / workaround / convention
-       └─ writes it to the relevant skill file in docs/skills/
-            └─ commits in the same PR
-                 └─ next agent starts smarter
-                      └─ loop
-```
-
-**Before marking your work complete, verify:**
-- [ ] Did I discover a workaround, non-obvious pattern, or convention?
-- [ ] Is there a skill file for the area I worked in (`docs/skills/`)?
-- [ ] If yes — did I update it?
-- [ ] If no — did I create one and add it to `docs/SKILL.md`?
-- [ ] Is the skill file committed in the **same PR** as the change?
-
-### What counts as a learning worth writing back
-
-**Write it:**
-- A workaround for an upstream bug (include component + issue link if open)
-- A non-obvious pattern required for correctness
-- A convention that isn't obvious from the code
-- Something you had to discover by trial and error
-
-**Don't write it:**
-- One-off task notes ("use commit message X for this PR")
-- Obvious things any developer would know
-- Ephemeral state ("currently broken, fix pending")
-- Specific SHAs, PR numbers, or point-in-time deployment state — these become misleading after the next commit
-
-### Where learnings live
-
-| You are working in... | Write to |
-|---|---|
-| `projectbluefin/bluefin-lts` | `docs/skills/` in this repo (create if absent) |
-| `projectbluefin/actions` | `docs/skills/` AND `.github/skills/` in that repo |
-| Cross-cutting (affects multiple repos) | Local first, then open propagation issue in `projectbluefin/actions` |
-| `ublue-os/*` repos | **NEVER** — see the prohibition below |
-
-See [`docs/SKILL.md`](docs/SKILL.md) for the skill index.
-For skill file format, see
-[`projectbluefin/actions/.github/skills/skill-improvement/SKILL.md`](https://github.com/projectbluefin/actions/blob/main/.github/skills/skill-improvement/SKILL.md).
+Every session produces two outputs: the work and the learning. See [`docs/skills/skill-improvement.md`](docs/skills/skill-improvement.md) for the full mandate, canonical skill format, and commit procedure.
 
 ---
 
@@ -145,13 +129,13 @@ When in doubt, post nothing.
 ### Mandatory gates
 
 - `just check && pre-commit run --all-files` before every commit
-- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/actions/` and `projectbluefin/bonedigger/` refs are intentional managed tags and are exempted. `projectbluefin/testsuite` is SHA-pinned in `run-testsuite.yml` and managed by Renovate.
+- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/actions/`, `projectbluefin/bonedigger/`, and `projectbluefin/testsuite/` refs are intentional managed tags and are exempted. `no-sha-pins-for-internal-actions` blocks SHA pins on `projectbluefin/actions` and `projectbluefin/testsuite` — both use `@v1` managed tags.
 - PR title: Conventional Commits format
 - Attribution on every AI-authored commit: `Assisted-by: <Model> via <Tool>`
 - Max 4 open PRs at a time per agent
 - No WIP PRs
 - **Agents MUST NOT push directly to `main`.** All changes via PR. Branch protection enforces this (requires 2 `projectbluefin/maintainers` approvals).
-- **Agents MUST NOT push directly to `lts`.** Land in `main` first; `execute-release.yml` handles copying `:testing`→`:lts` on promotion PR merge.
+- **Agents MUST NOT push directly to `lts`.** Land in `main` first; `execute-release.yml` handles copying `:testing`→`:lts` on promotion PR auto-merge.
 - **Releases** are cut by merging the `auto/promote-testing-to-main` PR. No `scheduled-lts-release.yml` workflow exists — do not reference it.
 - **bluefin-lts workflow path overrides are intentional:** use `build_scripts/` and `image-versions.yaml`, not bluefin's `build_files/` and `image-versions.yml`.
 - **`.github/workflows/`, `Justfile`, and `build_scripts/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
@@ -193,7 +177,7 @@ Until migration is complete, use `main` as the PR target for bluefin-lts. Do not
 ## Hard rules
 
 - **NEVER cancel builds** — 45–90 min, set 120+ min timeout
-- **Promotion PRs squash-merge by design** — `reusable-promote-squash.yml` rebuilds the squash branch fresh from the target branch on every run. Do NOT manually merge the promotion PR; the PR merges itself once 2 approvals land and all gate checks pass.
+- **Promotion PRs squash-merge by design** — `reusable-promote-squash.yml` rebuilds the squash branch fresh from the target branch on every run. Do NOT manually merge the promotion PR; the PR auto-merges once all gate checks pass (`lts` requires 0 approvals — gate checks are the only gate).
 - **NEVER re-enable LTS ISO builds** — Anaconda is broken on CentOS Stream base
 - **NEVER commit directly to `lts` branch** — land in `main` first
 - **NEVER merge `lts→main`** — flow is one-way: `main→lts` only
@@ -235,8 +219,8 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 All `uses:` references to **external** actions must be pinned to a full commit SHA with a version
 comment. Never use floating `@main` or `@vN` tags for third-party actions.
 `projectbluefin/actions` refs (`@v1`) are intentional managed tags and are exempt.
-`projectbluefin/testsuite` refs are SHA-pinned in `run-testsuite.yml`; Renovate keeps
-the pin current.
+`projectbluefin/testsuite` refs use `@v1` in `run-testsuite.yml`; the testsuite's
+`update-v1-tag.yml` auto-tracks `v1` to main on every merge — no manual SHA bumps needed.
 
 ---
 

@@ -53,7 +53,10 @@ BUILD_ID="${SHA_HEAD_SHORT:-deadbeef}"
 EOF
 
 # Weekly user count for fastfetch
-# FIXME: change this back to -lts once CentOS fixed their countme
+# TODO: switch to bluefin-lts.json once ublue-os/countme re-enables the bluefin-lts
+# badge entry (currently commented out as "centos countme data is broken").
+# The countme fix is in bluefin-lts-countme.service (dnf5-based, replaces the broken
+# rpm-ostree-countme). See coreos/rpm-ostree#5464, projectbluefin/bluefin-lts#656.
 ghcurl https://raw.githubusercontent.com/ublue-os/countme/main/badge-endpoints/bluefin.json --retry 3 | jq -r ".message" > /usr/share/ublue-os/fastfetch-user-count
 
 # bazaar weekly downloads used for fastfetch
