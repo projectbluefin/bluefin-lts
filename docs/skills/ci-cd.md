@@ -121,7 +121,7 @@ After any workflow change:
 | `build-nvidia.yml` | caller for `bluefin-lts-hwe-nvidia` (NVIDIA/AI) |
 | `sync-main-to-testing.yml` | force-syncs `main → testing` on every push to `main`; thin caller to `projectbluefin/actions/reusable-sync-branches.yml@v1` |
 | `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`main → lts`); calls `reusable-promote-squash.yml@v1` with `source_branch=main, target_branch=lts` |
-| `execute-release.yml` | fires on promotion PR merge; cosign re-verify, skopeo `:testing` → `:lts`, fast-forward `lts`, GitHub release |
+| `execute-release.yml` | fires on promotion PR merge; cosign re-verify, skopeo `:testing` → `:lts`, fast-forward `lts`, GitHub release. Its `release-notes` job must download `sbom-bluefin-lts-hwe` from `build-regular-hwe.yml` on `testing` — inline Syft extraction hits the 2 GB OCI safety limit on `bluefin-lts-hwe`. |
 | ~~`sync-main-to-lts.yml`~~ | **deleted** — replaced by PR-as-gate promotion model |
 | ~~`scheduled-lts-release.yml`~~ | **deleted** — releases cut by merging the promotion PR |
 | ~~`generate-release.yml`~~ | **deleted** — release creation handled by `execute-release.yml` |
@@ -481,6 +481,7 @@ Once done, `github.token` from any `bluefin-lts` workflow has full package read/
 - All SBOM steps must keep `continue-on-error: true`.
 - Failed SBOM attestation must never block image publishing.
 - LTS uses SPDX JSON artifacts on the amd64 manifest digest; signing uses keyless cosign (Sigstore OIDC).
+- The archived `lts` release path must reuse the `sbom-bluefin-lts-hwe` artifact from `build-regular-hwe.yml` on `testing`. Do **not** set `generate_sbom_inline: true` in `execute-release.yml` for `bluefin-lts-hwe` — Syft can hit the 2 GB OCI extraction guard on that image.
 
 ### SBOM permission gotcha
 

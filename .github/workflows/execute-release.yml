@@ -67,7 +67,12 @@ jobs:
     with:
       stream_name: lts
       image: ghcr.io/projectbluefin/bluefin-lts-hwe
-      generate_sbom_inline: true
+      # LTS releases retag the testing image directly, so reuse the HWE build's
+      # uploaded SPDX SBOM instead of re-scanning the promoted image inline.
+      # Inline Syft extraction hits the 2 GB OCI safety limit on bluefin-lts-hwe.
+      build_workflow: build-regular-hwe.yml
+      build_branch: testing
+      sbom_artifact: sbom-bluefin-lts-hwe
       checkout_ref: lts
       project_name: Bluefin LTS
       badge_label: LTS
