@@ -51,17 +51,17 @@ behaviour locally before pushing.
 
 | Goal | Command | Typical time |
 |---|---|---|
-| Regular | `just build bluefin lts 0 0 0` | 45-90 min |
-| Nvidia | `just build bluefin-lts-hwe-nvidia lts 0 1 0` | 45-90 min |
-| HWE | `just build bluefin lts 0 0 1` | 45-90 min |
+| Regular | `just build bluefin testing 0 0 0` | 45-90 min |
+| Nvidia | `just build bluefin-lts-hwe-nvidia testing 0 1 0` | 45-90 min |
+| HWE | `just build bluefin testing 0 0 1` | 45-90 min |
 
 The `gnome_version` parameter defaults to `"50"`. Override only if testing a future GNOME version.
 
 **HWE and GDX kernel tracking:** For HWE and GDX builds, the Fedora CoreOS stable version is resolved dynamically at build time via `skopeo inspect docker://quay.io/fedora/fedora-coreos:stable`. This version is used to select the matching `coreos-stable-<version>` akmods image tag and is passed as `FEDORA_AKMODS_VERSION` (controls negativo17 Fedora repo for NVIDIA drivers). Override with `COREOS_STABLE_VERSION` env var if you need to pin:
 
 ```bash
-COREOS_STABLE_VERSION=44 just build bluefin-lts-hwe-nvidia lts 0 1 0   # Nvidia, force Fedora 44 akmods
-COREOS_STABLE_VERSION=44 just build bluefin lts 0 0 1   # HWE, force Fedora 44 akmods
+COREOS_STABLE_VERSION=44 just build bluefin-lts-hwe-nvidia testing 0 1 0   # Nvidia, force Fedora 44 akmods
+COREOS_STABLE_VERSION=44 just build bluefin testing 0 0 1   # HWE, force Fedora 44 akmods
 ```
 
 Regular builds continue to use `centos-10` akmods and the `fedora_akmods_version` parameter (default `"43"`) has no effect on HWE/GDX.
@@ -184,7 +184,7 @@ Recovery loop:
 ```bash
 just clean
 just check && just lint
-just build bluefin lts
+just build bluefin testing
 ```
 
 ## Unit testing build scripts

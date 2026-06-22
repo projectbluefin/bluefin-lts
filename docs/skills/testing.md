@@ -128,7 +128,7 @@ spec:
 ### Caching
 
 Images are cached in the cluster after first pull. Subsequent runs of the same tag
-are ~5 seconds. Use pinned tags (`:lts`, `:testing`) not `:latest` — floating tags
+are ~5 seconds. Use pinned tags (`:stable`, `:testing`) not `:latest` — floating tags
 bypass the cache if the digest changes.
 
 ## Real example: lts-migration-smoke (2026-06-21)

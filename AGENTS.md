@@ -205,5 +205,5 @@ comment. Never use floating `@main` or `@vN` tags for third-party actions.
 
 ```bash
 just check && pre-commit run --all-files   # validate before every commit
-just build bluefin lts                     # full build (120+ min timeout)
+just build bluefin testing                     # full build (120+ min timeout)
 ```
