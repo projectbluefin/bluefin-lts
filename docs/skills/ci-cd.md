@@ -100,7 +100,7 @@ After any workflow change:
 - [Centralized CI — projectbluefin/actions](#centralized-ci--projectbluefinaactions)
 - [Schedule ownership](#schedule-ownership)
 - [Renovate auto-merge pipeline](#renovate-auto-merge-pipeline)
-- [Weekly release pipeline](#weekly-tuesday-release-pipeline)
+- [Daily release pipeline](#daily-release-pipeline)
 - [Release pipeline pitfalls](#release-pipeline-pitfalls)
 - [GHCR Package Access](#ghcr-package-access--always-use-githubtoken-never-custom-pats)
 - [SBOM rules](#sbom-rules)
@@ -113,7 +113,7 @@ After any workflow change:
 | `build-regular.yml` | caller for `bluefin-lts` — fires on push to `testing` |
 | `build-regular-hwe.yml` | caller for `bluefin-lts-hwe` (HWE kernel) — fires on push to `testing` |
 | `build-nvidia.yml` | caller for `bluefin-lts-hwe-nvidia` (NVIDIA/AI) — fires on push to `testing` |
-| `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`testing → main`); calls `reusable-promote-squash.yml@v1` with `source_branch=testing, target_branch=main`, weekly Tuesday cron |
+| `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`testing → main`); calls `reusable-promote-squash.yml@v1` with `source_branch=testing, target_branch=main`, daily 04:00 UTC cron |
 | `execute-release.yml` | fires on push to `main` when commit message matches `"^chore: promote testing to main"`; cosign re-verify, skopeo `:testing` → `:stable`, GitHub release |
 | ~~`sync-main-to-lts.yml`~~ | **deleted** — replaced by PR-as-gate promotion model |
 | ~~`scheduled-lts-release.yml`~~ | **deleted** — releases cut by merging the promotion PR |
@@ -164,7 +164,7 @@ After any workflow change:
 `promote-testing-to-main.yml` maintains an always-open `auto/promote-testing-to-main` PR targeting `main`. Merging it cuts a release — see `docs/skills/release.md`.
 
 1. PRs squash-merge to `testing`.
-2. `promote-testing-to-main.yml` fires on push to `testing` and weekly Tuesday at 04:00 UTC.
+2. `promote-testing-to-main.yml` fires on push to `testing` and daily at 04:00 UTC.
 3. Promote workflow compares `testing` vs `main` trees; rebuilds the squash branch if different.
 4. Promotion PR enters the merge queue (ruleset 17070416 on `main`). `Lint & syntax` is the only gate check.
 5. On merge, `execute-release.yml` fires on `push: main`, detects `"^chore: promote testing to main"`, skopeo-copies `:testing` → `:stable`.
@@ -234,7 +234,7 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 
 ## Schedule ownership
 
-`promote-testing-to-main.yml` is the only scheduled workflow — weekly Tuesday at `0 4 * * 2`. Do not add `schedule:` triggers to the build callers.
+`promote-testing-to-main.yml` is the only scheduled workflow — daily at `0 4 * * *`. Do not add `schedule:` triggers to the build callers.
 
 ## Renovate auto-merge pipeline
 
@@ -243,7 +243,7 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 Flow:
 1. Renovate/Mergeraptor opens a PR against `testing`.
 2. `renovate-automerge.yml` reacts to successful PR validation and calls `reusable-renovate-automerge.yml@v1`.
-3. Merged bot changes land on `testing`; the weekly Tuesday promote workflow carries them to `main`.
+3. Merged bot changes land on `testing`; the daily promote workflow carries them to `main`.
 
 **Required status check** (ruleset 4940669): `Lint & syntax` only. Builds are informational.
 
