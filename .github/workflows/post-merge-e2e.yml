@@ -1,13 +1,16 @@
-name: Post-Merge Testing Gate
+name: Post-Merge E2E
 
-# Promotes :testing immediately after a successful build — no post-merge E2E.
-# PR validation (pr-testsuite.yml) already gates every change before merge.
-# :testing is NOT published by the build itself (publish_stream_tag: false in
-# build-regular-hwe.yml); this workflow does the promotion.
+# Runs e2e smoke tests after every successful push build on testing/main,
+# then promotes verified digests to :testing.
+# Gate model: :testing is only updated after E2E passes.
+# The promote-testing-to-main gate (run_e2e: true) checks for a successful
+# completed run of this workflow keyed by the testing branch HEAD SHA.
 on:
   workflow_run:
     workflows:
+      - Build Bluefin LTS
       - Build Bluefin LTS HWE
+      - Build Bluefin Nvidia
     types:
       - completed
     branches: [main, testing]
@@ -16,17 +19,63 @@ on:
 permissions: read-all
 
 concurrency:
-  group: post-merge-testing-gate-${{ github.event.workflow_run.head_sha || github.sha }}
+  group: post-merge-e2e-${{ github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
-  promote-to-testing:
-    name: Promote verified digests to :testing
+  e2e:
+    name: E2E smoke gate
+    # Only run E2E for the base image build — HWE and Nvidia promote unconditionally after build.
+    # The gate SHA lookup keys on this workflow file; one E2E run per build cycle is sufficient.
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
-       (github.event.workflow_run.head_branch == 'main' ||
-        github.event.workflow_run.head_branch == 'testing'))
+       github.event.workflow_run.name == 'Build Bluefin LTS' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      image: ${{ steps.get-digest.outputs.image }}
+    steps:
+      - name: Download base image digest
+        id: get-digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download "${{ github.event.workflow_run.id }}" \
+            --repo "${{ github.repository }}" \
+            --name "image-digest-testing-bluefin-lts-main-x86_64" \
+            --dir /tmp/digest
+          DIGEST=$(grep "=" /tmp/digest/*.txt | head -1 | cut -d= -f2-)
+          echo "image=ghcr.io/${{ github.repository_owner }}/bluefin-lts@${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "Testing image: ghcr.io/${{ github.repository_owner }}/bluefin-lts@${DIGEST}"
+
+  run-e2e:
+    needs: [e2e]
+    permissions:
+      packages: write
+      contents: read
+    uses: ./.github/workflows/run-testsuite.yml
+    with:
+      image: ${{ needs.e2e.outputs.image }}
+      suites: smoke,common
+
+  promote-to-testing:
+    name: Promote verified digests to :testing
+    # For base LTS builds: only promote after E2E passes.
+    # For HWE and Nvidia builds: promote immediately after successful build.
+    needs: [e2e, run-e2e]
+    if: >
+      always() && (
+        (github.event_name == 'workflow_dispatch') ||
+        (github.event.workflow_run.conclusion == 'success' &&
+         github.event.workflow_run.name != 'Build Bluefin LTS' &&
+         (github.event.workflow_run.head_branch == 'main' ||
+          github.event.workflow_run.head_branch == 'testing')) ||
+        (needs.run-e2e.result == 'success' &&
+         github.event.workflow_run.head_branch == 'main')
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -59,11 +108,11 @@ jobs:
               [[ -z "${image_name}" || -z "${digest}" || "${image_name}" == *"|"* ]] && continue
               SRC="docker://${REGISTRY}/${image_name}@${digest}"
               DST="docker://${REGISTRY}/${image_name}:testing"
-              echo "Promoting ${image_name}@${digest} → :testing"
+              echo "Promoting ${image_name}@${digest} -> :testing"
               skopeo copy --all "${SRC}" "${DST}"
-              echo "  ✅ ${image_name}:testing updated"
+              echo "  ${image_name}:testing updated"
               PROMOTED=$((PROMOTED + 1))
             done < "$f"
           done < <(find /tmp/all-digests -name "*.txt" -print0)
 
-          echo "✅ Promoted ${PROMOTED} flavor(s) to :testing"
+          echo "Promoted ${PROMOTED} flavor(s) to :testing"
