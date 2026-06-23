@@ -27,8 +27,9 @@ metadata:
 | Packages removed pre-install | `build_scripts/packages/base.toml` `[remove]` | `dnf remove` before main install |
 | GNOME versionlock pins | `build_scripts/packages/base.toml` `[versionlock_gnome]` | Pinned against EL10 downgrades |
 | GNOME base setup | `build_scripts/overrides/base/10-packages-image-base.sh` | Group installs + repo setup; not TOML |
-| NVIDIA driver install | `build_scripts/overrides/nvidia/20-nvidia.sh` | Orchestration only; no TOML |
-| Nvidia packages | `build_scripts/overrides/nvidia/30-packages.sh` | uv, nvtop |
+| NVIDIA driver install | `build_scripts/overrides/gdx/20-nvidia.sh` | Orchestration only; no TOML |
+| dx packages | `build_scripts/overrides/dx/00-packages.sh` | VSCode, Docker, libvirt, cockpit |
+| gdx packages | `build_scripts/overrides/gdx/30-packages.sh` | uv, nvtop |
 
 ## Adding a package
 

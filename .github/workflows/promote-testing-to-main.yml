@@ -4,17 +4,25 @@ name: Promote testing to main
 # Auto-merges via enablePullRequestAutoMerge (--auto) — no human approval required.
 # main branch protection requires 0 reviews; gate checks are the only gate.
 #
+# Factory-standard branch model: source_branch=testing, target_branch=main.
+# Compares testing vs main trees and opens auto/promote-testing-to-main → main
+# when they differ. On merge, execute-release.yml fires and publishes :stable.
+#
 # Triggers:
-#   - push to testing (fires on every merge, keeps the promotion PR fresh)
-#   - weekly schedule Tuesday 04:00 UTC as the guaranteed weekly release trigger
+#   - push to testing (immediate re-evaluation after every merge)
+#   - workflow_run on Post-Merge E2E (fires after E2E passes and :testing is promoted)
+#   - daily schedule 04:00 UTC as the guaranteed daily release trigger
 
 on:
   push:
-    branches:
-      - testing
+    branches: [testing]
   schedule:
-    - cron: '0 4 * * 2'
+    - cron: '0 4 * * *'
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Post-Merge E2E"]
+    types: [completed]
+    branches: [testing]
 
 concurrency:
   group: promote-testing-to-main
@@ -35,6 +43,12 @@ jobs:
         [{"image":"bluefin-lts"},{"image":"bluefin-lts-hwe"},{"image":"bluefin-lts-hwe-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
-      run_e2e: false
-      use_merge_queue: false
+      run_e2e: true
+      e2e_suites: smoke,common
+      source_branch: testing
+      target_branch: main
+      # main uses a merge queue ruleset (17070416): gh pr merge --auto is blocked.
+      # use_merge_queue: true calls enqueuePullRequest GraphQL instead, which
+      # places the PR in the queue and lets it squash-merge once checks pass.
+      use_merge_queue: true
     secrets: inherit
