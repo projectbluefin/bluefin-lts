@@ -11,7 +11,7 @@ permissions:
 on:
   pull_request:
     branches:
-      - testing
+      - main
     paths:
       - Containerfile
       - Justfile
@@ -21,12 +21,8 @@ on:
       - image-versions.yaml
   push:
     branches:
+      - main  # testing only; production images published via workflow_dispatch
       - testing
-    paths-ignore:
-      - '.github/workflows/**'
-      - 'docs/**'
-      - '**.md'
-      - 'AGENTS.md'
   merge_group:
   workflow_dispatch:
 
@@ -77,7 +73,6 @@ jobs:
     secrets: inherit
     with:
       brand_name: bluefin-lts-hwe-nvidia
-      stream_name: testing
+      stream_name: ${{ github.ref == 'refs/heads/lts' && 'lts' || 'testing' }}
       image_flavors: '["main"]'
       architecture: '["x86_64"]'
-      publish_stream_tag: ${{ github.event_name != 'pull_request' && 'true' || 'false' }}

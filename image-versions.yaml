@@ -6,11 +6,11 @@ images:
   - name: common
     image: ghcr.io/projectbluefin/common
     tag: latest
-    digest: sha256:0a9d42077925cc7c8c6b6e089e475c6d025a5c34e6fed132af23034218b7c8fa
+    digest: sha256:16ecfe2f2e4e84012f52fbd0300f48c6155217b51f20410721c2984a3704e86a
   - name: brew
     image: ghcr.io/ublue-os/brew
     tag: latest
-    digest: sha256:5c5b6dea4b9faaab4d6fa81d7fc4f37f218c8a75a0839c72ae70b268bfdf4b0f
+    digest: sha256:d5064e6e2f6c577ac6b6accfff3a2a34fe34c0dd9d4dba284acd5a9393a5be75
 
 # Pinned binary downloads (managed by Renovate)
 downloads:

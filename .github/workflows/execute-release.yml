@@ -1,14 +1,14 @@
 name: Execute Release
 
-# Triggered by a push to main whose commit message starts with
-# "chore: promote testing to main" — the squash commit produced by
+# Triggered by a push to lts whose commit message starts with
+# "chore: promote main to lts" — the squash commit produced by
 # promote-testing-to-main.yml when auto/promote-testing-to-main merges
-# into main.
+# into lts.
 
 on:
   push:
     branches:
-      - main
+      - lts
   workflow_dispatch:
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           EVENT: ${{ github.event_name }}
         run: |
-          if [ "$EVENT" = "workflow_dispatch" ] || echo "$COMMIT_MSG" | grep -q "^chore: promote testing to main"; then
+          if [ "$EVENT" = "workflow_dispatch" ] || echo "$COMMIT_MSG" | grep -q "^chore: promote main to lts"; then
             echo "is-promotion=true" >> "$GITHUB_OUTPUT"
           else
             echo "is-promotion=false" >> "$GITHUB_OUTPUT"
@@ -45,10 +45,11 @@ jobs:
       registry: ghcr.io/projectbluefin
       variants: >-
         [
-          {"image":"bluefin-lts","source_tag":"testing","target_tag":"stable"},
-          {"image":"bluefin-lts-hwe","source_tag":"testing","target_tag":"stable"},
-          {"image":"bluefin-lts-hwe-nvidia","source_tag":"testing","target_tag":"stable"}
+          {"image":"bluefin-lts","source_tag":"testing","target_tag":"lts"},
+          {"image":"bluefin-lts-hwe","source_tag":"testing","target_tag":"lts"},
+          {"image":"bluefin-lts-hwe-nvidia","source_tag":"testing","target_tag":"lts"}
         ]
+      fast_forward_branch: lts
       cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
     secrets: inherit
 
@@ -64,10 +65,10 @@ jobs:
     # version appears in the Key components table instead of the base CentOS kernel.
     uses: projectbluefin/actions/.github/workflows/reusable-release.yml@v1
     with:
-      stream_name: stable
+      stream_name: lts
       image: ghcr.io/projectbluefin/bluefin-lts-hwe
       generate_sbom_inline: true
-      checkout_ref: main
+      checkout_ref: lts
       project_name: Bluefin LTS
       badge_label: LTS
       accent_color: "#0ea5e9"
@@ -99,7 +100,7 @@ jobs:
         run: |
           set -euo pipefail
           for image in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
-            digest=$(skopeo inspect --no-tags "docker://ghcr.io/projectbluefin/${image}:stable" \
+            digest=$(skopeo inspect --no-tags "docker://ghcr.io/projectbluefin/${image}:lts" \
               | jq -r '.Digest' | cut -c1-19)
             echo "${image}=${digest}" >> "$GITHUB_OUTPUT"
           done
@@ -119,9 +120,9 @@ jobs:
             '' \
             '| Variant | Tag | Digest |' \
             '|---|---|---|' \
-            "| \`bluefin-lts\` | \`:stable\` | \`${LTS_DIGEST}\` |" \
-            "| \`bluefin-lts-hwe\` | \`:stable\` | \`${HWE_DIGEST}\` |" \
-            "| \`bluefin-lts-hwe-nvidia\` | \`:stable\` | \`${NVIDIA_DIGEST}\` |" \
+            "| \`bluefin-lts\` | \`:lts\` | \`${LTS_DIGEST}\` |" \
+            "| \`bluefin-lts-hwe\` | \`:lts\` | \`${HWE_DIGEST}\` |" \
+            "| \`bluefin-lts-hwe-nvidia\` | \`:lts\` | \`${NVIDIA_DIGEST}\` |" \
             '' \
             '> **bluefin-lts-hwe** and **bluefin-lts-hwe-nvidia** use the Fedora CoreOS stable kernel. The **Kernel (HWE)** version above applies to both.' \
             '' \
@@ -129,3 +130,37 @@ jobs:
             '')
           printf '%s\n%s' "$VARIANTS_SECTION" "$CURRENT" > /tmp/updated-body.md
           gh release edit "$TAG" --repo "${{ github.repository }}" --notes-file /tmp/updated-body.md
+
+  tag-stable:
+    # Create :stable as a floating alias for :lts on every release.
+    # Makes the production tag discoverable without knowing the lts branch model.
+    needs: [execute]
+    if: always() && needs.execute.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    env:
+      REGISTRY: ghcr.io/projectbluefin
+    steps:
+      - name: Install skopeo
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y skopeo
+
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io \
+            --username "${{ github.actor }}" --password-stdin
+
+      - name: Copy :lts → :stable for all variants
+        run: |
+          set -euo pipefail
+          for image in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
+            DIGEST=$(skopeo inspect --no-tags "docker://${REGISTRY}/${image}:lts" \
+              | jq -er '.Digest')
+            echo "Tagging ${image}@${DIGEST} as :stable"
+            skopeo copy \
+              "docker://${REGISTRY}/${image}@${DIGEST}" \
+              "docker://${REGISTRY}/${image}:stable"
+            echo "  ✅ ${image}:stable → ${image}@${DIGEST}"
+          done

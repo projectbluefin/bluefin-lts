@@ -97,13 +97,13 @@ set -xeuo pipefail
   copied in the Containerfile, and `brew-setup.service` is enabled in `build_scripts/40-services.sh`.
   Hooks using brew work the same as in bluefin
 
-## Nvidia variant — NVIDIA CDI (rootless Podman GPU passthrough)
+## GDX — NVIDIA CDI (rootless Podman GPU passthrough)
 
-The `bluefin-lts-hwe-nvidia` variant ships full CDI configuration so `podman run --device nvidia.com/gpu=all` works out of the box without root or privileged containers.
+The `bluefin-gdx` variant ships full CDI configuration so `podman run --device nvidia.com/gpu=all` works out of the box without root or privileged containers.
 
 ### What's wired (as of 2026-06)
 
-**`build_scripts/overrides/nvidia/20-nvidia.sh`**
+**`build_scripts/overrides/gdx/20-nvidia.sh`**
 ```bash
 # Configure nvidia-container-toolkit for rootless use.
 # --in-place patches /etc/nvidia-container-runtime/config.toml directly into the image.
@@ -111,7 +111,7 @@ The `bluefin-lts-hwe-nvidia` variant ships full CDI configuration so `podman run
 nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place
 ```
 
-**`system_files_overrides/nvidia/usr/lib/systemd/system-preset/80-nvidia-container-toolkit.preset`**
+**`system_files_overrides/gdx/usr/lib/systemd/system-preset/80-nvidia-container-toolkit.preset`**
 ```
 enable nvidia-cdi-refresh.path
 enable nvidia-cdi-refresh.service

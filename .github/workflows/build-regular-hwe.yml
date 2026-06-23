@@ -11,7 +11,7 @@ permissions:
 on:
   pull_request:
     branches:
-      - testing
+      - main
     paths:
       - Containerfile
       - Justfile
@@ -20,12 +20,8 @@ on:
       - image-versions.yaml
   push:
     branches:
+      - main  # testing only; production images published via workflow_dispatch
       - testing
-    paths-ignore:
-      - '.github/workflows/**'
-      - 'docs/**'
-      - '**.md'
-      - 'AGENTS.md'
   merge_group:
   workflow_dispatch:
 
@@ -75,8 +71,9 @@ jobs:
     secrets: inherit
     with:
       brand_name: bluefin-lts-hwe
-      stream_name: testing
+      stream_name: ${{ github.ref == 'refs/heads/lts' && 'lts' || 'testing' }}
       image_flavors: '["main"]'
       architecture: '["x86_64"]'
-      # post-merge-e2e removed — builds publish :testing directly.
-      publish_stream_tag: ${{ github.event_name != 'pull_request' && 'true' || 'false' }}
+      # Hold :testing back — post-merge-e2e.yml promotes to :testing only after smoke passes.
+      # :lts builds (on the lts branch) publish their tag directly via execute-release.yml.
+      publish_stream_tag: ${{ (github.ref == 'refs/heads/lts' || github.event_name == 'pull_request') && 'true' || 'false' }}
