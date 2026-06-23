@@ -27,8 +27,6 @@ Written as timeless rules, not session logs.
 
 | File | What it covers |
 |---|---|
-| [`../factory/README.md`](../factory/README.md) | Factory structure, data flow, open gaps, parity matrix |
-| [`../factory/IMPROVEMENTS.md`](../factory/IMPROVEMENTS.md) | Running record of shipped improvements — append here when landing something significant |
 | [`../factory/agentic-model.md`](../factory/agentic-model.md) | Cross-repo hard rules, branch targets, PR comment policy, ublue-os prohibition |
 
 ## Skill docs
@@ -64,4 +62,3 @@ Written as timeless rules, not session logs.
 | Understand why the skill-drift CI check fired | `skill-drift.md` |
 | Test a change in the ghost lab or podman headless | `testing.md` |
 | Understand cross-repo rules or branch targets | `../factory/agentic-model.md` |
-| Understand what improvement is next for the factory | `../factory/IMPROVEMENTS.md` |
