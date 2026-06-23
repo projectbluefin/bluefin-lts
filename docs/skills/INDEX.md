@@ -27,7 +27,7 @@ Written as timeless rules, not session logs.
 
 | File | What it covers |
 |---|---|
-| [`../factory/agentic-model.md`](../factory/agentic-model.md) | Cross-repo hard rules, branch targets, PR comment policy, ublue-os prohibition |
+| [projectbluefin/common — agentic-model.md](https://github.com/projectbluefin/common/blob/main/docs/factory/agentic-model.md) | Cross-repo hard rules, branch targets, PR comment policy, ublue-os prohibition |
 
 ## Skill docs
 
@@ -61,4 +61,4 @@ Written as timeless rules, not session logs.
 | Write or update a skill file | `skill-improvement.md` |
 | Understand why the skill-drift CI check fired | `skill-drift.md` |
 | Test a change in the ghost lab or podman headless | `testing.md` |
-| Understand cross-repo rules or branch targets | `../factory/agentic-model.md` |
+| Understand cross-repo rules or branch targets | [agentic-model.md](https://github.com/projectbluefin/common/blob/main/docs/factory/agentic-model.md) |

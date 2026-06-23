@@ -123,7 +123,6 @@ After any workflow change:
 | ~~`sync-main-to-testing.yml`~~ | **deleted** — inverted flow no longer needed |
 | `pr-testsuite.yml` | runs **`validate-pr@v1`** (just check, shellcheck, hadolint, pre-commit) + **e2e smoke** on every PR; only `Lint & syntax` is a required check |
 | `pr-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
-| `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
 | `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; uses `@v1` managed tag, auto-tracked to main by testsuite's `update-v1-tag.yml` (see below) |
 | `renovate-automerge.yml` | auto-merges Renovate/mergeraptor PRs when pr-testsuite passes |
 | `pr-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
@@ -520,40 +519,6 @@ curl -fsSL "${UUPD_RAW}/uupd.timer"   -o /usr/lib/systemd/system/uupd.timer
 
 ---
 
-## PR-based release gate model
-
-**Design:** The always-open `auto/promote-testing-to-main` PR is the release gate. It auto-merges when all gate checks pass — no human approval required. Gate checks run automatically after each promotion update.
-
-**Key GITHUB_TOKEN limitations (both apply here):**
-1. `GITHUB_TOKEN` pushes to a branch do NOT fire `pull_request: synchronize` events — GitHub blocks this to prevent loops.
-2. `GITHUB_TOKEN` cannot trigger `workflow_dispatch` events via the API (HTTP 403).
-
-**Solution:** Inline the gate as a `gate` job inside `promote-testing-to-main.yml` rather than dispatching separately:
-```yaml
-jobs:
-  promote:
-    outputs:
-      sync_needed: ${{ steps.compare.outputs.sync_needed }}
-      pr_number: ${{ steps.upsert.outputs.pr_number }}
-      testing_sha: ${{ steps.compare.outputs.testing_sha }}
-    ...
-
-  gate:
-    needs: [promote]
-    if: needs.promote.outputs.sync_needed == 'true'
-    uses: projectbluefin/actions/.github/workflows/reusable-release-gate.yml@main
-    with:
-      pr_number: ${{ needs.promote.outputs.pr_number }}
-      head_sha: ${{ needs.promote.outputs.testing_sha }}
-      ...
-```
-
-**reusable-release-gate.yml inputs:** `pr_number` and `head_sha` are optional overrides. When provided, they replace `context.payload.pull_request?.number` and `github.event.pull_request.head.sha` respectively — enabling the gate to run outside a pull_request event context.
-
-**Gate output on PR #125:** Sticky comment with `<!-- release-status-marker -->` is posted/updated on the promotion PR. Labels `release/ready` or `release/blocked` are auto-applied.
-
-**E2E gate:** The gate checks for a `post-testing-e2e` workflow run on the PR's head SHA. When there is none (fresh image builds), the e2e check fails and the PR is labeled `release/blocked`. This is expected — maintainers can review and merge anyway via admin bypass.
-
 ---
 
 ## execute-release.yml — startup_failure diagnosis and fix
@@ -681,16 +646,7 @@ See https://github.com/aquasecurity/trivy-db/issues/435
 
 The `bootc-build/scan-image@v1` action in `projectbluefin/actions` did not have `continue-on-error: true` on the Trivy steps, so a Trivy FATAL kills the entire build job.
 
-**Fix:** `projectbluefin/actions` PR #201:
-- `continue-on-error: true` on both Trivy scan steps (SARIF + JSON)
-- Guard Python summarize step against missing `trivy-results.json`
-
-**After actions PR #201 merges:** A maintainer must retag `v1` in `projectbluefin/actions`:
-```bash
-git tag -f v1 <merge-commit-sha>
-git push origin v1 --force
-```
-All consuming repos (`bluefin-lts`, `bluefin`, `dakota`) pick up the fix immediately via `@v1`.
+**Fix:** `projectbluefin/actions` PR #201 added `continue-on-error: true` on both Trivy scan steps and guards the Python summarize step against missing `trivy-results.json`. All consuming repos pick up fixes immediately via `@v1`.
 
 **Note:** The dracut POSTTRANS failures (`error: rpm-ostree kernel-install: … Invalid cross-device link`) in `kernel-swap.sh` are **non-fatal warnings** — dnf exits 0 despite them and the build continues past them. They appear in logs but do not kill the build. PR #174 adds `export DRACUT_TMPDIR=/boot` as a belt-and-suspenders fix but the primary blocker is the Trivy issue above.
 
@@ -713,64 +669,18 @@ All consuming repos (`bluefin-lts`, `bluefin`, `dakota`) pick up the fix immedia
 - `MINIMAL_CONFIG` in the test file must mirror the production `changelog_config.yaml` schema exactly — divergence creates false-green tests where production code paths are never exercised
 - Verify `sections` keys (`all`, `base`, `dx`, `nvidia`) and `templates` keys (including `changelog_format`) match `changelog_config.yaml`
 
-## ublue-os → projectbluefin migration
+## Keyless signing (OIDC/Fulcio)
 
-For the complete implementation spec (script, service unit, timer unit, file paths,
-build enablement, testing) see **[`docs/skills/migration.md`](migration.md)**.
-
-### Signing policy — verified 2026-06-21
-
-Inspected `/etc/containers/policy.json` on `ghcr.io/ublue-os/bluefin:lts` and `ghcr.io/projectbluefin/bluefin-lts:stable` — both images ship the **same** policy.json (from `projectbluefin/common`).
-
-- `ghcr.io/ublue-os` → `sigstoreSigned` with key-based verification (ublue-os.pub)
-- `ghcr.io/projectbluefin` → **not listed** → falls through to `""` catch-all → `insecureAcceptAnything`
-
-`bootc switch --enforce-container-sigpolicy ghcr.io/projectbluefin/bluefin-lts:stable` succeeds on the old image (insecureAcceptAnything). The new image's own ongoing updates are also unverified by the current policy — adding a `sigstoreSigned` keyless entry for `ghcr.io/projectbluefin` is a separate hardening task.
-
-### New LTS signing: keyless (OIDC/Fulcio)
-
-New LTS images are signed via `projectbluefin/actions` `sign-and-publish` action with `signing-mode: keyless`. Verification uses:
+LTS images are signed via `projectbluefin/actions` `sign-and-publish` with `signing-mode: keyless`. Verification:
 ```
 cosign verify \
   --certificate-identity-regexp="https://github.com/projectbluefin/(bluefin|bluefin-lts|dakota|common|aurora|actions)/.github/workflows/" \
   --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
   ghcr.io/projectbluefin/<image>:<tag>
 ```
-The `cosign.pub` files in both repos are identical but are **not used** for new LTS images — they are leftovers from before the switch to keyless.
+The `cosign.pub` files in the repo are not used for current images — leftovers from before the keyless switch.
 
-### Migration service (ships in ublue-os/bluefin-lts)
-
-A `bluefin-lts-migration.timer` + `bluefin-lts-migration.service` ships in the old image's weekly build. The service:
-1. Checks for `/etc/bluefin-lts-migrated` stamp — exits 0 if present
-2. Reads current image from `bootc status --format=json`
-3. Exits 0 if already on `projectbluefin`; writes MOTD + exits 0 for arm64
-4. Maps variant to new image (gdx→hwe-nvidia, dx+hwe→lts-hwe, dx→lts, hwe→lts-hwe, *→lts)
-5. Writes `/etc/motd.d/50-bluefin-lts-migration` with next-reboot notice
-6. Runs `bootc switch --enforce-container-sigpolicy <new-image>` — non-destructive until reboot
-7. On success: touches stamp, disables timer; on failure: appends retry note to MOTD, exits 1
-
-Timer retries daily (`OnUnitInactiveSec=24h`) until success. MOTD self-cleans on reboot (not present on new image). dx/gdx users see a `ujust devmode` note.
-
-### Variant mapping (old → new)
-
-| Old (ublue-os) | New (projectbluefin) | Notes |
-|---|---|---|
-| `bluefin-gdx:lts*` | `bluefin-lts-hwe-nvidia:stable` | dx/gdx: ujust devmode |
-| `bluefin-dx:lts-hwe*` | `bluefin-lts-hwe:stable` | dx: ujust devmode |
-| `bluefin-dx:lts*` | `bluefin-lts:stable` | dx: ujust devmode |
-| `bluefin:lts-hwe*` | `bluefin-lts-hwe:stable` | |
-| `bluefin:lts*` (incl. GNOME50) | `bluefin-lts:stable` | |
-| arm64 | MOTD only, no switch | unsupported |
-
-### ghost lab migration workflow
-
-`bluefin-migration-test` and `migration-upgrade-test` Argo templates in the ghost lab are NOT suitable for LTS migration testing as-is. Known issues:
-- `run-bootc-switch` hardcodes `--enforce-container-sigpolicy` with no override
-- Golden disk cache keyed by tag only — all `lts`-tagged variants collide
-- Tests backward (new→old) direction which adds irrelevant failure modes
-- Weak target verification (substring, not digest)
-
-Use `projectbluefin/actions/.github/workflows/migration-test.yml` via `workflow_dispatch` instead — it delegates to the testsuite and avoids these issues.
+Note: `ghcr.io/projectbluefin` is not in the shipped `policy.json` — falls through to `insecureAcceptAnything`. Adding a `sigstoreSigned` keyless entry is an open hardening task.
 
 ## countme: rpm-ostree-countme is broken on CentOS — replaced with dnf5 service
 
