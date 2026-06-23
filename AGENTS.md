@@ -7,6 +7,11 @@ Home repo: [projectbluefin/bluefin-lts](https://github.com/projectbluefin/bluefi
 > Humans approve design, security-sensitive changes, and merge. See also the
 > [org-wide AGENTS.md](https://github.com/projectbluefin/.github/blob/main/AGENTS.md).
 
+> **Before using any tool or library: look up its docs via Context7 first. Always.**
+> bootc, cosign, skopeo, buildah, GitHub Actions, rpm-ostree — every tool has live, authoritative docs.
+> Pattern: `resolve-library-id` → `get-library-docs` → implement → cite the section.
+> Guessing, flag-hunting, and trial-and-error are banned. The docs exist. Read them.
+
 ## Agent fast path
 
 ```
