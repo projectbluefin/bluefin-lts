@@ -1,13 +1,11 @@
 name: PR Release Gate
 
-# Runs the release gate checks on the promotion PR targeting the lts branch.
-# Mirrors the equivalent workflow in projectbluefin/bluefin, adapted for the
-# lts branch model (main → lts instead of testing → main).
+# Runs the release gate checks on the promotion PR targeting main.
 
 on:
   pull_request:
     branches:
-      - lts
+      - main
 
 permissions: {}
 
