@@ -10,13 +10,13 @@ name: Promote testing to main
 #
 # Triggers:
 #   - push to testing (immediate re-evaluation after every merge)
-#   - weekly schedule Tuesday 04:00 UTC — matches dakota cadence
+#   - daily 04:00 UTC — matches bluefin cadence
 
 on:
   push:
     branches: [testing]
   schedule:
-    - cron: '0 4 * * 2'
+    - cron: '0 4 * * *'
   workflow_dispatch:
 
 concurrency:

@@ -101,7 +101,7 @@ dakota  (PRs→testing; testing→main; main→:stable)
 `promote-testing-to-main.yml` maintains an always-open `auto/promote-testing-to-main` PR.
 It auto-merges via the merge queue (0 approvals required — fully automated).
 `execute-release.yml` fires on the resulting push to `main`, copies `:testing` → `:stable`,
-and creates a GitHub release. Weekly cadence: Tuesday 04:00 UTC.
+and creates a GitHub release. Daily cadence: 04:00 UTC.
 
 ### Issue lifecycle
 
