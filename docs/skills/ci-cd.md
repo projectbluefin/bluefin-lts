@@ -72,7 +72,7 @@ See Reference — Cosign verification section below. The cert identity regexp mu
 - **Adding `workflows: write` to a job** — not a valid `GITHUB_TOKEN` scope; causes silent failures.
 - **Triggering on `push: main`** — builds fire on push to `testing`, not `main`. `main` only triggers `execute-release.yml`.
 - **Calling the testsuite `e2e.yml` directly** — always call via `run-testsuite.yml`; never call the testsuite directly.
-- **`stream_name: lts` in a build caller** — the build callers do not run on `lts`; `execute-release.yml` uses skopeo copy, not reusable-build.
+- **`stream_name: lts` in a build caller** — there is no `lts` stream; build callers use `stream_name: testing`. `execute-release.yml` uses skopeo copy, not reusable-build.
 - **`startup_failure` with no log** — means a permission scope required by a nested reusable workflow is not granted by the caller job. See Reference — startup_failure diagnosis.
 - **`use_merge_queue: false` on main** — main has a merge queue ruleset (17070416); always use `use_merge_queue: true` so `enqueuePullRequest` fires and the PR squash-merges.
 
@@ -100,7 +100,7 @@ After any workflow change:
 - [Centralized CI — projectbluefin/actions](#centralized-ci--projectbluefinaactions)
 - [Schedule ownership](#schedule-ownership)
 - [Renovate auto-merge pipeline](#renovate-auto-merge-pipeline)
-- [Weekly release pipeline](#daily-release-pipeline)
+- [Weekly release pipeline](#weekly-tuesday-release-pipeline)
 - [Release pipeline pitfalls](#release-pipeline-pitfalls)
 - [GHCR Package Access](#ghcr-package-access--always-use-githubtoken-never-custom-pats)
 - [SBOM rules](#sbom-rules)
@@ -113,7 +113,7 @@ After any workflow change:
 | `build-regular.yml` | caller for `bluefin-lts` — fires on push to `testing` |
 | `build-regular-hwe.yml` | caller for `bluefin-lts-hwe` (HWE kernel) — fires on push to `testing` |
 | `build-nvidia.yml` | caller for `bluefin-lts-hwe-nvidia` (NVIDIA/AI) — fires on push to `testing` |
-| `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`testing → main`); calls `reusable-promote-squash.yml@v1` with `source_branch=testing, target_branch=main`, daily cron |
+| `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`testing → main`); calls `reusable-promote-squash.yml@v1` with `source_branch=testing, target_branch=main`, weekly Tuesday cron |
 | `execute-release.yml` | fires on push to `main` when commit message matches `"^chore: promote testing to main"`; cosign re-verify, skopeo `:testing` → `:stable`, GitHub release |
 | ~~`sync-main-to-lts.yml`~~ | **deleted** — replaced by PR-as-gate promotion model |
 | ~~`scheduled-lts-release.yml`~~ | **deleted** — releases cut by merging the promotion PR |
@@ -126,7 +126,7 @@ After any workflow change:
 | `pr-e2e-smoke.yml` | informational E2E smoke on every PR; always fails due to `ublue-os/` prefix mismatch in testsuite (issue #34, testsuite#412); never block merge on this |
 | `run-testsuite.yml` | canonical wrapper for calling `projectbluefin/testsuite` — always call via this file, never call the testsuite `e2e.yml` directly; uses `@v1` managed tag, auto-tracked to main by testsuite's `update-v1-tag.yml` (see below) |
 | `renovate-automerge.yml` | auto-merges Renovate/mergeraptor PRs when pr-testsuite passes |
-| `post-merge-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
+| `pr-e2e.yml` | advisory PR E2E gate; composes `system_files/` changes on top of `bluefin-lts:testing` and runs smoke suite; non-blocking; only fires when image-relevant paths change |
 | `lifecycle-caller.yml` | issue and PR lifecycle automation (bonedigger pipeline via `projectbluefin/common`) |
 | `skill-drift.yml` | warns on PRs that change CI/build/system files without updating docs/skills |
 | `validate-renovate.yaml` | validates `.github/renovate.json5` on relevant PRs and pushes |
@@ -164,7 +164,7 @@ After any workflow change:
 `promote-testing-to-main.yml` maintains an always-open `auto/promote-testing-to-main` PR targeting `main`. Merging it cuts a release — see `docs/skills/release.md`.
 
 1. PRs squash-merge to `testing`.
-2. `promote-testing-to-main.yml` fires on push to `testing` and daily at 04:00 UTC.
+2. `promote-testing-to-main.yml` fires on push to `testing` and weekly Tuesday at 04:00 UTC.
 3. Promote workflow compares `testing` vs `main` trees; rebuilds the squash branch if different.
 4. Promotion PR enters the merge queue (ruleset 17070416 on `main`). `Lint & syntax` is the only gate check.
 5. On merge, `execute-release.yml` fires on `push: main`, detects `"^chore: promote testing to main"`, skopeo-copies `:testing` → `:stable`.
@@ -234,7 +234,7 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 
 ## Schedule ownership
 
-`release-reminder.yml` is the only scheduled workflow — posts a reminder on the promotion PR after 7 days open. Do not add `schedule:` triggers to the build callers.
+`promote-testing-to-main.yml` is the only scheduled workflow — weekly Tuesday at `0 4 * * 2`. Do not add `schedule:` triggers to the build callers.
 
 ## Renovate auto-merge pipeline
 
@@ -243,13 +243,13 @@ Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kern
 Flow:
 1. Renovate/Mergeraptor opens a PR against `testing`.
 2. `renovate-automerge.yml` reacts to successful PR validation and calls `reusable-renovate-automerge.yml@v1`.
-3. Merged bot changes land on `testing`; the daily promote workflow carries them to `main`.
+3. Merged bot changes land on `testing`; the weekly Tuesday promote workflow carries them to `main`.
 
 **Required status check** (ruleset 4940669): `Lint & syntax` only. Builds are informational.
 
 ### Renovate automerge pitfalls
 
-**All PRs target `testing`.** Renovate must target `testing`, not `main` or `lts`.
+**All PRs target `testing`.** Renovate must target `testing`, not `main`.
 
 **Never add `projectbluefin/actions` refs to the automerge `pin` rule.** The `matchUpdateTypes: ["pin"]` Renovate rule generates PRs that SHA-pin `@v1` managed tags to commit hashes. The `no-sha-pins-for-internal-actions` pre-commit hook rejects those for `projectbluefin/actions` permanently (exit 1). The fix is to exclude `projectbluefin/actions` refs:
 
@@ -720,12 +720,12 @@ build enablement, testing) see **[`docs/skills/migration.md`](migration.md)**.
 
 ### Signing policy — verified 2026-06-21
 
-Inspected `/etc/containers/policy.json` on `ghcr.io/ublue-os/bluefin:lts` and `ghcr.io/projectbluefin/bluefin-lts:lts` — both images ship the **same** policy.json (from `projectbluefin/common`).
+Inspected `/etc/containers/policy.json` on `ghcr.io/ublue-os/bluefin:lts` and `ghcr.io/projectbluefin/bluefin-lts:stable` — both images ship the **same** policy.json (from `projectbluefin/common`).
 
 - `ghcr.io/ublue-os` → `sigstoreSigned` with key-based verification (ublue-os.pub)
 - `ghcr.io/projectbluefin` → **not listed** → falls through to `""` catch-all → `insecureAcceptAnything`
 
-`bootc switch --enforce-container-sigpolicy ghcr.io/projectbluefin/bluefin-lts:lts` succeeds on the old image (insecureAcceptAnything). The new image's own ongoing updates are also unverified by the current policy — adding a `sigstoreSigned` keyless entry for `ghcr.io/projectbluefin` is a separate hardening task.
+`bootc switch --enforce-container-sigpolicy ghcr.io/projectbluefin/bluefin-lts:stable` succeeds on the old image (insecureAcceptAnything). The new image's own ongoing updates are also unverified by the current policy — adding a `sigstoreSigned` keyless entry for `ghcr.io/projectbluefin` is a separate hardening task.
 
 ### New LTS signing: keyless (OIDC/Fulcio)
 
@@ -755,11 +755,11 @@ Timer retries daily (`OnUnitInactiveSec=24h`) until success. MOTD self-cleans on
 
 | Old (ublue-os) | New (projectbluefin) | Notes |
 |---|---|---|
-| `bluefin-gdx:lts*` | `bluefin-lts-hwe-nvidia:lts` | dx/gdx: ujust devmode |
-| `bluefin-dx:lts-hwe*` | `bluefin-lts-hwe:lts` | dx: ujust devmode |
-| `bluefin-dx:lts*` | `bluefin-lts:lts` | dx: ujust devmode |
-| `bluefin:lts-hwe*` | `bluefin-lts-hwe:lts` | |
-| `bluefin:lts*` (incl. GNOME50) | `bluefin-lts:lts` | |
+| `bluefin-gdx:lts*` | `bluefin-lts-hwe-nvidia:stable` | dx/gdx: ujust devmode |
+| `bluefin-dx:lts-hwe*` | `bluefin-lts-hwe:stable` | dx: ujust devmode |
+| `bluefin-dx:lts*` | `bluefin-lts:stable` | dx: ujust devmode |
+| `bluefin:lts-hwe*` | `bluefin-lts-hwe:stable` | |
+| `bluefin:lts*` (incl. GNOME50) | `bluefin-lts:stable` | |
 | arm64 | MOTD only, no switch | unsupported |
 
 ### ghost lab migration workflow

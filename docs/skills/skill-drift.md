@@ -10,7 +10,7 @@ metadata:
 
 # Skill Drift
 
-The `skill-drift.yml` workflow fires on every PR to `main`. It checks that changes to
+The `skill-drift.yml` workflow fires on every PR to `testing`. It checks that changes to
 code paths are accompanied by changes to skill paths. It enforces **coupling** — that docs
 stay in sync with code — but does NOT check the structural quality of skill files (that is
 agent self-discipline; see `skill-improvement.md`).
@@ -36,7 +36,7 @@ Use this when the check fires and you need to know which skill to update:
 |---|---|
 | `.github/workflows/build*.yml`, `build_scripts/**`, `image-versions.yaml` | `ci-cd.md` |
 | `.github/workflows/execute-release.yml`, `promote-testing-to-main.yml` | `release.md` |
-| `.github/workflows/post-merge-e2e.yml`, `run-testsuite.yml`, `pr-e2e.yml` | `ci-cd.md` |
+| `.github/workflows/run-testsuite.yml`, `pr-e2e.yml` | `ci-cd.md` |
 | `.github/workflows/skill-drift.yml` | this file (`skill-drift.md`) |
 | `.github/workflows/renovate-automerge.yml` | `ci-cd.md` |
 | `Containerfile` | `build.md` |
