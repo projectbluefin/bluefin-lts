@@ -88,6 +88,9 @@ Every skill file must have these sections. This is enforced by agent self-audit,
 ```markdown
 ---
 name: <skill-name>
+version: "1.0"
+last_updated: YYYY-MM-DD
+tags: [tag1, tag2, tag3]
 description: >-
   <one-line description>. Use when <specific trigger phrases>.
 metadata:
