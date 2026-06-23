@@ -40,7 +40,7 @@ testing → main → :stable
 
 ## Production release flow
 
-1. `promote-testing-to-main.yml` fires on push to `testing`, daily at **04:00 UTC**, and on manual dispatch.
+1. `promote-testing-to-main.yml` fires on push to `testing`, weekly **Tuesday at 04:00 UTC**, and on manual dispatch.
    It calls `reusable-promote-squash.yml@v1` with `source_branch: testing`, `target_branch: main`, `use_merge_queue: true`.
    When trees differ it rebuilds the squash branch and upserts the `auto/promote-testing-to-main` PR.
 2. The PR enters the merge queue (ruleset 17070416 on `main` requires squash + merge queue).
@@ -62,9 +62,9 @@ gh pr merge <pr-number> --repo projectbluefin/bluefin-lts --squash --admin
 `main` requires a PR with merge queue entry. Gate check: `Lint & syntax`. 0 approvals required.
 `.github/workflows/` is CODEOWNERS-protected — PRs touching workflow files require `--admin` bypass.
 
-## Daily cadence
+## Weekly Tuesday cadence
 
-- Fully automated: **04:00 UTC daily** — cron fires, promote workflow updates the PR, merge queue processes it, execute-release publishes `:stable`
+- Fully automated: **Tuesday 04:00 UTC** — cron fires, promote workflow updates the PR, merge queue processes it, execute-release publishes `:stable`
 - No human approval required — `Lint & syntax` is the only gate
 - `workflow_dispatch` is the supported manual release path
 
@@ -184,11 +184,11 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 - `use_merge_queue: false` — main requires a merge queue (ruleset 17070416); always use `true`
 - `source_branch: main` or `target_branch: lts` — model changed; use `testing` → `main`
 - adding `run_e2e: true` — no post-merge-e2e gate; builds publish `:testing` directly
-- describing the schedule as Thursday or weekly — cadence is daily 04:00 UTC
+- describing the schedule as daily or Thursday — cadence is weekly Tuesday at 04:00 UTC (`0 4 * * 2`)
 
 ## Verification
 
-- [ ] `promote-testing-to-main.yml` schedules daily at `0 4 * * *`
+- [ ] `promote-testing-to-main.yml` schedules weekly Tuesday at `0 4 * * 2`
 - [ ] `use_merge_queue: true`
 - [ ] `source_branch: testing` and `target_branch: main`
 - [ ] `execute-release.yml` fires on `push: main`, detects `"^chore: promote testing to main"`, publishes `:stable`

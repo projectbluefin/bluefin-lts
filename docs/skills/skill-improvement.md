@@ -68,7 +68,7 @@ If all five are checked, you're done. If any are unchecked, finish them first.
 |---|---|
 | `.github/workflows/build*.yml`, `build_scripts/**`, `image-versions.yaml` | `ci-cd.md` |
 | `.github/workflows/execute-release.yml`, `promote-testing-to-main.yml` | `release.md` |
-| `.github/workflows/post-merge-e2e.yml`, `run-testsuite.yml`, `pr-e2e.yml` | `ci-cd.md` |
+| `.github/workflows/run-testsuite.yml`, `pr-e2e.yml` | `ci-cd.md` |
 | `.github/workflows/skill-drift.yml` | `skill-drift.md` (this file) |
 | `system_files/**`, `build_scripts/**` package manifests | `build.md` or `packages.md` |
 | GNOME extension add/remove | `gnome-extensions.md` |

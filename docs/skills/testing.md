@@ -47,7 +47,7 @@ spec:
   templates:
   - name: run
     container:
-      image: ghcr.io/projectbluefin/bluefin-lts:lts
+      image: ghcr.io/projectbluefin/bluefin-lts:stable
       command: [bash, -c]
       args:
       - |
@@ -102,7 +102,7 @@ spec:
           - name: image
             value: "ghcr.io/ublue-os/bluefin:lts"
           - name: expected_target
-            value: "ghcr.io/projectbluefin/bluefin-lts:lts"
+            value: "ghcr.io/projectbluefin/bluefin-lts:stable"
       - name: hwe
         template: smoke
         arguments:
@@ -110,7 +110,7 @@ spec:
           - name: image
             value: "ghcr.io/ublue-os/bluefin:lts-hwe"
           - name: expected_target
-            value: "ghcr.io/projectbluefin/bluefin-lts-hwe:lts"
+            value: "ghcr.io/projectbluefin/bluefin-lts-hwe:stable"
   - name: smoke
     inputs:
       parameters:
@@ -145,7 +145,7 @@ All 5 tasks Succeeded in ~5 seconds each using cached images.
    (meaning `bootc switch --enforce-container-sigpolicy` will succeed)
 
 **Key finding on signing:** Both the old image (`ghcr.io/ublue-os/bluefin:lts`) and the
-new image (`ghcr.io/projectbluefin/bluefin-lts:lts`) ship the same `policy.json` from
+new image (`ghcr.io/projectbluefin/bluefin-lts:stable`) ship the same `policy.json` from
 `projectbluefin/common`. The `ghcr.io/projectbluefin` registry is not listed explicitly
 and falls through to the `""` catch-all (`insecureAcceptAnything`). The migration
 `bootc switch --enforce-container-sigpolicy` call succeeds.
