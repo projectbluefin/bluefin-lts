@@ -47,5 +47,8 @@ jobs:
       e2e_suites: smoke,common
       source_branch: testing
       target_branch: main
-      use_merge_queue: false
+      # main uses a merge queue ruleset (17070416): gh pr merge --auto is blocked.
+      # use_merge_queue: true calls enqueuePullRequest GraphQL instead, which
+      # places the PR in the queue and lets it squash-merge once checks pass.
+      use_merge_queue: true
     secrets: inherit
