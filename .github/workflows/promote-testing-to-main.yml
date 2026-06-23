@@ -10,7 +10,6 @@ name: Promote testing to main
 #
 # Triggers:
 #   - push to testing (immediate re-evaluation after every merge)
-#   - workflow_run on Post-Merge E2E (fires after E2E passes and :testing is promoted)
 #   - daily schedule 04:00 UTC as the guaranteed daily release trigger
 
 on:
@@ -19,10 +18,6 @@ on:
   schedule:
     - cron: '0 4 * * *'
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Post-Merge E2E"]
-    types: [completed]
-    branches: [testing]
 
 concurrency:
   group: promote-testing-to-main
@@ -43,8 +38,7 @@ jobs:
         [{"image":"bluefin-lts"},{"image":"bluefin-lts-hwe"},{"image":"bluefin-lts-hwe-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
-      run_e2e: true
-      e2e_suites: smoke,common
+      run_e2e: false
       source_branch: testing
       target_branch: main
       # main uses a merge queue ruleset (17070416): gh pr merge --auto is blocked.
