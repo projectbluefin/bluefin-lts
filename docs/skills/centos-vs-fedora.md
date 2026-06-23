@@ -45,7 +45,7 @@ dnf config-manager --add-repo "https://copr.fedorainfracloud.org/coprs/OWNER/PRO
 dnf config-manager --add-repo "https://copr.fedorainfracloud.org/coprs/OWNER/PROJECT/repo/centos-stream-${MAJOR_VERSION_NUMBER}/OWNER-PROJECT-centos-stream-${MAJOR_VERSION_NUMBER}.repo"
 ```
 
-**Example:** `jreilly1821/c10s-gnome-50` only has `epel-10` chroots, not `centos-stream-10`. Always verify with the COPR API before adding a source.
+**Real example** (issue #48, fixed 2026-06-04): `jreilly1821/c10s-gnome-50` only has `epel-10` chroots. Using `centos-stream-10` caused a 404 on every GDX build until the URL was corrected.
 
 ## Common mistakes to avoid
 
