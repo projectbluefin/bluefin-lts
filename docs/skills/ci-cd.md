@@ -1,6 +1,6 @@
 ---
 name: bluefin-lts-ci-cd
-version: "1.1"
+version: "1.2"
 last_updated: 2026-06-23
 tags: [ci, workflows, release, promotion, e2e]
 description: >-
@@ -606,6 +606,22 @@ The `pull_request: closed` trigger was replaced with `push: branches: [main]` be
 - Bot-authored PRs that modify `.github/workflows/` via GITHUB_TOKEN cannot fire `pull_request` events (GitHub security restriction).
 - Push events fire for all merges including admin force-merges.
 - A `check-trigger` job with the `if: startsWith(...)` condition gates the actual release jobs so non-promotion pushes are no-ops.
+
+### post-release-variants — idempotency guard
+
+**Symptom:** GitHub release shows `## Variants promoted` table 2–5 times.
+
+**Root cause:** `execute-release.yml` fires on every `push: main`. If multiple commits matching `"^chore: promote testing to main"` land the same day, `post-release-variants` runs each time and prepends the variants block again. `reusable-release.yml@v1` is idempotent (skips if tag exists); the local `post-release-variants` job was not.
+
+**Fix (PR #379):** The prepend step now guards:
+```bash
+if echo "$CURRENT" | grep -q "## Variants promoted"; then
+  echo "Variants table already present — skipping."
+  exit 0
+fi
+```
+
+**If you see duplicates on an existing release:** Cosmetic only — changelog, SBOM, and key components are generated once by `reusable-release.yml@v1`. Clean manually with `gh release edit <tag> --notes-file <cleaned.md>`.
 
 ---
 
