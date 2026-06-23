@@ -1,5 +1,8 @@
 ---
 name: bluefin-lts-build
+version: "1.0"
+last_updated: 2026-06-23
+tags: [build, validation, variants, just]
 description: >-
   Local build, validation, and variant guide for projectbluefin/bluefin-lts. Use when running
   just build, just check, or just lint; understanding the Regular/HWE/GDX variant map; debugging

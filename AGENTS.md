@@ -140,18 +140,6 @@ When in doubt, post nothing.
 - **bluefin-lts workflow path overrides are intentional:** use `build_scripts/` and `image-versions.yaml`, not bluefin's `build_files/` and `image-versions.yml`.
 - **`.github/workflows/`, `Justfile`, and `build_scripts/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
 
-## Skills
-
-See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task needs:
-
-| Task | Load |
-|---|---|
-| Local build, validation, packages | `docs/skills/build.md` |
-| CI/CD workflows, publish logic, tag namespaces | `docs/skills/ci-cd.md` |
-| CentOS-vs-Fedora package/repo decisions | `docs/skills/centos-vs-fedora.md` |
-| GNOME Shell extensions (add/remove/build) | `docs/skills/gnome-extensions.md` |
-| Release, rollback, registry, ISO status | `docs/skills/release.md` |
-
 ## Branch model
 
 - `testing` — all PRs target this branch. Builds push `:testing` on every push.

@@ -1,5 +1,8 @@
 ---
 name: bluefin-lts-release
+version: "1.1"
+last_updated: 2026-06-23
+tags: [release, promotion, rollback, registry]
 description: >-
   Production release pipeline, branch promotion, registry rollback, and ISO status for
   projectbluefin/bluefin-lts. Use when cutting a release, debugging promotion automation,

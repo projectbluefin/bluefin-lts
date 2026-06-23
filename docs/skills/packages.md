@@ -1,5 +1,8 @@
 ---
 name: bluefin-lts-packages
+version: "1.0"
+last_updated: 2026-06-23
+tags: [packages, rpm, dnf, copr, epel]
 description: >-
   Adding, removing, or updating RPM packages in the bluefin-lts image.
   Use when editing package lists, handling COPR packages, or debugging

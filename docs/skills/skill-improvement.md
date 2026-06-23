@@ -1,5 +1,8 @@
 ---
-name: skill-improvement
+name: bluefin-lts-skill-improvement
+version: "1.0"
+last_updated: 2026-06-23
+tags: [skills, documentation, self-improvement]
 description: >-
   The skill-improvement mandate — every agent session must produce a skill file update alongside
   the work. Use when completing a task and deciding whether to write a skill update, or when

@@ -1,5 +1,8 @@
 ---
-name: hardware
+name: bluefin-lts-hardware
+version: "1.0"
+last_updated: 2026-06-23
+tags: [hardware, oem, framework, aarch64, first-boot]
 description: >-
   OEM hardware detection, first-boot setup hooks, and device-specific configuration in
   bluefin-lts. Covers the ublue-user-setup hook architecture, Framework laptop support,

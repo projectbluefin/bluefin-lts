@@ -1,5 +1,8 @@
 ---
 name: bluefin-lts-ci-cd
+version: "1.1"
+last_updated: 2026-06-23
+tags: [ci, workflows, release, promotion, e2e]
 description: >-
   CI/CD workflow map, publish logic, tag namespaces, promotion flow, and pitfalls for
   projectbluefin/bluefin-lts. Use when debugging build triggers, understanding why images were
@@ -94,17 +97,27 @@ After any workflow change:
 ## Contents
 - [Workflow map](#workflow-map)
 - [Branches and tags](#branches-and-tags)
+- [Branch model](#branch-model)
 - [Promotion flow](#promotion-flow-testingmain)
 - [stream_name routing](#stream_name--how-tags-are-determined)
 - [Event truth table](#event-truth-table)
-- [Centralized CI — projectbluefin/actions](#centralized-ci--projectbluefinaactions)
+- [Centralized CI — projectbluefin/actions](#centralized-ci--projectbluefinactions)
 - [Schedule ownership](#schedule-ownership)
 - [Renovate auto-merge pipeline](#renovate-auto-merge-pipeline)
-- [Daily release pipeline](#daily-release-pipeline)
 - [Release pipeline pitfalls](#release-pipeline-pitfalls)
+- [Release-generation pitfalls](#release-generation-pitfalls)
+- [Rechunker](#rechunker--chunkaav1-projectbluefinactions)
 - [GHCR Package Access](#ghcr-package-access--always-use-githubtoken-never-custom-pats)
 - [SBOM rules](#sbom-rules)
 - [Condition quick reference](#condition-quick-reference)
+- [uupd install — COPR removed](#uupd-install--copr-removed-use-github-releases)
+- [execute-release.yml startup_failure](#execute-releaseyml--startup_failure-diagnosis-and-fix)
+- [E2E known issues — QEMU artifacts](#e2e-known-issues--qemu-environment-artifacts)
+- [Trivy scan FATAL](#trivy-scan-fatal--centos-10-cpe-indices-missing)
+- [changelogs.py](#changelogspy--oci-manifest-diff-changelog)
+- [Keyless signing](#keyless-signing-oidcfulcio)
+- [rpm-ostree-countme broken](#countme-rpm-ostree-countme-is-broken-on-centos--replaced-with-dnf5-service)
+- [Merging PRs as repo admin](#merging-prs-as-repo-admin)
 
 ## Workflow map
 

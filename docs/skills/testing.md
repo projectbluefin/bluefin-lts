@@ -1,3 +1,16 @@
+---
+name: bluefin-lts-testing
+version: "1.0"
+last_updated: 2026-06-23
+tags: [testing, lab, qemu, podman, ghost]
+description: >-
+  Ghost lab and podman headless testing for projectbluefin/bluefin-lts. Use when deciding
+  between VM-based and containerized testing, running E2E tests on the lab cluster, or debugging
+  build output without a full CI run.
+metadata:
+  type: procedure
+---
+
 # Testing — ghost lab and podman headless
 
 This file documents when and how to test changes in the ghost lab.
