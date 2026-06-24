@@ -1,8 +1,5 @@
 ---
-name: bluefin-lts-skill-improvement
-version: "1.0"
-last_updated: 2026-06-23
-tags: [skills, documentation, self-improvement]
+name: skill-improvement
 description: >-
   The skill-improvement mandate — every agent session must produce a skill file update alongside
   the work. Use when completing a task and deciding whether to write a skill update, or when
@@ -88,9 +85,6 @@ Every skill file must have these sections. This is enforced by agent self-audit,
 ```markdown
 ---
 name: <skill-name>
-version: "1.0"
-last_updated: YYYY-MM-DD
-tags: [tag1, tag2, tag3]
 description: >-
   <one-line description>. Use when <specific trigger phrases>.
 metadata:

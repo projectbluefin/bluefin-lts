@@ -1,8 +1,5 @@
 ---
 name: bluefin-lts-gnome-extensions
-version: "1.0"
-last_updated: 2026-06-23
-tags: [gnome, extensions, submodules, build]
 description: >-
   Adding, removing, and building GNOME Shell extensions in projectbluefin/bluefin-lts. Extensions
   are git submodules in system_files/usr/share/gnome-shell/extensions/<UUID>/. Use when adding a
