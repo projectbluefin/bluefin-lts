@@ -29,6 +29,7 @@ permissions:
   issues: write
   packages: read
   actions: read
+  statuses: write
 
 jobs:
   promote:
