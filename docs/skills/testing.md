@@ -1,16 +1,3 @@
----
-name: bluefin-lts-testing
-version: "1.0"
-last_updated: 2026-06-23
-tags: [testing, lab, qemu, podman, ghost]
-description: >-
-  Ghost lab and podman headless testing for projectbluefin/bluefin-lts. Use when deciding
-  between VM-based and containerized testing, running E2E tests on the lab cluster, or debugging
-  build output without a full CI run.
-metadata:
-  type: procedure
----
-
 # Testing — ghost lab and podman headless
 
 This file documents when and how to test changes in the ghost lab.
@@ -113,29 +100,55 @@ spec:
         arguments:
           parameters:
           - name: image
-            value: "ghcr.io/projectbluefin/bluefin-lts:testing"
+            value: "ghcr.io/ublue-os/bluefin:lts"
+          - name: expected_target
+            value: "ghcr.io/projectbluefin/bluefin-lts:stable"
       - name: hwe
         template: smoke
         arguments:
           parameters:
           - name: image
-            value: "ghcr.io/projectbluefin/bluefin-lts-hwe:testing"
+            value: "ghcr.io/ublue-os/bluefin:lts-hwe"
+          - name: expected_target
+            value: "ghcr.io/projectbluefin/bluefin-lts-hwe:stable"
   - name: smoke
     inputs:
       parameters:
       - name: image
+      - name: expected_target
     container:
       image: "{{inputs.parameters.image}}"
       command: [bash, -c]
       args:
       - |
+        expected="{{inputs.parameters.expected_target}}"
         # ... run checks
 ```
 
 ### Caching
 
 Images are cached in the cluster after first pull. Subsequent runs of the same tag
-are ~5 seconds. Use `:testing` or `:stable` tags — floating tags bypass the cache if the digest changes.
+are ~5 seconds. Use pinned tags (`:lts`, `:testing`) not `:latest` — floating tags
+bypass the cache if the digest changes.
+
+## Real example: lts-migration-smoke (2026-06-21)
+
+Tested the `bluefin-lts-migrate` service logic across all 5 old-LTS variants.
+All 5 tasks Succeeded in ~5 seconds each using cached images.
+
+**What was proven:**
+1. `python3` JSON parsing of `bootc status --format=json` works in the real old image
+2. All variant → target mappings are correct (`bluefin-gdx` → `bluefin-lts-hwe-nvidia`, etc.)
+3. Required tools (`python3`, `bootc`, `systemctl`) exist in `ghcr.io/ublue-os/bluefin:lts`
+4. `/etc/motd.d/` is writable at container start
+5. `/etc/containers/policy.json` has `insecureAcceptAnything` for `ghcr.io/projectbluefin`
+   (meaning `bootc switch --enforce-container-sigpolicy` will succeed)
+
+**Key finding on signing:** Both the old image (`ghcr.io/ublue-os/bluefin:lts`) and the
+new image (`ghcr.io/projectbluefin/bluefin-lts:stable`) ship the same `policy.json` from
+`projectbluefin/common`. The `ghcr.io/projectbluefin` registry is not listed explicitly
+and falls through to the `""` catch-all (`insecureAcceptAnything`). The migration
+`bootc switch --enforce-container-sigpolicy` call succeeds.
 
 ## KubeVirt VMs (full boot test)
 

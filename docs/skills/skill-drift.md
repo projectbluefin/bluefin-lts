@@ -1,8 +1,5 @@
 ---
-name: bluefin-lts-skill-drift
-version: "1.0"
-last_updated: 2026-06-23
-tags: [skills, ci, drift-check]
+name: skill-drift
 description: >-
   How the skill-drift CI check works — when it fires, what it validates, how to write a
   satisfying skill update, and how to request a waiver. Load when the skill-drift check is

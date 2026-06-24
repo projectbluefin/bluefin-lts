@@ -50,7 +50,6 @@ jobs:
           {"image":"bluefin-lts-hwe-nvidia","source_tag":"testing","target_tag":"stable"}
         ]
       cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
-      fast_forward_sha: ${{ github.event.workflow_run.head_sha || github.sha }}
     secrets: inherit
 
   release-notes:
@@ -114,6 +113,12 @@ jobs:
           set -euo pipefail
           TAG=$(gh release list --repo "${{ github.repository }}" --limit 1 --json tagName --jq '.[0].tagName')
           CURRENT=$(gh release view "$TAG" --repo "${{ github.repository }}" --json body --jq '.body')
+
+          # Idempotency guard: skip if variants table already present (re-run protection)
+          if echo "$CURRENT" | grep -q "## Variants promoted"; then
+            echo "Variants table already present in release $TAG — skipping to avoid duplicate."
+            exit 0
+          fi
 
           VARIANTS_SECTION=$(printf '%s\n' \
             '## Variants promoted' \

@@ -1,8 +1,5 @@
 ---
 name: bluefin-lts-centos-vs-fedora
-version: "1.0"
-last_updated: 2026-06-23
-tags: [packages, centos, epel, copr, dnf]
 description: >-
   CentOS Stream 10 vs Fedora package and repo differences for projectbluefin/bluefin-lts builds.
   Use when adding packages, enabling repos, choosing akmods tags, or resolving COPR chroot names.
