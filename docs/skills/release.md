@@ -185,6 +185,7 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 - `source_branch: main` or `target_branch: lts` — model changed; use `testing` → `main`
 - adding `run_e2e: true` — no post-merge-e2e gate; builds publish `:testing` directly
 - describing the schedule as weekly — cadence is daily at 04:00 UTC (`0 4 * * *`)
+- **Claiming completion without live verification:** Never claim a build-fixing task is "fully complete" without noting that the fix is still pending live verification by the active CI pipeline (which takes 45–90 mins). Always clearly differentiate between local code-level/syntax validation and live OCI container build execution.
 
 ## Verification
 

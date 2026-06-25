@@ -42,6 +42,9 @@ copy_systemfiles_for() {
 	printf "::endgroup::\n"
 }
 
+# Satisfy dracut-install when installing the /root symlink pointing to var/roothome
+mkdir -p /var/roothome
+
 run_buildscripts_for base
 
 CUSTOM_NAME="bluefin"
