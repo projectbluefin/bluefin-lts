@@ -51,7 +51,7 @@ behaviour locally before pushing.
 
 | Goal | Command | Typical time |
 |---|---|---|
-| Regular (LTS) | `just build bluefin lts 0 0 1` | 45-90 min |
+| Regular (LTS) | `just build bluefin-lts lts 0 0 1` | 45-90 min |
 | Nvidia | `just build bluefin-lts-nvidia lts 0 1 1` | 45-90 min |
 
 The `gnome_version` parameter defaults to `"50"`. Override only if testing a future GNOME version.
@@ -60,7 +60,7 @@ The `gnome_version` parameter defaults to `"50"`. Override only if testing a fut
 
 ```bash
 COREOS_STABLE_VERSION=44 just build bluefin-lts-nvidia lts 0 1 1   # Nvidia, force Fedora 44 akmods
-COREOS_STABLE_VERSION=44 just build bluefin lts 0 0 1   # LTS, force Fedora 44 akmods
+COREOS_STABLE_VERSION=44 just build bluefin-lts lts 0 0 1   # LTS, force Fedora 44 akmods
 ```
 
 **Never cancel builds.** Use 120+ minute timeouts.
