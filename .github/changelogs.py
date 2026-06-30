@@ -164,7 +164,7 @@ class ChangelogGenerator:
     def get_images(self, target: str) -> List[Tuple[str, str]]:
         """Generate image names and experiences for a given target."""
         images = []
-        base_name = "bluefin"  # Base image name is always "bluefin"
+        base_name = "bluefin-lts"  # Base image name is always "bluefin-lts"
 
         for experience in self.config.image_variants:
             img = base_name

@@ -110,9 +110,8 @@ After any workflow change:
 
 | File | Role |
 |---|---|
-| `build-regular.yml` | caller for `bluefin-lts` — fires on push to `testing` |
-| `build-regular-hwe.yml` | caller for `bluefin-lts-hwe` (HWE kernel) — fires on push to `testing` |
-| `build-nvidia.yml` | caller for `bluefin-lts-hwe-nvidia` (NVIDIA/AI) — fires on push to `testing` |
+| `build-regular.yml` | caller for `bluefin-lts` (HWE kernel) — fires on push to `testing` |
+| `build-nvidia.yml` | caller for `bluefin-lts-nvidia` (NVIDIA/AI) — fires on push to `testing` |
 | `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`testing → main`); calls `reusable-promote-squash.yml@v1` with `source_branch=testing, target_branch=main`, daily 04:00 UTC cron |
 | `execute-release.yml` | fires on push to `main` when commit message matches `"^chore: promote testing to main"`; cosign re-verify, skopeo `:testing` → `:stable`, GitHub release |
 | ~~`sync-main-to-lts.yml`~~ | **deleted** — replaced by PR-as-gate promotion model |
@@ -142,11 +141,9 @@ After any workflow change:
 | Branch | Image | Tags | When |
 |---|---|---|---|
 | `testing` | `bluefin-lts` | `testing`, `testing-YYYYMMDD` | every push/merge to `testing` |
-| `testing` | `bluefin-lts-hwe` | `testing`, `testing-YYYYMMDD` | every push/merge to `testing` |
-| `testing` | `bluefin-lts-hwe-nvidia` | `testing`, `testing-YYYYMMDD` | every push/merge to `testing` |
+| `testing` | `bluefin-lts-nvidia` | `testing`, `testing-YYYYMMDD` | every push/merge to `testing` |
 | `main` (via execute-release) | `bluefin-lts` | `stable`, `stable-YYYYMMDD` | on promotion PR merge (execute-release.yml) |
-| `main` (via execute-release) | `bluefin-lts-hwe` | `stable`, `stable-YYYYMMDD` | on promotion PR merge (execute-release.yml) |
-| `main` (via execute-release) | `bluefin-lts-hwe-nvidia` | `stable`, `stable-YYYYMMDD` | on promotion PR merge (execute-release.yml) |
+| `main` (via execute-release) | `bluefin-lts-nvidia` | `stable`, `stable-YYYYMMDD` | on promotion PR merge (execute-release.yml) |
 
 `push` to `main` does NOT trigger any build workflow. Builds fire on `testing` only.
 
@@ -206,14 +203,14 @@ Common CI/CD logic lives in reusable GitHub Actions at **https://github.com/proj
 `projectbluefin/actions/.github/workflows/reusable-build.yml@v1`
 
 Inputs used by each caller:
-- `brand_name` — image name (`bluefin-lts`, `bluefin-lts-hwe`, `bluefin-lts-hwe-nvidia`)
+- `brand_name` — image name (`bluefin-lts`, `bluefin-lts-nvidia`)
 - `stream_name` — `testing` or `lts`
 - `image_flavors` — `'["main"]'`
-- `architecture` — `'["x86_64"]'`
+- `architecture` — `'["x86_64", "aarch64"]'`
 
 ### HWE and Nvidia kernel selection
 
-HWE (`bluefin-lts-hwe`) and Nvidia (`bluefin-lts-hwe-nvidia`) use the **Fedora CoreOS stable** kernel, not the CentOS kernel. The Justfile resolves the current Fedora CoreOS stable version at build time:
+Both `bluefin-lts` and `bluefin-lts-nvidia` use the **Fedora CoreOS stable** kernel, not the CentOS kernel. The Justfile resolves the current Fedora CoreOS stable version at build time:
 
 ```bash
 skopeo inspect docker://quay.io/fedora/fedora-coreos:stable
@@ -222,14 +219,12 @@ skopeo inspect docker://quay.io/fedora/fedora-coreos:stable
 
 This means HWE/Nvidia kernels automatically track upstream as CoreOS advances Fedora versions — no manual pin bumps needed. Set `COREOS_STABLE_VERSION=NN` to override for testing.
 
-Regular builds (`bluefin-lts`) use `centos-10` akmods and the CentOS Stream kernel.
-
 ### Shared composite actions in bluefin-lts
 
 | Action | Where used | LTS-specific override |
 |---|---|---|
 | `bootc-build/validate-pr` | `pr-testsuite.yml` | `shellcheck-glob: "build_scripts/**/*.sh"` (lts uses `build_scripts/`, not `build_files/`) |
-| `bootc-build/detect-changes` | `build-regular.yml`, `build-gdx.yml`, `build-regular-hwe.yml` | filters for `build_scripts/**` and `image-versions.yaml` |
+| `bootc-build/detect-changes` | `build-regular.yml`, `build-nvidia.yml` | filters for `build_scripts/**` and `image-versions.yaml` |
 | `bootc-build/sign-and-publish` | called internally by `reusable-build.yml@v1` | `signing-mode: keyless` |
 
 ## Schedule ownership
@@ -441,8 +436,7 @@ Three GHCR packages must be linked to `projectbluefin/bluefin-lts` and grant Act
 | Package | Settings URL |
 |---|---|
 | `bluefin-lts` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts/settings |
-| `bluefin-lts-hwe` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-hwe/settings |
-| `bluefin-lts-hwe-nvidia` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-hwe-nvidia/settings |
+| `bluefin-lts-nvidia` | https://github.com/orgs/projectbluefin/packages/container/bluefin-lts-nvidia/settings |
 
 On each settings page:
 1. **Connected repository** → set to `projectbluefin/bluefin-lts`
@@ -450,7 +444,7 @@ On each settings page:
 
 Once done, `github.token` from any `bluefin-lts` workflow has full package read/write — no PAT needed.
 
-> **Note:** `bluefin-lts-hwe-nvidia` is a new package (created 2026-06-14, PR #225). New GHCR packages in an org
+> **Note:** `bluefin-lts-nvidia` is a new package. New GHCR packages in an org
 > are **private by default** — `skopeo list-tags` returns `name unknown` until the package is published AND
 > linked to the repo. Link it via the settings page above. `bluefin-lts` may still be linked to
 > `projectbluefin/bluefin` rather than `bluefin-lts` — verify and correct if GHCR pushes fail with `DENIED`.
@@ -744,7 +738,7 @@ A `bluefin-lts-migration.timer` + `bluefin-lts-migration.service` ships in the o
 1. Checks for `/etc/bluefin-lts-migrated` stamp — exits 0 if present
 2. Reads current image from `bootc status --format=json`
 3. Exits 0 if already on `projectbluefin`; writes MOTD + exits 0 for arm64
-4. Maps variant to new image (gdx→hwe-nvidia, dx+hwe→lts-hwe, dx→lts, hwe→lts-hwe, *→lts)
+4. Maps variant to new image (gdx→lts-nvidia, dx+hwe→lts, dx→lts, hwe→lts, *→lts)
 5. Writes `/etc/motd.d/50-bluefin-lts-migration` with next-reboot notice
 6. Runs `bootc switch --enforce-container-sigpolicy <new-image>` — non-destructive until reboot
 7. On success: touches stamp, disables timer; on failure: appends retry note to MOTD, exits 1
@@ -755,10 +749,10 @@ Timer retries daily (`OnUnitInactiveSec=24h`) until success. MOTD self-cleans on
 
 | Old (ublue-os) | New (projectbluefin) | Notes |
 |---|---|---|
-| `bluefin-gdx:lts*` | `bluefin-lts-hwe-nvidia:stable` | dx/gdx: ujust devmode |
-| `bluefin-dx:lts-hwe*` | `bluefin-lts-hwe:stable` | dx: ujust devmode |
+| `bluefin-gdx:lts*` | `bluefin-lts-nvidia:stable` | dx/gdx: ujust devmode |
+| `bluefin-dx:lts-hwe*` | `bluefin-lts:stable` | dx: ujust devmode |
 | `bluefin-dx:lts*` | `bluefin-lts:stable` | dx: ujust devmode |
-| `bluefin:lts-hwe*` | `bluefin-lts-hwe:stable` | |
+| `bluefin:lts-hwe*` | `bluefin-lts:stable` | |
 | `bluefin:lts*` (incl. GNOME50) | `bluefin-lts:stable` | |
 | arm64 | MOTD only, no switch | unsupported |
 
