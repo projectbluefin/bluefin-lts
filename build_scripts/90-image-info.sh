@@ -6,9 +6,6 @@ IMAGE_REF="ostree-image-signed:docker://ghcr.io/${IMAGE_VENDOR}/${IMAGE_NAME}"
 IMAGE_INFO="/usr/share/ublue-os/image-info.json"
 IMAGE_FLAVOR="main"
 IMAGE_TAG="lts"
-if [ "${ENABLE_HWE}" == "1" ] ; then
-IMAGE_TAG="${IMAGE_TAG}-hwe"
-fi
 
 tee "$IMAGE_INFO" <<EOF
 {

@@ -123,16 +123,10 @@ _run_image_info() {
     grep -q '"centos-version": "10"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
-@test "image-info: image-tag is 'lts' when ENABLE_HWE=0" {
-    _run_image_info bluefin projectbluefin 10 0
-    [ "$status" -eq 0 ]
-    grep -q '"image-tag": "lts"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
-}
-
-@test "image-info: image-tag is 'lts-hwe' when ENABLE_HWE=1" {
+@test "image-info: image-tag is 'lts'" {
     _run_image_info bluefin projectbluefin 10 1
     [ "$status" -eq 0 ]
-    grep -q '"image-tag": "lts-hwe"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
+    grep -q '"image-tag": "lts"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
 # ──────────────────────────────────────────────────────────────────────────────

@@ -12,16 +12,16 @@ Bluefin LTS uses `bootc-image-builder` (BIB) on CentOS Stream 10 — **not** `po
 
 - **Base:** CentOS Stream 10 (`centos_version` in `Justfile`)
 - **Build tool:** `bootc-image-builder` (BIB)
-- **Variants:** `bluefin-lts`, `bluefin-lts-dx`, `bluefin-lts-gdx`
-- **Published tag:** `:lts`
+- **Variants:** `bluefin-lts`, `bluefin-lts-nvidia`
+- **Published tag:** `:stable` (with `:testing` for the pre-release stream)
 
 When in doubt about whether a change belongs here or in [`projectbluefin/common`](https://github.com/projectbluefin/common), prefer `common` for shared system files.
 
 ## Pull requests
 
-- Open PRs against the `main` branch
+- Open PRs against the `testing` branch
 - Run `just check && just lint` before opening a PR
-- PR CI on `main` runs lint/syntax validation; the E2E smoke test is informational only (see [issue #34](https://github.com/projectbluefin/bluefin-lts/issues/34))
+- PR CI on `testing` runs lint/syntax validation; the E2E smoke test is informational only (see [issue #34](https://github.com/projectbluefin/bluefin-lts/issues/34))
 
 ## Prerequisites
 

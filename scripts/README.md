@@ -12,7 +12,7 @@ Creates a test VM from a Bluefin LTS bootc image with SSH enabled, suitable for 
 
 **Arguments:**
 - `VM_NAME` (optional, default: `bluefin-test-ssh`): Name for the VM
-- `IMAGE_TAG` (optional, default: `lts-hwe`): Bluefin image tag to use
+- `IMAGE_TAG` (optional, default: `lts`): Bluefin image tag to use
 - `SSH_PUB_KEY` (optional, default: `$HOME/.ssh/id_ed25519.pub`): SSH public key to inject
 
 ### Example
@@ -21,11 +21,11 @@ Creates a test VM from a Bluefin LTS bootc image with SSH enabled, suitable for 
 # Create a test VM with default settings
 ./scripts/create-test-vm.sh
 
-# Create a VM named "gnome50-test" using lts-hwe-testing image
-./scripts/create-test-vm.sh gnome50-test lts-hwe-testing
+# Create a VM named "lts-test" using lts image
+./scripts/create-test-vm.sh lts-test lts
 
 # Create with specific SSH key
-./scripts/test-vm.sh my-test lts-hwe ~/.ssh/mykey.pub
+./scripts/create-test-vm.sh my-test lts ~/.ssh/mykey.pub
 ```
 
 ### What It Does
