@@ -36,7 +36,7 @@ jobs:
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
-        [{"image":"bluefin-lts"},{"image":"bluefin-lts-hwe"},{"image":"bluefin-lts-hwe-nvidia"}]
+        [{"image":"bluefin-lts"},{"image":"bluefin-lts-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
       run_e2e: false

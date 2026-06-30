@@ -110,7 +110,7 @@ spec:
           - name: image
             value: "ghcr.io/ublue-os/bluefin:lts-hwe"
           - name: expected_target
-            value: "ghcr.io/projectbluefin/bluefin-lts-hwe:stable"
+            value: "ghcr.io/projectbluefin/bluefin-lts:stable"
   - name: smoke
     inputs:
       parameters:
@@ -138,7 +138,7 @@ All 5 tasks Succeeded in ~5 seconds each using cached images.
 
 **What was proven:**
 1. `python3` JSON parsing of `bootc status --format=json` works in the real old image
-2. All variant → target mappings are correct (`bluefin-gdx` → `bluefin-lts-hwe-nvidia`, etc.)
+2. All variant → target mappings are correct (`bluefin-gdx` → `bluefin-lts-nvidia`, etc.)
 3. Required tools (`python3`, `bootc`, `systemctl`) exist in `ghcr.io/ublue-os/bluefin:lts`
 4. `/etc/motd.d/` is writable at container start
 5. `/etc/containers/policy.json` has `insecureAcceptAnything` for `ghcr.io/projectbluefin`

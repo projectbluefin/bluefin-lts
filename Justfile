@@ -109,7 +109,7 @@ _ensure-yq:
     fi
 
 # Build the image using the specified parameters
-build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $hwe="0" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43": _ensure-yq
+build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $hwe="1" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43": _ensure-yq
     #!/usr/bin/env bash
 
     # Get Version
@@ -406,14 +406,14 @@ lint:
 
 # Usage: just create-test-vm [name] [tag] [ssh-key]
 [group('VM Testing')]
-create-test-vm name="bluefin-test-ssh" tag="lts-hwe" ssh_key="":
+create-test-vm name="bluefin-test-ssh" tag="lts" ssh_key="":
     @echo "Creating test VM: {{ name }}"
     @if [ -z "{{ ssh_key }}" ]; then ssh_key="{{ HOME }}/.ssh/id_ed25519.pub"; fi
     @./scripts/create-test-vm.sh "{{ name }}" "{{ tag }}" "{{ ssh_key }}"
 
 # Create and immediately start a test VM
 [group('VM Testing')]
-run-test-vm name="bluefin-test-ssh" tag="lts-hwe":
+run-test-vm name="bluefin-test-ssh" tag="lts":
     @just create-test-vm "{{ name }}" "{{ tag }}" ""
     @echo "Starting VM: {{ name }}"
     @limactl start "{{ name }}"
@@ -456,9 +456,8 @@ build-ghcr base="bluefin-lts" stream="lts" flavor="main" kernel_pin="":
         echo "build-ghcr must run as root (called via sudo -E)" >&2
         exit 1
     fi
-    HWE=0
+    HWE=1
     NVIDIA=0
-    [[ "{{ base }}" == *"-hwe"* ]] && HWE=1
     [[ "{{ base }}" == *"nvidia"* ]] && NVIDIA=1
     {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${NVIDIA}" "${HWE}" "{{ kernel_pin }}"
 

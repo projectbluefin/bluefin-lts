@@ -4,7 +4,7 @@
 # Basic configuration
 os_name: "bluefin-lts"
 targets: ["lts", "dx", "nvidia"]
-registry_url: "ghcr.io/ublue-os"
+registry_url: "ghcr.io/projectbluefin"
 
 # Package blacklist - packages to exclude from changelog
 package_blacklist:
@@ -25,7 +25,7 @@ package_blacklist:
 image_variants:
   - ""
   - "-dx"
-  - "-hwe-nvidia"
+  - "-nvidia"
 
 # Regex patterns
 patterns:

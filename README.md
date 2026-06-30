@@ -28,7 +28,7 @@ Long-term support Bluefin stream built on CentOS Stream 10.
 # LTS — recommended
 sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:lts --enforce-container-sigpolicy
 # LTS — NVIDIA
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia:lts --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-nvidia:lts --enforce-container-sigpolicy
 ```
 
 ### Bluefin DX LTS
@@ -58,10 +58,10 @@ Users on the previous `ghcr.io/ublue-os/bluefin*:lts` images will be migrated au
 | Old image (ublue-os) | New image (projectbluefin) |
 |---|---|
 | `bluefin:lts` | `bluefin-lts:lts` |
-| `bluefin:lts-hwe` | `bluefin-lts-hwe:lts` |
+| `bluefin:lts-hwe` | `bluefin-lts:lts` |
 | `bluefin-dx:lts` | `bluefin-lts:lts` + run `ujust devmode` after reboot |
-| `bluefin-dx:lts-hwe` | `bluefin-lts-hwe:lts` + run `ujust devmode` after reboot |
-| `bluefin-gdx:lts` | `bluefin-lts-hwe-nvidia:lts` + run `ujust devmode` after reboot |
+| `bluefin-dx:lts-hwe` | `bluefin-lts:lts` + run `ujust devmode` after reboot |
+| `bluefin-gdx:lts` | `bluefin-lts-nvidia:lts` + run `ujust devmode` after reboot |
 | arm64 variants | No automatic migration — reinstall from new image |
 
 To migrate manually before the automatic migration ships:

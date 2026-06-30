@@ -24,10 +24,10 @@ jobs:
       pr_number: ${{ github.event.pull_request.number }}
       registry: ghcr.io/projectbluefin
       variants: >-
-        [{"image":"bluefin-lts"},{"image":"bluefin-lts-hwe"},{"image":"bluefin-lts-hwe-nvidia"}]
+        [{"image":"bluefin-lts"},{"image":"bluefin-lts-nvidia"}]
       cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
       target_tag: testing
       run_e2e: true
       e2e_suites: smoke,common
-      e2e_image: ghcr.io/projectbluefin/bluefin-lts-hwe:testing
+      e2e_image: ghcr.io/projectbluefin/bluefin-lts:testing
     secrets: inherit

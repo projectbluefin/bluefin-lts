@@ -77,4 +77,6 @@ jobs:
       brand_name: bluefin-lts
       stream_name: testing
       image_flavors: '["main"]'
-      architecture: '["x86_64"]'
+      architecture: '["x86_64", "aarch64"]'
+      # post-merge-e2e removed — builds publish :testing directly.
+      publish_stream_tag: ${{ github.event_name != 'pull_request' && 'true' || 'false' }}
