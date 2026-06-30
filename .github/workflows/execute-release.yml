@@ -68,7 +68,6 @@ jobs:
       image: ghcr.io/projectbluefin/bluefin-lts-hwe
       build_workflow: build-regular-hwe.yml
       build_branch: testing
-      sbom_artifact: sbom-bluefin-lts-hwe
       checkout_ref: main
       project_name: Bluefin LTS
       badge_label: LTS
