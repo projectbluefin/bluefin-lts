@@ -8,8 +8,7 @@ set ${CI:+-x} -euo pipefail
 # /*
 ### Kernel Swap - Install kernel from mounted akmods containers
 ### Containerfile provides the correct kernel via AKMODS_VERSION:
-###   - centos-10 for standard builds
-###   - coreos-stable-<version> for LTS/nvidia builds (follows Fedora CoreOS stable)
+###   - coreos-stable-<version> for all LTS builds (base + nvidia)
 # */
 
 KERNEL_NAME="kernel"
