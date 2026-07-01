@@ -103,7 +103,7 @@ spec:
             value: "ghcr.io/ublue-os/bluefin:lts"
           - name: expected_target
             value: "ghcr.io/projectbluefin/bluefin-lts:stable"
-      - name: hwe
+      - name: legacy-hwe
         template: smoke
         arguments:
           parameters:

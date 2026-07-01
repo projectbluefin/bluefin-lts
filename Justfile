@@ -91,12 +91,12 @@ sudoif command *args:
 # The script constructs the version string using the tag and the current date.
 # If the git working directory is clean, it also includes the short SHA of the current HEAD.
 #
-# just build $target_image $tag $dx $nvidia $hwe
+# just build $target_image $tag $dx $nvidia
 #
 # Example usage:
-#   just build bluefin lts 1 0 1
+#   just build bluefin-lts lts 1 0
 #
-# This will build an image 'bluefin:lts' with DX and HWE enabled.
+# This will build an image 'bluefin-lts:lts' with DX and the HWE CoreOS kernel enabled.
 #
 
 [private]
@@ -109,7 +109,7 @@ _ensure-yq:
     fi
 
 # Build the image using the specified parameters
-build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $hwe="1" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43": _ensure-yq
+build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43": _ensure-yq
     #!/usr/bin/env bash
 
     # Get Version
@@ -128,23 +128,17 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $hwe="1" $ke
     BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR=${repo_organization}")
     BUILD_ARGS+=("--build-arg" "ENABLE_DX=${dx}")
     BUILD_ARGS+=("--build-arg" "ENABLE_NVIDIA=${nvidia}")
-    BUILD_ARGS+=("--build-arg" "ENABLE_HWE=${hwe}")
     BUILD_ARGS+=("--build-arg" "GNOME_VERSION=${gnome_version}")
-    # Select akmods source tag for mounted ZFS/NVIDIA images
+    # Select akmods source tag for mounted ZFS/NVIDIA images (always CoreOS stable)
     ARCH=$(uname -m)
-    if [[ "${hwe}" -eq "1" || "${nvidia}" -eq "1" ]]; then
-        # Dynamically follow Fedora CoreOS stable; override with COREOS_STABLE_VERSION env if set
-        if [[ -n "${coreos_stable_version:-}" ]]; then
-            coreos_fedora_ver="${coreos_stable_version}"
-        else
-            coreos_fedora_ver=$(skopeo inspect --retry-times 3 docker://quay.io/fedora/fedora-coreos:stable | jq -r '.Labels["org.opencontainers.image.version"]' | grep -oP '^[0-9]+')
-        fi
-        AKMODS_BASE="coreos-stable-${coreos_fedora_ver}"
-        BUILD_ARGS+=("--build-arg" "FEDORA_AKMODS_VERSION=${coreos_fedora_ver}")
+    # Dynamically follow Fedora CoreOS stable; override with COREOS_STABLE_VERSION env if set
+    if [[ -n "${coreos_stable_version:-}" ]]; then
+        coreos_fedora_ver="${coreos_stable_version}"
     else
-        AKMODS_BASE="centos-10"
-        BUILD_ARGS+=("--build-arg" "FEDORA_AKMODS_VERSION=${fedora_akmods_version}")
+        coreos_fedora_ver=$(skopeo inspect --retry-times 3 docker://quay.io/fedora/fedora-coreos:stable | jq -r '.Labels["org.opencontainers.image.version"]' | grep -oP '^[0-9]+')
     fi
+    AKMODS_BASE="coreos-stable-${coreos_fedora_ver}"
+    BUILD_ARGS+=("--build-arg" "FEDORA_AKMODS_VERSION=${coreos_fedora_ver}")
     if [[ -n "${kernel_pin}" ]]; then
         BUILD_ARGS+=("--build-arg" "AKMODS_VERSION=${AKMODS_BASE}-${kernel_pin}.${ARCH}")
     else
@@ -406,14 +400,14 @@ lint:
 
 # Usage: just create-test-vm [name] [tag] [ssh-key]
 [group('VM Testing')]
-create-test-vm name="bluefin-test-ssh" tag="lts" ssh_key="":
+create-test-vm name="bluefin-test-ssh" tag="stable" ssh_key="":
     @echo "Creating test VM: {{ name }}"
     @if [ -z "{{ ssh_key }}" ]; then ssh_key="{{ HOME }}/.ssh/id_ed25519.pub"; fi
     @./scripts/create-test-vm.sh "{{ name }}" "{{ tag }}" "{{ ssh_key }}"
 
 # Create and immediately start a test VM
 [group('VM Testing')]
-run-test-vm name="bluefin-test-ssh" tag="lts":
+run-test-vm name="bluefin-test-ssh" tag="stable":
     @just create-test-vm "{{ name }}" "{{ tag }}" ""
     @echo "Starting VM: {{ name }}"
     @limactl start "{{ name }}"
@@ -447,7 +441,7 @@ setup-cache base="bluefin-lts" stream="lts" ghcr="0" event="push":
     echo "{{ base }}-stream10 ${ALLOW_CACHE_WRITE}"
 
 # Build image for GHCR publication — called with sudo by reusable-build.yml.
-# Maps brand_name suffix to ENABLE_HWE / ENABLE_NVIDIA build args.
+# Maps brand_name suffix to ENABLE_NVIDIA build args.
 [group('Image')]
 build-ghcr base="bluefin-lts" stream="lts" flavor="main" kernel_pin="":
     #!/usr/bin/bash
@@ -456,10 +450,9 @@ build-ghcr base="bluefin-lts" stream="lts" flavor="main" kernel_pin="":
         echo "build-ghcr must run as root (called via sudo -E)" >&2
         exit 1
     fi
-    HWE=1
     NVIDIA=0
     [[ "{{ base }}" == *"nvidia"* ]] && NVIDIA=1
-    {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${NVIDIA}" "${HWE}" "{{ kernel_pin }}"
+    {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${NVIDIA}" "{{ kernel_pin }}"
 
 # Generate space-separated alias tags (dated + CentOS version aliases for production).
 [group('Utility')]

@@ -37,17 +37,17 @@ Users on the previous `ghcr.io/ublue-os/bluefin*:lts` images will be migrated au
 
 | Old image (ublue-os) | New image (projectbluefin) |
 |---|---|
-| `bluefin:lts` | `bluefin-lts:lts` |
-| `bluefin:lts-hwe` | `bluefin-lts:lts` |
-| `bluefin-dx:lts` | `bluefin-lts:lts` + run `ujust devmode` after reboot |
-| `bluefin-dx:lts-hwe` | `bluefin-lts:lts` + run `ujust devmode` after reboot |
-| `bluefin-gdx:lts` | `bluefin-lts-nvidia:lts` + run `ujust devmode` after reboot |
+| `bluefin:lts` | `bluefin-lts:stable` |
+| `bluefin:lts-hwe` (legacy tag) | `bluefin-lts:stable` |
+| `bluefin-dx:lts` | `bluefin-lts:stable` + run `ujust devmode` after reboot |
+| `bluefin-dx:lts-hwe` (legacy tag) | `bluefin-lts:stable` + run `ujust devmode` after reboot |
+| `bluefin-gdx:lts` | `bluefin-lts-nvidia:stable` + run `ujust devmode` after reboot |
 | arm64 variants | No automatic migration — reinstall from new image |
 
 To migrate manually before the automatic migration ships:
 
 ```bash
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:lts --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:stable --enforce-container-sigpolicy
 ```
 
 ## Getting Started
