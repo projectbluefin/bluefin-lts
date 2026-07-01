@@ -1,10 +1,9 @@
 ARG MAJOR_VERSION="${MAJOR_VERSION:-c10s}"
 ARG BASE_IMAGE_SHA="${BASE_IMAGE_SHA:-sha256-feea845d2e245b5e125181764cfbc26b6dacfb3124f9c8d6a2aaa4a3f91082ed}"
-ARG ENABLE_HWE="${ENABLE_HWE:-0}"
-ARG AKMODS_VERSION="${AKMODS_VERSION:-centos-10}"
+ARG AKMODS_VERSION="${AKMODS_VERSION:-coreos-stable-43}"
 ARG COMMON_IMAGE_REF
 ARG BREW_IMAGE_REF
-# Upstream mounts akmods-zfs and akmods-nvidia-open; select their tag via AKMODS_VERSION
+# Upstream mounts akmods-zfs and akmods-nvidia-open; LTS defaults to CoreOS-stable kernel tags.
 FROM ghcr.io/ublue-os/akmods-zfs:${AKMODS_VERSION} AS akmods_zfs
 FROM ghcr.io/ublue-os/akmods-nvidia-open:${AKMODS_VERSION} AS akmods_nvidia_open
 FROM ${COMMON_IMAGE_REF} AS common
@@ -24,7 +23,6 @@ FROM quay.io/centos-bootc/centos-bootc:$MAJOR_VERSION
 
 ARG ENABLE_DX="${ENABLE_DX:-0}"
 ARG ENABLE_NVIDIA="${ENABLE_NVIDIA:-0}"
-ARG ENABLE_HWE="${ENABLE_HWE:-0}"
 ARG FEDORA_AKMODS_VERSION="${FEDORA_AKMODS_VERSION:-43}"
 ARG GNOME_VERSION="${GNOME_VERSION:-50}"
 ARG IMAGE_NAME="${IMAGE_NAME:-bluefin}"
