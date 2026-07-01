@@ -12,7 +12,7 @@ Creates a test VM from a Bluefin LTS bootc image with SSH enabled, suitable for 
 
 **Arguments:**
 - `VM_NAME` (optional, default: `bluefin-test-ssh`): Name for the VM
-- `IMAGE_TAG` (optional, default: `lts`): Bluefin image tag to use
+- `IMAGE_TAG` (optional, default: `stable`): Bluefin image tag to use
 - `SSH_PUB_KEY` (optional, default: `$HOME/.ssh/id_ed25519.pub`): SSH public key to inject
 
 ### Example
@@ -21,11 +21,11 @@ Creates a test VM from a Bluefin LTS bootc image with SSH enabled, suitable for 
 # Create a test VM with default settings
 ./scripts/create-test-vm.sh
 
-# Create a VM named "lts-test" using lts image
-./scripts/create-test-vm.sh lts-test lts
+# Create a VM named "lts-test" using stable image
+./scripts/create-test-vm.sh lts-test stable
 
 # Create with specific SSH key
-./scripts/create-test-vm.sh my-test lts ~/.ssh/mykey.pub
+./scripts/create-test-vm.sh my-test stable ~/.ssh/mykey.pub
 ```
 
 ### What It Does

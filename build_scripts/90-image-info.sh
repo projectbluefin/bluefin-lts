@@ -5,7 +5,7 @@ set -xeuo pipefail
 IMAGE_REF="ostree-image-signed:docker://ghcr.io/${IMAGE_VENDOR}/${IMAGE_NAME}"
 IMAGE_INFO="/usr/share/ublue-os/image-info.json"
 IMAGE_FLAVOR="main"
-IMAGE_TAG="lts"
+IMAGE_TAG="stable/testing"
 
 tee "$IMAGE_INFO" <<EOF
 {

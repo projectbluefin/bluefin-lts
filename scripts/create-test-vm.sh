@@ -5,7 +5,7 @@ set -e
 # This allows testing bootc images in Lima/QEMU VMs
 
 VM_NAME="${1:-bluefin-test-ssh}"
-IMAGE_TAG="${2:-lts}"
+IMAGE_TAG="${2:-stable}"
 SSH_PUB_KEY="${3:-$HOME/.ssh/id_ed25519.pub}"
 DISK_SIZE="32G"
 MEMORY="8GiB"

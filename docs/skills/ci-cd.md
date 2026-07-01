@@ -110,7 +110,7 @@ After any workflow change:
 
 | File | Role |
 |---|---|
-| `build-regular.yml` | caller for `bluefin-lts` (HWE kernel) — fires on push to `testing` |
+| `build-regular.yml` | caller for `bluefin-lts` (LTS/CoreOS-stable kernel) — fires on push to `testing` |
 | `build-nvidia.yml` | caller for `bluefin-lts-nvidia` (NVIDIA/AI) — fires on push to `testing` |
 | `promote-testing-to-main.yml` | maintains always-open `auto/promote-testing-to-main` PR (`testing → main`); calls `reusable-promote-squash.yml@v1` with `source_branch=testing, target_branch=main`, daily 04:00 UTC cron |
 | `execute-release.yml` | fires on push to `main` when commit message matches `"^chore: promote testing to main"`; cosign re-verify, skopeo `:testing` → `:stable`, GitHub release |
@@ -131,7 +131,7 @@ After any workflow change:
 | `validate-renovate.yaml` | validates `.github/renovate.json5` on relevant PRs and pushes |
 | ~~`build-gdx.yml`~~ | **renamed** to `build-nvidia.yml` (PR #225, 2026-06-14) |
 | ~~`build-dx.yml`~~ | **deleted** — no DX variant in LTS |
-| ~~`build-dx-hwe.yml`~~ | **deleted** — no DX HWE variant |
+| ~~`build-dx-hwe.yml`~~ | **deleted** — no DX legacy-hwe variant |
 | ~~`build-gnome50.yml`~~ | **deleted 2026-05-30** — GNOME 50 is now the default |
 | ~~`reusable-build-image.yml`~~ | **deleted** — replaced by `projectbluefin/actions/.github/workflows/reusable-build.yml@v1` |
 | ~~`create-lts-pr.yml`~~ | **deleted 2026-05-30** — replaced by `sync-main-to-lts.yml` |
@@ -208,7 +208,7 @@ Inputs used by each caller:
 - `image_flavors` — `'["main"]'`
 - `architecture` — `'["x86_64", "aarch64"]'`
 
-### HWE and Nvidia kernel selection
+### LTS and Nvidia kernel selection
 
 Both `bluefin-lts` and `bluefin-lts-nvidia` use the **Fedora CoreOS stable** kernel, not the CentOS kernel. The Justfile resolves the current Fedora CoreOS stable version at build time:
 
@@ -217,7 +217,7 @@ skopeo inspect docker://quay.io/fedora/fedora-coreos:stable
 # → derives Fedora version (e.g., 44) → selects coreos-stable-44 akmods
 ```
 
-This means HWE/Nvidia kernels automatically track upstream as CoreOS advances Fedora versions — no manual pin bumps needed. Set `COREOS_STABLE_VERSION=NN` to override for testing.
+This means LTS/Nvidia kernels automatically track upstream as CoreOS advances Fedora versions — no manual pin bumps needed. Set `COREOS_STABLE_VERSION=NN` to override for testing.
 
 ### Shared composite actions in bluefin-lts
 
@@ -664,7 +664,7 @@ Include only extensions that are physically present in `system_files/usr/share/g
 
 ## Trivy scan FATAL — CentOS 10 CPE indices missing
 
-**Symptom:** All three build jobs (`Build Bluefin LTS`, `Build Bluefin LTS HWE`, `Build Bluefin Nvidia`) fail at the `image (main, …, testing, x86_64)` step with exit code 1 and no obvious container build error. The actual error is Trivy crashing at the very end of the job (after a successful container build):
+**Symptom:** All build jobs (`Build Bluefin LTS`, `Build Bluefin Nvidia`) fail at the `image (main, …, testing, x86_64)` step with exit code 1 and no obvious container build error. The actual error is Trivy crashing at the very end of the job (after a successful container build):
 
 ```
 FATAL  Fatal error  run error: image scan error: … unable to find CPE indices.
@@ -738,7 +738,7 @@ A `bluefin-lts-migration.timer` + `bluefin-lts-migration.service` ships in the o
 1. Checks for `/etc/bluefin-lts-migrated` stamp — exits 0 if present
 2. Reads current image from `bootc status --format=json`
 3. Exits 0 if already on `projectbluefin`; writes MOTD + exits 0 for arm64
-4. Maps variant to new image (gdx→lts-nvidia, dx+hwe→lts, dx→lts, hwe→lts, *→lts)
+4. Maps variant to new image (gdx→lts-nvidia, dx+legacy-hwe→lts, dx→lts, legacy-hwe→lts, *→lts)
 5. Writes `/etc/motd.d/50-bluefin-lts-migration` with next-reboot notice
 6. Runs `bootc switch --enforce-container-sigpolicy <new-image>` — non-destructive until reboot
 7. On success: touches stamp, disables timer; on failure: appends retry note to MOTD, exits 1
@@ -750,9 +750,9 @@ Timer retries daily (`OnUnitInactiveSec=24h`) until success. MOTD self-cleans on
 | Old (ublue-os) | New (projectbluefin) | Notes |
 |---|---|---|
 | `bluefin-gdx:lts*` | `bluefin-lts-nvidia:stable` | dx/gdx: ujust devmode |
-| `bluefin-dx:lts-hwe*` | `bluefin-lts:stable` | dx: ujust devmode |
+| `bluefin-dx:lts-hwe*` (legacy tag) | `bluefin-lts:stable` | dx: ujust devmode |
 | `bluefin-dx:lts*` | `bluefin-lts:stable` | dx: ujust devmode |
-| `bluefin:lts-hwe*` | `bluefin-lts:stable` | |
+| `bluefin:lts-hwe*` (legacy tag) | `bluefin-lts:stable` | |
 | `bluefin:lts*` (incl. GNOME50) | `bluefin-lts:stable` | |
 | arm64 | MOTD only, no switch | unsupported |
 

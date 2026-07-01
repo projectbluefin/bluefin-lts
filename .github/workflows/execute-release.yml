@@ -59,7 +59,7 @@ jobs:
       contents: write
       id-token: write
       packages: read
-    # Use bluefin-lts as the primary image so the HWE (CoreOS stable) kernel
+    # Use bluefin-lts as the primary image so the stock LTS (CoreOS stable) kernel
     # version appears in the Key components table instead of the base CentOS kernel.
     uses: projectbluefin/actions/.github/workflows/reusable-release.yml@v1
     with:
@@ -76,7 +76,7 @@ jobs:
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
       notable_packages: >-
         [
-          {"sbom_name": "kernel", "label": "Kernel (HWE)"},
+          {"sbom_name": "kernel", "label": "Kernel (LTS)"},
           {"sbom_name": "gnome-shell", "label": "GNOME Shell"},
           {"sbom_name": "flatpak", "label": "Flatpak"},
           {"sbom_name": "bootc", "label": "bootc"}
@@ -128,7 +128,7 @@ jobs:
             "| \`bluefin-lts\` | \`:stable\` | \`${LTS_DIGEST}\` |" \
             "| \`bluefin-lts-nvidia\` | \`:stable\` | \`${NVIDIA_DIGEST}\` |" \
             '' \
-            '> **bluefin-lts** and **bluefin-lts-nvidia** use the Fedora CoreOS stable kernel. The **Kernel (HWE)** version above applies to both.' \
+            '> **bluefin-lts** and **bluefin-lts-nvidia** use the Fedora CoreOS stable kernel. The **Kernel (LTS)** version above applies to both.' \
             '' \
             '---' \
             '')
