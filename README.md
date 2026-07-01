@@ -26,29 +26,9 @@ Long-term support Bluefin stream built on CentOS Stream 10.
 
 ```bash
 # LTS — recommended
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:lts --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:stable --enforce-container-sigpolicy
 # LTS — NVIDIA
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia:lts --enforce-container-sigpolicy
-```
-
-### Bluefin DX LTS
-
-Long-term support developer image with cloud-native tooling pre-installed.
-
-```bash
-# LTS — recommended
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-dx:lts --enforce-container-sigpolicy
-# LTS — NVIDIA
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-dx-nvidia:lts --enforce-container-sigpolicy
-```
-
-### Bluefin GDX
-
-AI-focused track with LTS roots.
-
-```bash
-# LTS
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-gdx:lts --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-nvidia:stable --enforce-container-sigpolicy
 ```
 
 ## Migrating from ublue-os/bluefin-lts
@@ -57,17 +37,17 @@ Users on the previous `ghcr.io/ublue-os/bluefin*:lts` images will be migrated au
 
 | Old image (ublue-os) | New image (projectbluefin) |
 |---|---|
-| `bluefin:lts` | `bluefin-lts:lts` |
-| `bluefin:lts-hwe` | `bluefin-lts-hwe:lts` |
-| `bluefin-dx:lts` | `bluefin-lts:lts` + run `ujust devmode` after reboot |
-| `bluefin-dx:lts-hwe` | `bluefin-lts-hwe:lts` + run `ujust devmode` after reboot |
-| `bluefin-gdx:lts` | `bluefin-lts-hwe-nvidia:lts` + run `ujust devmode` after reboot |
+| `bluefin:lts` | `bluefin-lts:stable` |
+| `bluefin:lts-hwe` (legacy tag) | `bluefin-lts:stable` |
+| `bluefin-dx:lts` | `bluefin-lts:stable` + run `ujust devmode` after reboot |
+| `bluefin-dx:lts-hwe` (legacy tag) | `bluefin-lts:stable` + run `ujust devmode` after reboot |
+| `bluefin-gdx:lts` | `bluefin-lts-nvidia:stable` + run `ujust devmode` after reboot |
 | arm64 variants | No automatic migration — reinstall from new image |
 
 To migrate manually before the automatic migration ships:
 
 ```bash
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:lts --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:stable --enforce-container-sigpolicy
 ```
 
 ## Getting Started

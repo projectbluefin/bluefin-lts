@@ -46,8 +46,7 @@ jobs:
       variants: >-
         [
           {"image":"bluefin-lts","source_tag":"testing","target_tag":"stable"},
-          {"image":"bluefin-lts-hwe","source_tag":"testing","target_tag":"stable"},
-          {"image":"bluefin-lts-hwe-nvidia","source_tag":"testing","target_tag":"stable"}
+          {"image":"bluefin-lts-nvidia","source_tag":"testing","target_tag":"stable"}
         ]
       cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
     secrets: inherit
@@ -60,13 +59,13 @@ jobs:
       contents: write
       id-token: write
       packages: read
-    # Use bluefin-lts-hwe as the primary image so the HWE (CoreOS stable) kernel
+    # Use bluefin-lts as the primary image so the stock LTS (CoreOS stable) kernel
     # version appears in the Key components table instead of the base CentOS kernel.
     uses: projectbluefin/actions/.github/workflows/reusable-release.yml@v1
     with:
       stream_name: stable
-      image: ghcr.io/projectbluefin/bluefin-lts-hwe
-      build_workflow: build-regular-hwe.yml
+      image: ghcr.io/projectbluefin/bluefin-lts
+      build_workflow: build-regular.yml
       build_branch: testing
       generate_sbom_inline: true
       checkout_ref: main
@@ -77,7 +76,7 @@ jobs:
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
       notable_packages: >-
         [
-          {"sbom_name": "kernel", "label": "Kernel (HWE)"},
+          {"sbom_name": "kernel", "label": "Kernel (LTS)"},
           {"sbom_name": "gnome-shell", "label": "GNOME Shell"},
           {"sbom_name": "flatpak", "label": "Flatpak"},
           {"sbom_name": "bootc", "label": "bootc"}
@@ -100,7 +99,7 @@ jobs:
         id: digests
         run: |
           set -euo pipefail
-          for image in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
+          for image in bluefin-lts bluefin-lts-nvidia; do
             digest=$(skopeo inspect --no-tags "docker://ghcr.io/projectbluefin/${image}:stable" \
               | jq -r '.Digest' | cut -c1-19)
             echo "${image}=${digest}" >> "$GITHUB_OUTPUT"
@@ -109,8 +108,7 @@ jobs:
       - name: Prepend variants table to release
         env:
           LTS_DIGEST: ${{ steps.digests.outputs.bluefin-lts }}
-          HWE_DIGEST: ${{ steps.digests.outputs.bluefin-lts-hwe }}
-          NVIDIA_DIGEST: ${{ steps.digests.outputs.bluefin-lts-hwe-nvidia }}
+          NVIDIA_DIGEST: ${{ steps.digests.outputs.bluefin-lts-nvidia }}
         run: |
           set -euo pipefail
           TAG=$(gh release list --repo "${{ github.repository }}" --limit 1 --json tagName --jq '.[0].tagName')
@@ -128,10 +126,9 @@ jobs:
             '| Variant | Tag | Digest |' \
             '|---|---|---|' \
             "| \`bluefin-lts\` | \`:stable\` | \`${LTS_DIGEST}\` |" \
-            "| \`bluefin-lts-hwe\` | \`:stable\` | \`${HWE_DIGEST}\` |" \
-            "| \`bluefin-lts-hwe-nvidia\` | \`:stable\` | \`${NVIDIA_DIGEST}\` |" \
+            "| \`bluefin-lts-nvidia\` | \`:stable\` | \`${NVIDIA_DIGEST}\` |" \
             '' \
-            '> **bluefin-lts-hwe** and **bluefin-lts-hwe-nvidia** use the Fedora CoreOS stable kernel. The **Kernel (HWE)** version above applies to both.' \
+            '> **bluefin-lts** and **bluefin-lts-nvidia** use the Fedora CoreOS stable kernel. The **Kernel (LTS)** version above applies to both.' \
             '' \
             '---' \
             '')

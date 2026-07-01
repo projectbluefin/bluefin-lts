@@ -74,7 +74,7 @@ Do NOT trust "the fix is in main" as evidence the fix is published. Verify:
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
-for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
+for IMAGE in bluefin-lts bluefin-lts-nvidia; do
   skopeo inspect --no-tags --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:stable \
     | python3 -c "import json,sys; d=json.load(sys.stdin); print('${IMAGE}:stable', d['Digest'][:22], d['Labels'].get('org.opencontainers.image.created','?')[:10])"
 done
@@ -83,7 +83,7 @@ done
 A fix is published when:
 1. The `:stable` digest differs from the last known digest
 2. The `org.opencontainers.image.created` date is after the fix merged
-3. All three variants (bluefin-lts, bluefin-lts-hwe, bluefin-lts-hwe-nvidia) are updated
+3. Both variants (bluefin-lts and bluefin-lts-nvidia) are updated
 
 ## Build cascade — rapid commits cancel in-progress builds
 
@@ -101,14 +101,12 @@ gh run list --repo projectbluefin/bluefin-lts \
 ```bash
 gh auth token | skopeo login ghcr.io -u castrojo --password-stdin
 skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts
-skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts-hwe
-skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia
+skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts-nvidia
 ```
 
 Images publish to:
 - `ghcr.io/projectbluefin/bluefin-lts`
-- `ghcr.io/projectbluefin/bluefin-lts-hwe`
-- `ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia`
+- `ghcr.io/projectbluefin/bluefin-lts-nvidia`
 
 ## Emergency rollback
 
@@ -121,18 +119,18 @@ skopeo copy \
   docker://ghcr.io/projectbluefin/IMAGE:stable
 ```
 
-Rollback all three variants, then verify digest/created time.
+Rollback both variants, then verify digest/created time.
 
 ## Emergency promotion for production-bricking bugs
 
 1. Push fix to `testing` — builds trigger automatically on push to `testing`.
-2. Wait for all 3 builds to complete (~45-90 min). Never promote before builds finish.
+2. Wait for both builds to complete (~45-90 min). Never promote before builds finish.
 3. Verify the new `:testing` image has a fresh initramfs (see Verifying images below).
 4. Skopeo-copy `:testing` → `:stable` by digest:
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
-for IMAGE in bluefin-lts bluefin-lts-hwe bluefin-lts-hwe-nvidia; do
+for IMAGE in bluefin-lts bluefin-lts-nvidia; do
   DIGEST=$(skopeo inspect --no-tags --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:testing \
     | python3 -c "import json,sys; print(json.load(sys.stdin)['Digest'])")
   skopeo copy \

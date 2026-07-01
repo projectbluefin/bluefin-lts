@@ -82,15 +82,13 @@ _run_image_info() {
     local image_name="${1:-bluefin}"
     local image_vendor="${2:-projectbluefin}"
     local major_version="${3:-10}"
-    local enable_hwe="${4:-0}"
-    local sha="${5:-deadbeef}"
+    local sha="${4:-deadbeef}"
 
     run env \
         PATH="${STUB_BIN}:${PATH}" \
         IMAGE_NAME="${image_name}" \
         IMAGE_VENDOR="${image_vendor}" \
         MAJOR_VERSION_NUMBER="${major_version}" \
-        ENABLE_HWE="${enable_hwe}" \
         SHA_HEAD_SHORT="${sha}" \
         bash "${PATCHED_SCRIPT}"
 }
@@ -123,16 +121,10 @@ _run_image_info() {
     grep -q '"centos-version": "10"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
-@test "image-info: image-tag is 'lts' when ENABLE_HWE=0" {
-    _run_image_info bluefin projectbluefin 10 0
+@test "image-info: image-tag is 'lts'" {
+    _run_image_info bluefin projectbluefin 10
     [ "$status" -eq 0 ]
     grep -q '"image-tag": "lts"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
-}
-
-@test "image-info: image-tag is 'lts-hwe' when ENABLE_HWE=1" {
-    _run_image_info bluefin projectbluefin 10 1
-    [ "$status" -eq 0 ]
-    grep -q '"image-tag": "lts-hwe"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -177,7 +169,7 @@ _run_image_info() {
 }
 
 @test "image-info: os-release appends BUILD_ID from SHA_HEAD_SHORT" {
-    _run_image_info bluefin projectbluefin 10 0 abc1234
+    _run_image_info bluefin projectbluefin 10 abc1234
     [ "$status" -eq 0 ]
     grep -q 'BUILD_ID="abc1234"' "${TEST_ROOT}/usr/lib/os-release"
 }

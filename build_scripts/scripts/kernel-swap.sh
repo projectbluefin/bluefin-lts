@@ -8,8 +8,7 @@ set ${CI:+-x} -euo pipefail
 # /*
 ### Kernel Swap - Install kernel from mounted akmods containers
 ### Containerfile provides the correct kernel via AKMODS_VERSION:
-###   - centos-10 for standard builds
-###   - coreos-stable-<version> for HWE/nvidia builds (follows Fedora CoreOS stable)
+###   - coreos-stable-<version> for all LTS builds (base + nvidia)
 # */
 
 KERNEL_NAME="kernel"
@@ -74,65 +73,61 @@ depmod -a "${CACHED_VERSION}"
 # Direct -f output avoids the cross-device rename that kernel-install uses internally.
 dracut --no-hostonly --kver "${CACHED_VERSION}" --reproducible --tmpdir /boot --zstd -v --add ostree -f "/lib/modules/${CACHED_VERSION}/initramfs.img"
 
-# HWE-specific: Install common akmods
+# HWE CoreOS kernel: Install common akmods
 # These are not in the base mounts, so we download them via skopeo
-if [[ "${ENABLE_HWE:-0}" -eq 1 || "${ENABLE_NVIDIA:-0}" -eq 1 ]]; then
-  echo "HWE mode enabled - installing common akmods..."
+echo "Installing common akmods for HWE CoreOS kernel..."
 
-  # Detect kernel version from installed kernel
-  KERNEL_VERSION=$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')
-  echo "Detected kernel version: ${KERNEL_VERSION}"
+# Detect kernel version from installed kernel
+KERNEL_VERSION=$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')
+echo "Detected kernel version: ${KERNEL_VERSION}"
 
-  AKMODS_FLAVOR="coreos-stable"
-  # Derive Fedora version from the installed kernel (e.g., 7.0.8-200.fc44.x86_64 → 44)
-  FEDORA_VERSION=$(echo "${KERNEL_VERSION}" | grep -oP 'fc\K[0-9]+')
-  if [[ -z "${FEDORA_VERSION}" ]]; then
-    # Fall back to the build-arg passed at image build time
-    FEDORA_VERSION="${FEDORA_AKMODS_VERSION:-43}"
-  fi
-
-  # Create writable directory for common akmods downloads (tmpfs /tmp is mounted)
-  COMMON_AKMODS_DIR="/run/common-akmods"
-  mkdir -p "$COMMON_AKMODS_DIR"
-
-  # Fetch common akmods container for the kernel version
-  echo "Downloading common akmods for kernel ${KERNEL_VERSION}..."
-  skopeo copy --retry-times 3 \
-    docker://ghcr.io/ublue-os/akmods:"${AKMODS_FLAVOR}"-"${FEDORA_VERSION}"-"${KERNEL_VERSION}" \
-    dir:"$COMMON_AKMODS_DIR"/akmods-container
-
-  # Extract the common akmods rpms
-  AKMODS_TARGZ=$(jq -r '.layers[].digest' <"$COMMON_AKMODS_DIR"/akmods-container/manifest.json | cut -d : -f 2)
-  tar -xzf "$COMMON_AKMODS_DIR"/akmods-container/"$AKMODS_TARGZ" -C "$COMMON_AKMODS_DIR"
-
-  # Install common akmods if they exist
-  if [[ -d "$COMMON_AKMODS_DIR"/rpms ]]; then
-    echo "Available common akmods packages:"
-    ls -lh "$COMMON_AKMODS_DIR"/rpms/ || true
-    ls -lh "$COMMON_AKMODS_DIR"/rpms/kmods/ || true
-
-    echo "Installing common akmods with dependencies..."
-    # Install both the -kmod-common packages (from rpms/) and kmod-* packages (from rpms/kmods/)
-    dnf -y install \
-      "$COMMON_AKMODS_DIR"/rpms/*xone*.rpm \
-      "$COMMON_AKMODS_DIR"/rpms/*openrazer*.rpm \
-      "$COMMON_AKMODS_DIR"/rpms/*framework-laptop*.rpm \
-      "$COMMON_AKMODS_DIR"/rpms/*v4l2loopback*.rpm \
-      "$COMMON_AKMODS_DIR"/rpms/kmods/*xone*.rpm \
-      "$COMMON_AKMODS_DIR"/rpms/kmods/*openrazer*.rpm \
-      "$COMMON_AKMODS_DIR"/rpms/kmods/*framework-laptop*.rpm \
-      "$COMMON_AKMODS_DIR"/rpms/kmods/*v4l2loopback*.rpm \
-      || echo "Warning: Some common akmods failed to install (non-critical)"
-  else
-    echo "Warning: No rpms directory found in common akmods container"
-  fi
-  echo "Installed common akmods packages:"
-  rpm -qa | grep -E 'xone|openrazer|framework|v4l2loopback' || true
-  # Cleanup
-  rm -rf "$COMMON_AKMODS_DIR"
-else
-  echo "Standard mode - common akmods not installed"
+AKMODS_FLAVOR="coreos-stable"
+# Derive Fedora version from the installed kernel (e.g., 7.0.8-200.fc44.x86_64 → 44)
+FEDORA_VERSION=$(echo "${KERNEL_VERSION}" | grep -oP 'fc\K[0-9]+')
+if [[ -z "${FEDORA_VERSION}" ]]; then
+  # Fall back to the build-arg passed at image build time
+  FEDORA_VERSION="${FEDORA_AKMODS_VERSION:-43}"
 fi
+
+# Create writable directory for common akmods downloads (tmpfs /tmp is mounted)
+COMMON_AKMODS_DIR="/run/common-akmods"
+mkdir -p "$COMMON_AKMODS_DIR"
+
+# Fetch common akmods container for the kernel version
+echo "Downloading common akmods for kernel ${KERNEL_VERSION}..."
+skopeo copy --retry-times 3 \
+  docker://ghcr.io/ublue-os/akmods:"${AKMODS_FLAVOR}"-"${FEDORA_VERSION}"-"${KERNEL_VERSION}" \
+  dir:"$COMMON_AKMODS_DIR"/akmods-container
+
+# Extract the common akmods rpms
+AKMODS_TARGZ=$(jq -r '.layers[].digest' <"$COMMON_AKMODS_DIR"/akmods-container/manifest.json | cut -d : -f 2)
+tar -xzf "$COMMON_AKMODS_DIR"/akmods-container/"$AKMODS_TARGZ" -C "$COMMON_AKMODS_DIR"
+
+# Install common akmods if they exist
+if [[ -d "$COMMON_AKMODS_DIR"/rpms ]]; then
+  echo "Available common akmods packages:"
+  ls -lh "$COMMON_AKMODS_DIR"/rpms/ || true
+  ls -lh "$COMMON_AKMODS_DIR"/rpms/kmods/ || true
+
+  echo "Installing common akmods with dependencies..."
+  # Install both the -kmod-common packages (from rpms/) and kmod-* packages (from rpms/kmods/)
+  dnf -y install \
+    "$COMMON_AKMODS_DIR"/rpms/*xone*.rpm \
+    "$COMMON_AKMODS_DIR"/rpms/*openrazer*.rpm \
+    "$COMMON_AKMODS_DIR"/rpms/*framework-laptop*.rpm \
+    "$COMMON_AKMODS_DIR"/rpms/*v4l2loopback*.rpm \
+    "$COMMON_AKMODS_DIR"/rpms/kmods/*xone*.rpm \
+    "$COMMON_AKMODS_DIR"/rpms/kmods/*openrazer*.rpm \
+    "$COMMON_AKMODS_DIR"/rpms/kmods/*framework-laptop*.rpm \
+    "$COMMON_AKMODS_DIR"/rpms/kmods/*v4l2loopback*.rpm \
+    || echo "Warning: Some common akmods failed to install (non-critical)"
+else
+  echo "Warning: No rpms directory found in common akmods container"
+fi
+echo "Installed common akmods packages:"
+rpm -qa | grep -E 'xone|openrazer|framework|v4l2loopback' || true
+# Cleanup
+rm -rf "$COMMON_AKMODS_DIR"
 
 # Remove build-time dracut tmpdir config — must not ship in the final image
 rm -f /etc/dracut.conf.d/01-tmpdir.conf

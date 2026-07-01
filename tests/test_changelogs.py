@@ -37,10 +37,10 @@ from changelogs import (  # noqa: E402
 
 MINIMAL_CONFIG: Dict = {
     "os_name": "bluefin-lts",
-    "targets": ["lts", "dx"],
+    "targets": ["stable"],
     "registry_url": "ghcr.io/test-org",
     "package_blacklist": ["firefox"],
-    "image_variants": ["", "-dx"],
+    "image_variants": ["", "-nvidia"],
     "patterns": {
         "centos": r"\.el\d\d",
         "start_pattern": r"{target}\.\d\d\d+",
@@ -56,7 +56,7 @@ MINIMAL_CONFIG: Dict = {
         "commit_format": "\n| **[{short}](...)** | {subject} |",
         "changelog_title": "{os} {tag}: {pretty}",
         "handwritten_placeholder": "Auto-generated for `{curr}`.",
-        "hwe_kernel_table": "### HWE\n{changes}",
+        "kernel_track_note": "LTS kernel note",
         "changelog_format": (
             "{handwritten}\n\nFrom previous `{target}` version `{prev}` there have been "
             "the following changes. **One package per new version shown.**\n\n"
@@ -66,8 +66,7 @@ MINIMAL_CONFIG: Dict = {
     "sections": {
         "all": "All Images",
         "base": "Base Images",
-        "dx": "[Developer Experience Images]",
-        "gdx": "[Graphical Developer Experience Images]",
+        "nvidia": "[Nvidia Images]",
     },
     "defaults": {
         "retries": 3,
@@ -105,7 +104,7 @@ def generator(config):
 class TestConfig:
     def test_config_creation(self, config):
         assert config.os_name == "bluefin-lts"
-        assert config.targets == ["lts", "dx"]
+        assert config.targets == ["stable"]
         assert config.registry_url == "ghcr.io/test-org"
 
     def test_config_package_blacklist(self, config):
@@ -113,7 +112,7 @@ class TestConfig:
 
     def test_config_image_variants(self, config):
         assert "" in config.image_variants
-        assert "-dx" in config.image_variants
+        assert "-nvidia" in config.image_variants
 
     def test_config_patterns_keys(self, config):
         assert "centos" in config.patterns
@@ -132,7 +131,7 @@ class TestLoadConfig:
     def test_load_config_from_file(self, config_yaml_file):
         loaded = load_config(config_yaml_file)
         assert loaded.os_name == "bluefin-lts"
-        assert loaded.targets == ["lts", "dx"]
+        assert loaded.targets == ["stable"]
 
     def test_load_config_missing_file_exits(self):
         with pytest.raises(SystemExit):
@@ -146,7 +145,11 @@ class TestLoadConfig:
 
     def test_load_config_preserves_targets(self, config_yaml_file):
         loaded = load_config(config_yaml_file)
-        assert set(loaded.targets) == {"lts", "dx"}
+        assert set(loaded.targets) == {"stable"}
+
+    def test_production_config_uses_only_stable_target(self):
+        loaded = load_config(str(Path(__file__).parent.parent / ".github/changelog_config.yaml"))
+        assert loaded.targets == ["stable"]
 
 
 # ---------------------------------------------------------------------------
@@ -283,29 +286,29 @@ class TestChangelogGeneratorInit:
 
 class TestGetImages:
     def test_get_images_returns_list(self, generator):
-        images = generator.get_images("lts")
+        images = generator.get_images("stable")
         assert isinstance(images, list)
         assert len(images) > 0
 
     def test_get_images_tuples_have_two_elements(self, generator):
-        for img, target in generator.get_images("lts"):
+        for img, target in generator.get_images("stable"):
             assert isinstance(img, str)
             assert isinstance(target, str)
 
-    def test_get_images_hwe_returns_single_entry(self, generator):
-        """HWE target short-circuits after first match."""
-        images = generator.get_images("lts-hwe")
-        assert len(images) == 1
+    def test_get_images_stable_includes_configured_variants(self, generator, config):
+        """Each configured image variant is included for the target."""
+        images = generator.get_images("stable")
+        assert len(images) == len(config.image_variants)
 
-    def test_get_images_dx_experience_appended(self, generator):
-        """'-dx' variant should appear in images for 'dx' target."""
-        images = generator.get_images("dx")
+    def test_get_images_nvidia_variant_appended(self, generator):
+        """'-nvidia' variant should appear in images for 'stable' target."""
+        images = generator.get_images("stable")
         image_names = [img for img, _ in images]
-        assert any("-dx" in name for name in image_names)
+        assert any("-nvidia" in name for name in image_names)
 
     def test_get_images_base_name_is_bluefin(self, generator):
         """Base image name is always 'bluefin'."""
-        images = generator.get_images("lts")
+        images = generator.get_images("stable")
         for img, _ in images:
             assert img.startswith("bluefin")
 
