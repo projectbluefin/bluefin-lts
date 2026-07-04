@@ -40,6 +40,7 @@ jobs:
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
       run_e2e: true
+      e2e_image: ghcr.io/projectbluefin/bluefin-lts:testing
       source_branch: testing
       target_branch: main
       # main uses a merge queue ruleset (17070416): gh pr merge --auto is blocked.
