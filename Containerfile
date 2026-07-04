@@ -4,6 +4,7 @@ ARG AKMODS_VERSION="${AKMODS_VERSION:-coreos-stable-43}"
 ARG COMMON_IMAGE_REF
 ARG BREW_IMAGE_REF
 # Upstream mounts akmods-zfs and akmods-nvidia-open; LTS defaults to CoreOS-stable kernel tags.
+# Keep this build recipe in sync with the testing promotion pipeline.
 FROM ghcr.io/ublue-os/akmods-zfs:${AKMODS_VERSION} AS akmods_zfs
 FROM ghcr.io/ublue-os/akmods-nvidia-open:${AKMODS_VERSION} AS akmods_nvidia_open
 FROM ${COMMON_IMAGE_REF} AS common
