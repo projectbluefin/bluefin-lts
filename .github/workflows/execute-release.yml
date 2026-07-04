@@ -1,14 +1,17 @@
 name: Execute Release
 
-# Triggered by a push to main whose commit message starts with
-# "chore: promote testing to main" — the squash commit produced by
-# promote-testing-to-main.yml when auto/promote-testing-to-main merges
-# into main.
+# Triggered by:
+# - push to main whose commit message starts with
+#   "chore: promote testing to main" (testing→main promotion squash commit)
+# - daily schedule (04:00 UTC)
+# - manual workflow_dispatch
 
 on:
   push:
     branches:
       - main
+  schedule:
+    - cron: '0 4 * * *'
   workflow_dispatch:
 
 permissions:
@@ -25,7 +28,7 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           EVENT: ${{ github.event_name }}
         run: |
-          if [ "$EVENT" = "workflow_dispatch" ] || echo "$COMMIT_MSG" | grep -q "^chore: promote testing to main"; then
+          if [ "$EVENT" = "workflow_dispatch" ] || [ "$EVENT" = "schedule" ] || echo "$COMMIT_MSG" | grep -q "^chore: promote testing to main"; then
             echo "is-promotion=true" >> "$GITHUB_OUTPUT"
           else
             echo "is-promotion=false" >> "$GITHUB_OUTPUT"
