@@ -13,7 +13,9 @@ name: Promote testing to main
 #   - daily 04:00 UTC — matches bluefin cadence
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Post-Testing E2E"]
+    types: [completed]
     branches: [testing]
   schedule:
     - cron: '0 4 * * *'
@@ -33,6 +35,7 @@ permissions:
 
 jobs:
   promote:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
