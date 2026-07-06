@@ -1,5 +1,5 @@
 ARG MAJOR_VERSION="${MAJOR_VERSION:-c10s}"
-# Trigger a fresh testing rebuild after the workflow-run-based post-testing gate fix.
+# Trigger a fresh testing rebuild after the default-branch workflow trigger fix.
 ARG BASE_IMAGE_SHA="${BASE_IMAGE_SHA:-sha256-feea845d2e245b5e125181764cfbc26b6dacfb3124f9c8d6a2aaa4a3f91082ed}"
 ARG AKMODS_VERSION="${AKMODS_VERSION:-coreos-stable-43}"
 ARG COMMON_IMAGE_REF
