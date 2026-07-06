@@ -121,10 +121,10 @@ _run_image_info() {
     grep -q '"centos-version": "10"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
-@test "image-info: image-tag is 'lts'" {
+@test "image-info: image-tag reflects the release stream" {
     _run_image_info bluefin projectbluefin 10
     [ "$status" -eq 0 ]
-    grep -q '"image-tag": "lts"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
+    grep -q '"image-tag": "stable/testing"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
