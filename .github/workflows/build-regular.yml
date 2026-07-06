@@ -80,3 +80,18 @@ jobs:
       architecture: '["x86_64", "aarch64"]'
       # post-merge-e2e removed — builds publish :testing directly.
       publish_stream_tag: ${{ github.event_name != 'pull_request' && 'true' || 'false' }}
+
+  post-testing-e2e:
+    name: Post-testing e2e gate
+    needs: [build]
+    if: |
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/testing' &&
+      needs.build.result == 'success'
+    uses: ./.github/workflows/post-testing-e2e.yml
+    permissions:
+      contents: read
+      packages: read
+    with:
+      image: ghcr.io/projectbluefin/bluefin-lts:testing
+      suites: smoke

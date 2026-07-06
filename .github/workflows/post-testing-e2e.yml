@@ -3,6 +3,18 @@ name: Post-Testing E2E
 # Runs e2e smoke tests after successful testing-image builds so
 # promote-testing-to-main can gate on an existing verified run.
 on:
+  workflow_call:
+    inputs:
+      image:
+        description: Full image reference to test
+        required: false
+        default: ghcr.io/projectbluefin/bluefin-lts:testing
+        type: string
+      suites:
+        description: Comma-separated list of test suites to run
+        required: false
+        default: smoke
+        type: string
   workflow_dispatch:
     inputs:
       image:
@@ -32,6 +44,7 @@ jobs:
   e2e:
     if: |
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'workflow_call' ||
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push')
@@ -43,7 +56,7 @@ jobs:
     steps:
       - name: Verify testing image is reachable
         env:
-          IMAGE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.image || 'ghcr.io/projectbluefin/bluefin-lts:testing' }}
+          IMAGE_REF: ${{ github.event_name == 'workflow_call' && inputs.image || github.event_name == 'workflow_dispatch' && inputs.image || 'ghcr.io/projectbluefin/bluefin-lts:testing' }}
         shell: bash
         run: |
           set -euo pipefail
