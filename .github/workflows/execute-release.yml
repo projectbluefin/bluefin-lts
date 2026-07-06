@@ -43,16 +43,180 @@ jobs:
       issues: write
       packages: write
       pull-requests: write
-    uses: projectbluefin/actions/.github/workflows/reusable-execute-release.yml@v1
-    with:
-      registry: ghcr.io/projectbluefin
-      variants: >-
+    runs-on: ubuntu-latest
+    outputs:
+      promoted_digests: ${{ steps.resolve.outputs.digests }}
+      promoted_sha: ${{ steps.resolve-sha.outputs.sha }}
+    env:
+      REGISTRY: ghcr.io/projectbluefin
+      VARIANTS_JSON: >-
         [
           {"image":"bluefin-lts","source_tag":"testing","target_tag":"stable"},
           {"image":"bluefin-lts-nvidia","source_tag":"testing","target_tag":"stable"}
         ]
-      cosign_identity_regexp: ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
-    secrets: inherit
+      COSIGN_IDENTITY_REGEXP: ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Resolve fast-forward SHA
+        id: resolve-sha
+        shell: bash
+        env:
+          INPUT_SHA: ''
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to GHCR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          registry_host="${REGISTRY#docker://}"
+          registry_host="${registry_host%%/*}"
+          echo "$GH_TOKEN" | skopeo login "$registry_host" --username "${{ github.actor }}" --password-stdin
+
+      - name: Resolve source digests
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          digests='{}'
+
+          while IFS= read -r variant; do
+            [ -n "$variant" ] || continue
+            image=$(jq -r '.image' <<<"$variant")
+            source_tag=$(jq -r '.source_tag' <<<"$variant")
+            ref="${REGISTRY}/${image}:${source_tag}"
+            digest=$(skopeo inspect --format '{{.Digest}}' "docker://${ref}")
+            digests=$(jq -c --arg image "$image" --arg digest "$digest" '. + {($image): $digest}' <<<"$digests")
+            echo "Resolved ${image}:${source_tag} -> ${digest}"
+          done < <(jq -c '.[]' <<<"$VARIANTS_JSON")
+
+          echo "digests=${digests}" >> "$GITHUB_OUTPUT"
+
+      - name: Install cosign
+        uses: ./.github/actions/install-cosign
+        with:
+          cosign-release: v3.0.6
+
+      - name: Re-verify cosign signatures before promotion
+        shell: bash
+        env:
+          DIGESTS_JSON: ${{ steps.resolve.outputs.digests }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r variant; do
+            [ -n "$variant" ] || continue
+            image=$(jq -r '.image' <<<"$variant")
+            digest=$(jq -r --arg image "$image" '.[$image]' <<<"$DIGESTS_JSON")
+            ref="${REGISTRY}/${image}@${digest}"
+            echo "Verifying ${ref}"
+            cosign verify \
+              --certificate-identity-regexp "$COSIGN_IDENTITY_REGEXP" \
+              --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+              "$ref" >/dev/null
+          done < <(jq -c '.[]' <<<"$VARIANTS_JSON")
+
+      - name: Promote digests to target tags
+        shell: bash
+        env:
+          DIGESTS_JSON: ${{ steps.resolve.outputs.digests }}
+        run: |
+          set -uo pipefail
+          failed_variants=()
+          while IFS= read -r variant; do
+            [ -n "$variant" ] || continue
+            image=$(jq -r '.image' <<<"$variant")
+            target_tag=$(jq -r '.target_tag' <<<"$variant")
+            digest=$(jq -r --arg image "$image" '.[$image]' <<<"$DIGESTS_JSON")
+            src="docker://${REGISTRY}/${image}@${digest}"
+            dest="docker://${REGISTRY}/${image}:${target_tag}"
+            echo "Promoting ${src} to ${dest}"
+            if ! skopeo copy --preserve-digests --all "$src" "$dest"; then
+              echo "::warning::Promotion failed for variant ${image} -> :${target_tag}"
+              failed_variants+=("${image}:${target_tag}")
+            fi
+          done < <(jq -c '.[]' <<<"$VARIANTS_JSON")
+
+          if [ ${#failed_variants[@]} -gt 0 ]; then
+            echo "::error::Promotion failed for ${#failed_variants[@]} variant(s): ${failed_variants[*]}"
+            exit 1
+          fi
+
+      - name: Update sticky comment with promotion result
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          DIGESTS_JSON: ${{ steps.resolve.outputs.digests }}
+          PROMOTED_SHA: ${{ steps.resolve-sha.outputs.sha }}
+        with:
+          script: |
+            const marker = '<!-- release-status-marker -->';
+            const gateStart = '<!-- release-gate-start -->';
+            const gateEnd = '<!-- release-gate-end -->';
+            const reminderStart = '<!-- release-reminder-start -->';
+            const reminderEnd = '<!-- release-reminder-end -->';
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) {
+              core.info('No pull_request context (push trigger) — skipping sticky comment update.');
+              return;
+            }
+            const digests = JSON.parse(process.env.DIGESTS_JSON || '{}');
+            const variants = JSON.parse(process.env.VARIANTS_JSON || '[]');
+            const actor = context.actor;
+            const promotedAt = new Date().toISOString();
+
+            const digestLines = variants.map((variant) => {
+              const digest = digests[variant.image] || 'unknown';
+              const shortDigest = digest.startsWith('sha256:')
+                ? `sha256:${digest.slice(7, 23)}`
+                : digest.slice(0, 16);
+              return `| ${variant.image} | ${variant.source_tag} | ${variant.target_tag} | ${shortDigest} |`;
+            }).join('\n');
+
+            const gateSection = [
+              gateStart,
+              'Release status',
+              '',
+              'Status: promoted',
+              `Promoted on (UTC): ${promotedAt}`,
+              `Promoted by: ${actor}`,
+              `Source SHA: ${process.env.PROMOTED_SHA}`,
+              '',
+              'Digests',
+              '',
+              '| Variant | Source tag | Target tag | Digest |',
+              '|---|---|---|---|',
+              digestLines || '| none | none | none | none |',
+              gateEnd,
+            ].join('\n');
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100,
+            });
+
+            const existing = comments.find((comment) => comment.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: [marker, gateSection].join('\n\n'),
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: [marker, gateSection].join('\n\n'),
+              });
+            }
 
   release-notes:
     needs: [execute]
