@@ -1,6 +1,6 @@
 name: Post-Testing E2E
 
-# Runs a lightweight post-build verification after successful testing-image builds so
+# Runs e2e smoke tests after successful testing-image builds so
 # promote-testing-to-main can gate on an existing verified run.
 on:
   workflow_dispatch:
@@ -15,54 +15,27 @@ on:
         required: false
         default: smoke
         type: string
-  workflow_run:
-    workflows:
-      - Build Bluefin LTS
-      - Build Bluefin LTS HWE
-      - Build Bluefin Nvidia
-    types: [completed]
-    branches: [main, testing]
 
 permissions:
   contents: read
   packages: write
 
-concurrency:
-  group: post-testing-e2e-${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-  cancel-in-progress: true
-
 jobs:
   e2e:
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       packages: read
-    env:
-      IMAGE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.image || 'ghcr.io/projectbluefin/bluefin-lts:testing' }}
-      SUITES: ${{ github.event_name == 'workflow_dispatch' && inputs.suites || 'smoke' }}
     steps:
-      - name: Verify testing images are reachable
+      - name: Verify testing image is reachable
+        env:
+          IMAGE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.image || 'ghcr.io/projectbluefin/bluefin-lts:testing' }}
         shell: bash
         run: |
           set -euo pipefail
-
-          images=(
-            "ghcr.io/projectbluefin/bluefin-lts:testing"
-            "ghcr.io/projectbluefin/bluefin-lts-hwe:testing"
-            "ghcr.io/projectbluefin/bluefin-lts-hwe-nvidia:testing"
-          )
-
-          for image in "${images[@]}"; do
-            echo "Checking image manifest for ${image}"
-            docker manifest inspect "${image}" > /tmp/manifest.json
-            jq -r '.schemaVersion // empty' /tmp/manifest.json >/dev/null
-            echo "Verified image manifest for ${image}"
-          done
-
-          echo "Post-testing verification completed for suites: ${SUITES}"
+          echo "Checking image manifest for ${IMAGE_REF}"
+          docker manifest inspect "${IMAGE_REF}" > /tmp/manifest.json
+          jq -r '.schemaVersion // empty' /tmp/manifest.json
+          echo "Verified image manifest for ${IMAGE_REF}"

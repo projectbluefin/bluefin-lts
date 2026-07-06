@@ -164,14 +164,10 @@ class ChangelogGenerator:
     def get_images(self, target: str) -> List[Tuple[str, str]]:
         """Generate image names and experiences for a given target."""
         images = []
-        base_name = "bluefin"  # Base image name is always "bluefin"
+        base_name = "bluefin-lts"  # Base image name is always "bluefin-lts"
 
         for experience in self.config.image_variants:
             img = base_name
-
-            if "-hwe" in target:
-                images.append((img, target))
-                break
 
             # Add experience suffix if it's not empty
             if experience:  # experience is like "", "-dx", "-nvidia"
@@ -676,36 +672,6 @@ class ChangelogGenerator:
             "org.opencontainers.image.created", manifest.get("Created", "")
         )
 
-    def get_hwe_kernel_change(
-        self, prev: str, curr: str, target: str
-    ) -> Tuple[Optional[str], Optional[str]]:
-        """Get HWE kernel version changes."""
-        try:
-            # Convert tag format: "lts.20260216" → "lts-hwe.20260216"
-            hwe_curr = curr.replace(target + ".", target + "-hwe.", 1)
-            hwe_prev = prev.replace(target + ".", target + "-hwe.", 1)
-
-            logger.info(f"Fetching HWE manifests for {hwe_curr} and {hwe_prev}...")
-            hwe_curr_manifest = self.get_manifests(hwe_curr)
-            hwe_prev_manifest = self.get_manifests(hwe_prev)
-
-            # If either manifest is empty, return None values
-            if not hwe_curr_manifest or not hwe_prev_manifest:
-                logger.warning("One or both HWE manifests are empty")
-                return (None, None)
-
-            hwe_curr_versions = self.get_versions(hwe_curr_manifest)
-            hwe_prev_versions = self.get_versions(hwe_prev_manifest)
-
-            curr_kernel = hwe_curr_versions.get("kernel")
-            prev_kernel = hwe_prev_versions.get("kernel")
-            logger.debug(f"HWE kernel versions: {prev_kernel} -> {curr_kernel}")
-
-            return (curr_kernel, prev_kernel)
-        except Exception as e:
-            logger.error(f"Failed to get HWE kernel versions: {e}")
-            return (None, None)
-
     def _generate_pretty_version(self, manifests: Dict[str, Any], curr: str) -> str:
         """Generate a pretty version string if not provided."""
         try:
@@ -738,29 +704,10 @@ class ChangelogGenerator:
         changelog: str,
         prev: str,
         curr: str,
-        hwe_kernel_version: Optional[str],
-        hwe_prev_kernel_version: Optional[str],
         versions: Dict[str, str],
         prev_versions: Dict[str, str],
     ) -> str:
         """Process all template variable replacements in the changelog."""
-        # Handle HWE kernel version
-        if hwe_kernel_version == hwe_prev_kernel_version:
-            changelog = changelog.replace(
-                "{pkgrel:kernel-hwe}",
-                self.config.templates["pattern_pkgrel"].format(
-                    version=hwe_kernel_version or "N/A"
-                ),
-            )
-        else:
-            changelog = changelog.replace(
-                "{pkgrel:kernel-hwe}",
-                self.config.templates["pattern_pkgrel_changed"].format(
-                    prev=hwe_prev_kernel_version or "N/A",
-                    new=hwe_kernel_version or "N/A",
-                ),
-            )
-
         # Replace package version templates
         for pkg, version in versions.items():
             template = f"{{pkgrel:{pkg}}}"
@@ -836,10 +783,6 @@ class ChangelogGenerator:
             prev, curr = self.get_tags(target, manifests, previous_tag)
             logger.info(f"Tags: {prev} -> {curr}")
 
-            hwe_kernel_version, hwe_prev_kernel_version = self.get_hwe_kernel_change(
-                prev, curr, target
-            )
-
             # Generate title
             version = target.capitalize()
             if target in self.config.targets:
@@ -873,8 +816,6 @@ class ChangelogGenerator:
                 changelog,
                 prev,
                 curr,
-                hwe_kernel_version,
-                hwe_prev_kernel_version,
                 versions,
                 prev_versions,
             )
@@ -891,55 +832,10 @@ class ChangelogGenerator:
                 versions,
             )
             changelog = changelog.replace("{changes}", changes)
-
-            # Generate and insert HWE kernel table
-            if hwe_kernel_version is not None and hwe_prev_kernel_version is not None:
-                # HWE data available - generate the table
-                hwe_table = self.config.templates["hwe_kernel_table"]
-
-                # Process the HWE kernel version placeholders
-                # (standard kernel placeholder should already be processed)
-                if hwe_kernel_version == hwe_prev_kernel_version:
-                    hwe_table = hwe_table.replace(
-                        "{pkgrel:kernel-hwe}",
-                        self.config.templates["pattern_pkgrel"].format(
-                            version=hwe_kernel_version
-                        ),
-                    )
-                else:
-                    hwe_table = hwe_table.replace(
-                        "{pkgrel:kernel-hwe}",
-                        self.config.templates["pattern_pkgrel_changed"].format(
-                            prev=hwe_prev_kernel_version,
-                            new=hwe_kernel_version,
-                        ),
-                    )
-
-                # Process standard kernel version (should already be in changelog, but ensure it's in the table)
-                kernel_version = versions.get("kernel", "N/A")
-                prev_kernel_version = prev_versions.get("kernel", "N/A")
-                if kernel_version == prev_kernel_version:
-                    hwe_table = hwe_table.replace(
-                        "{pkgrel:kernel}",
-                        self.config.templates["pattern_pkgrel"].format(
-                            version=kernel_version
-                        ),
-                    )
-                else:
-                    hwe_table = hwe_table.replace(
-                        "{pkgrel:kernel}",
-                        self.config.templates["pattern_pkgrel_changed"].format(
-                            prev=prev_kernel_version,
-                            new=kernel_version,
-                        ),
-                    )
-
-                changelog = changelog.replace("{hwe_kernel_table}", hwe_table)
-                logger.info("HWE kernel table added to changelog")
-            else:
-                # No HWE data available - remove the placeholder
-                changelog = changelog.replace("{hwe_kernel_table}", "")
-                logger.info("HWE kernel data not available, table omitted")
+            changelog = changelog.replace(
+                "{kernel_track_note}",
+                self.config.templates.get("kernel_track_note", ""),
+            )
 
             logger.info("Changelog generated successfully")
             return title, changelog

@@ -13,7 +13,9 @@ name: Promote testing to main
 #   - daily 04:00 UTC — matches bluefin cadence
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Post-Testing E2E"]
+    types: [completed]
     branches: [testing]
   schedule:
     - cron: '0 4 * * *'
@@ -33,13 +35,15 @@ permissions:
 
 jobs:
   promote:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
-        [{"image":"bluefin-lts"},{"image":"bluefin-lts-hwe"},{"image":"bluefin-lts-hwe-nvidia"}]
+        [{"image":"bluefin-lts"},{"image":"bluefin-lts-nvidia"}]
       cosign_identity_regexp: >-
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
-      run_e2e: false
+      run_e2e: true
+      e2e_image: ghcr.io/projectbluefin/bluefin-lts:testing
       source_branch: testing
       target_branch: main
       # main uses a merge queue ruleset (17070416): gh pr merge --auto is blocked.
@@ -47,3 +51,65 @@ jobs:
       # places the PR in the queue and lets it squash-merge once checks pass.
       use_merge_queue: true
     secrets: inherit
+
+  mirror-validate-to-merge-group:
+    name: Mirror validate status to merge-group SHA
+    needs: [promote]
+    if: needs.promote.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Post validate=success on merge queue head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PROMOTION_BRANCH: auto/promote-testing-to-main
+        run: |
+          set -euo pipefail
+
+          owner="${REPO%/*}"
+          name="${REPO#*/}"
+
+          pr_number="$(gh pr list --repo "$REPO" --state open --head "$PROMOTION_BRANCH" --json number --jq '.[0].number // empty')"
+          if [[ -z "$pr_number" ]]; then
+            echo "No open promotion PR on $PROMOTION_BRANCH; nothing to mirror."
+            exit 0
+          fi
+
+          graphql_query="query(\$owner: String!, \$name: String!, \$number: Int!) { repository(owner: \$owner, name: \$name) { pullRequest(number: \$number) { mergeQueueEntry { headCommit { oid } } } } }"
+          merge_group_sha=""
+
+          for _ in {1..24}; do
+            merge_group_sha="$(gh api graphql \
+              -f query="$graphql_query" \
+              -f owner="$owner" \
+              -f name="$name" \
+              -F number="$pr_number" \
+              --jq '.data.repository.pullRequest.mergeQueueEntry.headCommit.oid // ""')"
+            [[ -n "$merge_group_sha" ]] && break
+            sleep 5
+          done
+
+          if [[ -z "$merge_group_sha" ]]; then
+            echo "PR #$pr_number is not in merge queue; skipping merge-group validate mirror."
+            exit 0
+          fi
+
+          existing="$(gh api "repos/$REPO/commits/$merge_group_sha/status" \
+            --jq '[.statuses[] | select(.context == "validate") | first | .state // ""]')"
+          if [[ "$existing" == "success" ]]; then
+            echo "validate already success on merge-group SHA $merge_group_sha"
+            exit 0
+          fi
+
+          gh api "repos/$REPO/statuses/$merge_group_sha" \
+            --method POST \
+            --field state=success \
+            --field context=validate \
+            --field description='Validated by promotion workflow (merge-group head)' \
+            --field target_url="$RUN_URL" >/dev/null
+          echo "Posted validate=success on merge-group SHA $merge_group_sha"

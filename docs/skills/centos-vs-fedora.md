@@ -18,13 +18,13 @@ bluefin-lts is built on **CentOS Stream 10**, not Fedora. This has critical impl
 |---|---|---|
 | COPR CLI | **Direct URL only** | `dnf copr enable` is blocked by CI guard. Use `dnf config-manager --add-repo <url>` instead |
 | `dnf5 copr` subcommand | N/A | Not available on CentOS |
-| Fedora akmods tags | `ghcr.io/ublue-os/akmods-*:centos-10` | Use `centos-10` tag, not `coreos-stable` |
+| Fedora akmods tags | `ghcr.io/ublue-os/akmods-*:coreos-stable-<fedora_version>` | Since LTS uses the Fedora CoreOS stable kernel by default, it uses `coreos-stable-*` akmods |
 
 ## What to use instead
 
 - **Third-party packages**: Use [EPEL](https://docs.fedoraproject.org/en-US/epel/) (`dnf install epel-release`) — the CentOS equivalent for extra packages
 - **COPR repos**: You can still USE COPR repos via direct `.repo` URL — but you must use the **`epel-10` chroot name**, not `centos-stream-10` (see below)
-- **Akmods**: Pull from `ghcr.io/ublue-os/akmods-*:centos-10` (not `coreos-stable`)
+- **Akmods**: Since all stock LTS builds are on the Fedora CoreOS stable kernel track, they pull akmods from `ghcr.io/ublue-os/akmods-*:coreos-stable-<fedora_version>`.
 - **Package availability**: Always verify a package exists in CentOS Stream repos before adding it
 
 ## COPR chroot naming — critical
@@ -52,7 +52,7 @@ dnf config-manager --add-repo "https://copr.fedorainfracloud.org/coprs/OWNER/PRO
 1. **DO NOT** copy `copr_install_isolated()` patterns from `bluefin` build scripts — `dnf copr enable` is blocked by CI guard
 2. **DO NOT** use `dnf5 copr enable` — the subcommand is unavailable and blocked
 3. **DO NOT** assume `centos-stream-10` is the right COPR chroot — verify with the API; most projects use `epel-10`
-4. **DO NOT** use `coreos-stable` or Fedora-version akmods tags
+4. **DO NOT** use standard Fedora-version akmods tags directly (use the resolved `coreos-stable` tags for LTS)
 5. **DO NOT** assume Fedora package names match CentOS package names exactly
 
 ## CI guard

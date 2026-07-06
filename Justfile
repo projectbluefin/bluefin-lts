@@ -1,7 +1,7 @@
 export repo_organization := env("GITHUB_REPOSITORY_OWNER", "projectbluefin")
 export image_name := env("IMAGE_NAME", "bluefin")
 export centos_version := env("CENTOS_VERSION", "stream10")
-export default_tag := env("DEFAULT_TAG", "lts")
+export default_tag := env("DEFAULT_TAG", "stable")
 export bib_image := env("BIB_IMAGE", "quay.io/centos-bootc/bootc-image-builder:latest")
 export coreos_stable_version := env("COREOS_STABLE_VERSION", "")
 export HOME := env("HOME", "")
@@ -77,7 +77,7 @@ sudoif command *args:
 #
 # Arguments:
 #   $target_image - The tag you want to apply to the image (default: bluefin).
-#   $tag - The tag for the image (default: lts).
+#   $tag - The tag for the image (default: stable).
 #   $dx - Enable DX (default: "0").
 #   $nvidia - Enable Nvidia drivers (default: "0").
 #
@@ -91,12 +91,12 @@ sudoif command *args:
 # The script constructs the version string using the tag and the current date.
 # If the git working directory is clean, it also includes the short SHA of the current HEAD.
 #
-# just build $target_image $tag $dx $nvidia $hwe
+# just build $target_image $tag $dx $nvidia
 #
 # Example usage:
-#   just build bluefin lts 1 0 1
+#   just build bluefin-lts stable 1 0
 #
-# This will build an image 'bluefin:lts' with DX and HWE enabled.
+# This will build an image 'bluefin-lts:stable' with DX and the HWE CoreOS kernel enabled.
 #
 
 [private]
@@ -109,7 +109,7 @@ _ensure-yq:
     fi
 
 # Build the image using the specified parameters
-build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $hwe="0" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43": _ensure-yq
+build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43": _ensure-yq
     #!/usr/bin/env bash
 
     # Get Version
@@ -128,23 +128,17 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $hwe="0" $ke
     BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR=${repo_organization}")
     BUILD_ARGS+=("--build-arg" "ENABLE_DX=${dx}")
     BUILD_ARGS+=("--build-arg" "ENABLE_NVIDIA=${nvidia}")
-    BUILD_ARGS+=("--build-arg" "ENABLE_HWE=${hwe}")
     BUILD_ARGS+=("--build-arg" "GNOME_VERSION=${gnome_version}")
-    # Select akmods source tag for mounted ZFS/NVIDIA images
+    # Select akmods source tag for mounted ZFS/NVIDIA images (always CoreOS stable)
     ARCH=$(uname -m)
-    if [[ "${hwe}" -eq "1" || "${nvidia}" -eq "1" ]]; then
-        # Dynamically follow Fedora CoreOS stable; override with COREOS_STABLE_VERSION env if set
-        if [[ -n "${coreos_stable_version:-}" ]]; then
-            coreos_fedora_ver="${coreos_stable_version}"
-        else
-            coreos_fedora_ver=$(skopeo inspect --retry-times 3 docker://quay.io/fedora/fedora-coreos:stable | jq -r '.Labels["org.opencontainers.image.version"]' | grep -oP '^[0-9]+')
-        fi
-        AKMODS_BASE="coreos-stable-${coreos_fedora_ver}"
-        BUILD_ARGS+=("--build-arg" "FEDORA_AKMODS_VERSION=${coreos_fedora_ver}")
+    # Dynamically follow Fedora CoreOS stable; override with COREOS_STABLE_VERSION env if set
+    if [[ -n "${coreos_stable_version:-}" ]]; then
+        coreos_fedora_ver="${coreos_stable_version}"
     else
-        AKMODS_BASE="centos-10"
-        BUILD_ARGS+=("--build-arg" "FEDORA_AKMODS_VERSION=${fedora_akmods_version}")
+        coreos_fedora_ver=$(skopeo inspect --retry-times 3 docker://quay.io/fedora/fedora-coreos:stable | jq -r '.Labels["org.opencontainers.image.version"]' | grep -oP '^[0-9]+')
     fi
+    AKMODS_BASE="coreos-stable-${coreos_fedora_ver}"
+    BUILD_ARGS+=("--build-arg" "FEDORA_AKMODS_VERSION=${coreos_fedora_ver}")
     if [[ -n "${kernel_pin}" ]]; then
         BUILD_ARGS+=("--build-arg" "AKMODS_VERSION=${AKMODS_BASE}-${kernel_pin}.${ARCH}")
     else
@@ -281,7 +275,7 @@ build-iso $target_image=("localhost/" + image_name) $tag=default_tag:
 
     # Determine Variant
     VARIANT="bluefin"
-    if [[ "{{ tag }}" =~ lts ]]; then
+    if [[ "{{ target_image }}" =~ bluefin-lts ]]; then
         VARIANT="lts"
     fi
 
@@ -406,14 +400,14 @@ lint:
 
 # Usage: just create-test-vm [name] [tag] [ssh-key]
 [group('VM Testing')]
-create-test-vm name="bluefin-test-ssh" tag="lts-hwe" ssh_key="":
+create-test-vm name="bluefin-test-ssh" tag="stable" ssh_key="":
     @echo "Creating test VM: {{ name }}"
     @if [ -z "{{ ssh_key }}" ]; then ssh_key="{{ HOME }}/.ssh/id_ed25519.pub"; fi
     @./scripts/create-test-vm.sh "{{ name }}" "{{ tag }}" "{{ ssh_key }}"
 
 # Create and immediately start a test VM
 [group('VM Testing')]
-run-test-vm name="bluefin-test-ssh" tag="lts-hwe":
+run-test-vm name="bluefin-test-ssh" tag="stable":
     @just create-test-vm "{{ name }}" "{{ tag }}" ""
     @echo "Starting VM: {{ name }}"
     @limactl start "{{ name }}"
@@ -426,17 +420,17 @@ run-test-vm name="bluefin-test-ssh" tag="lts-hwe":
 # Return the OCI image name for a given brand/stream/flavor combination.
 # For LTS each variant is its own brand_name so flavor is always "main".
 [group('Utility')]
-image_name base="bluefin-lts" stream="lts" flavor="main":
+image_name base="bluefin-lts" stream="stable" flavor="main":
     echo "{{ base }}"
 
 # Return the default OCI tag for the given stream (tag == stream for LTS).
 [group('Utility')]
-generate-default-tag stream="lts" ghcr="0":
+generate-default-tag stream="stable" ghcr="0":
     echo "{{ stream }}"
 
 # Return "cache-name allow-cache-write" for the dnf-cache composite action.
 [group('Utility')]
-setup-cache base="bluefin-lts" stream="lts" ghcr="0" event="push":
+setup-cache base="bluefin-lts" stream="stable" ghcr="0" event="push":
     #!/usr/bin/bash
     set -eou pipefail
     ALLOW_CACHE_WRITE="false"
@@ -447,24 +441,22 @@ setup-cache base="bluefin-lts" stream="lts" ghcr="0" event="push":
     echo "{{ base }}-stream10 ${ALLOW_CACHE_WRITE}"
 
 # Build image for GHCR publication — called with sudo by reusable-build.yml.
-# Maps brand_name suffix to ENABLE_HWE / ENABLE_NVIDIA build args.
+# Maps brand_name suffix to ENABLE_NVIDIA build args.
 [group('Image')]
-build-ghcr base="bluefin-lts" stream="lts" flavor="main" kernel_pin="":
+build-ghcr base="bluefin-lts" stream="stable" flavor="main" kernel_pin="":
     #!/usr/bin/bash
     set -eoux pipefail
     if [[ "${UID}" -gt "0" ]]; then
         echo "build-ghcr must run as root (called via sudo -E)" >&2
         exit 1
     fi
-    HWE=0
     NVIDIA=0
-    [[ "{{ base }}" == *"-hwe"* ]] && HWE=1
     [[ "{{ base }}" == *"nvidia"* ]] && NVIDIA=1
-    {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${NVIDIA}" "${HWE}" "{{ kernel_pin }}"
+    {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${NVIDIA}" "{{ kernel_pin }}"
 
 # Generate space-separated alias tags (dated + CentOS version aliases for production).
 [group('Utility')]
-generate-build-tags base="bluefin-lts" tag="lts" flavor="main" kernel_pin="" ghcr="0" version="" github_event="" github_number="":
+generate-build-tags base="bluefin-lts" tag="stable" flavor="main" kernel_pin="" ghcr="0" version="" github_event="" github_number="":
     #!/usr/bin/bash
     set -eou pipefail
     TODAY="$(date +%Y%m%d)"
@@ -473,12 +465,9 @@ generate-build-tags base="bluefin-lts" tag="lts" flavor="main" kernel_pin="" ghc
         echo "pr-{{ github_number }}-{{ tag }}-${TODAY} ${SHA_SHORT}-{{ tag }}-${TODAY}"
         exit 0
     fi
-    TAGS=("{{ tag }}-${TODAY}" "{{ tag }}.${TODAY}")
-    if [[ "{{ tag }}" != "testing" ]]; then
-        CNOS="$(echo "{{ centos_version }}" | tr -cd '0-9')"
-        TAGS+=("stream${CNOS}" "stream${CNOS}-${TODAY}" "${CNOS}" "${CNOS}-${TODAY}")
-    fi
-    echo "${TAGS[*]}"
+    # ponytail: keep production publication to canonical stable/testing tags only.
+    # reusable-build publishes the default stream tag; no additional aliases.
+    echo ""
 
 # Apply alias tags to the local image.
 [group('Utility')]
@@ -493,7 +482,7 @@ tag-images image_name="" default_tag="" tags="":
 
 # Generate SBOM for the built image using syft.
 [group('Utility')]
-gen-sbom base="bluefin-lts" stream="lts" flavor="main" syft_cmd="syft":
+gen-sbom base="bluefin-lts" stream="stable" flavor="main" syft_cmd="syft":
     #!/usr/bin/bash
     set -eou pipefail
     IMAGE_NAME="$({{ just_executable() }} image_name {{ base }} {{ stream }} {{ flavor }})"
@@ -508,7 +497,7 @@ gen-sbom base="bluefin-lts" stream="lts" flavor="main" syft_cmd="syft":
 
 # Secureboot validation stub — LTS uses bootc + TPM2/Verity, not UKI.
 [group('Utility')]
-secureboot base="bluefin-lts" tag="lts" flavor="main":
+secureboot base="bluefin-lts" tag="stable" flavor="main":
     echo "Secureboot check: LTS is CentOS bootc-based (TPM2/Verity). UKI check not applicable."
 
 # Run unit tests for build scripts

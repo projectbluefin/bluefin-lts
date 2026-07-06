@@ -7,6 +7,7 @@ permissions:
   attestations: write
   security-events: write
   issues: write
+  actions: write
 
 on:
   pull_request:
@@ -63,7 +64,7 @@ jobs:
     if: |
       always() &&
       (github.event_name != 'pull_request' ||
-        needs.detect-changes.outputs.should_build == 'true')
+       needs.detect-changes.outputs.should_build == 'true')
     uses: projectbluefin/actions/.github/workflows/reusable-build.yml@v1
     permissions:
       contents: read
@@ -80,3 +81,27 @@ jobs:
       architecture: '["x86_64", "aarch64"]'
       # post-merge-e2e removed — builds publish :testing directly.
       publish_stream_tag: ${{ github.event_name != 'pull_request' && 'true' || 'false' }}
+
+  trigger-post-testing:
+    name: Trigger post-testing verification
+    needs: [build]
+    if: |
+      always() &&
+      github.event_name != 'pull_request' &&
+      github.ref_name == 'testing' &&
+      needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Dispatch post-testing workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run post-testing-e2e.yml \
+            --repo "${{ github.repository }}" \
+            --ref "${GITHUB_REF_NAME}" \
+            -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
+            -f suites="smoke"

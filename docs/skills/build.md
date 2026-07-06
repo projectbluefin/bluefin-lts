@@ -2,7 +2,7 @@
 name: bluefin-lts-build
 description: >-
   Local build, validation, and variant guide for projectbluefin/bluefin-lts. Use when running
-  just build, just check, or just lint; understanding the Regular/HWE/GDX variant map; debugging
+  just build, just check, or just lint; understanding the LTS/Nvidia variant map; debugging
   build failures; or building QCOW2/raw disk images for VM testing.
 metadata:
   type: procedure
@@ -51,41 +51,36 @@ behaviour locally before pushing.
 
 | Goal | Command | Typical time |
 |---|---|---|
-| Regular | `just build bluefin lts 0 0 0` | 45-90 min |
-| Nvidia | `just build bluefin-lts-hwe-nvidia lts 0 1 0` | 45-90 min |
-| HWE | `just build bluefin lts 0 0 1` | 45-90 min |
+| Regular (LTS) | `just build bluefin-lts lts 0 0` | 45-90 min |
+| Nvidia | `just build bluefin-lts-nvidia lts 0 1` | 45-90 min |
 
 The `gnome_version` parameter defaults to `"50"`. Override only if testing a future GNOME version.
 
-**HWE and GDX kernel tracking:** For HWE and GDX builds, the Fedora CoreOS stable version is resolved dynamically at build time via `skopeo inspect docker://quay.io/fedora/fedora-coreos:stable`. This version is used to select the matching `coreos-stable-<version>` akmods image tag and is passed as `FEDORA_AKMODS_VERSION` (controls negativo17 Fedora repo for NVIDIA drivers). Override with `COREOS_STABLE_VERSION` env var if you need to pin:
+**LTS and Nvidia kernel tracking:** The Fedora CoreOS stable version is resolved dynamically at build time via `skopeo inspect docker://quay.io/fedora/fedora-coreos:stable`. This version is used to select the matching `coreos-stable-<version>` akmods image tag and is passed as `FEDORA_AKMODS_VERSION` (controls negativo17 Fedora repo for NVIDIA drivers). Override with `COREOS_STABLE_VERSION` env var if you need to pin:
 
 ```bash
-COREOS_STABLE_VERSION=44 just build bluefin-lts-hwe-nvidia lts 0 1 0   # Nvidia, force Fedora 44 akmods
-COREOS_STABLE_VERSION=44 just build bluefin lts 0 0 1   # HWE, force Fedora 44 akmods
+COREOS_STABLE_VERSION=44 just build bluefin-lts-nvidia lts 0 1   # Nvidia, force Fedora 44 akmods
+COREOS_STABLE_VERSION=44 just build bluefin-lts lts 0 0   # LTS, force Fedora 44 akmods
 ```
-
-Regular builds continue to use `centos-10` akmods and the `fedora_akmods_version` parameter (default `"43"`) has no effect on HWE/GDX.
 
 **Never cancel builds.** Use 120+ minute timeouts.
 
 | Variant | What changes |
 |---|---|
-| Regular (`bluefin-lts`) | base LTS image |
-| Nvidia (`bluefin-lts-hwe-nvidia`) | Nvidia drivers, CUDA toolkit, AI/GPU tooling; uses CoreOS stable kernel via `ENABLE_NVIDIA=1` |
-| HWE (`bluefin-lts-hwe`) | newer hardware enablement via CoreOS stable kernel |
+| Regular (`bluefin-lts`) | base LTS image (Fedora CoreOS stable kernel track) |
+| Nvidia (`bluefin-lts-nvidia`) | Nvidia drivers, CUDA toolkit, AI/GPU tooling |
 
 ## Nvidia build internals
 
-The Nvidia variant (`bluefin-lts-hwe-nvidia`) is built from the same `Containerfile` as the other variants
+The Nvidia variant (`bluefin-lts-nvidia`) is built from the same `Containerfile` as the other variants
 with `ENABLE_NVIDIA=1` passed as a build arg. Key differences from Regular:
 
-- **Kernel:** CoreOS stable (same as HWE) via `coreos-stable-<fedora_ver>` akmods — NOT CentOS 10 akmods
 - **Driver source:** negativo17 `fedora-nvidia.repo` (versioned to match the akmods Fedora version)
 - **Override directories:** `build_scripts/overrides/nvidia/` + arch-specific `aarch64/nvidia/`, `x86_64/nvidia/`
 - **System files:** `system_files_overrides/nvidia/` + arch-specific `aarch64-nvidia/`, `x86_64-nvidia/`
 - **Kernel args:** `kargs.d/00-nvidia.toml` written inline in `20-nvidia.sh` (blacklists nouveau, enables nvidia-drm.modeset)
 - **CDI:** `nvidia-container-toolkit` configured for rootless Podman access; `ublue-nvctk-cdi.service` enabled via preset
-- **FLAVOR label:** `nvidia`; `IMAGE_NAME`: `bluefin-lts-hwe-nvidia`
+- **FLAVOR label:** `nvidia`; `IMAGE_NAME`: `bluefin-lts-nvidia`
 
 **When renaming internal build flags or override directories**, always search ALL build scripts including
 arch-specific subdirectories (`build_scripts/overrides/aarch64/`, `build_scripts/overrides/x86_64/`) and
@@ -109,7 +104,7 @@ echo 'tmpdir="/boot"' > /etc/dracut.conf.d/01-tmpdir.conf
 
 dnf -y install "${RPM_NAMES[@]}"
 
-# ... HWE akmods dnf install (also triggers dracut — conf.d still needed here) ...
+# ... LTS-kernel akmods dnf install (also triggers dracut — conf.d still needed here) ...
 
 # AFTER ALL dnf installs — remove so it does not ship in the final image:
 rm -f /etc/dracut.conf.d/01-tmpdir.conf
@@ -123,7 +118,7 @@ directly to the command line — conf.d is not needed for explicit calls:
 ```
 
 See PRs #174, #248 for history. The regression recurs whenever centos-bootc is updated and `kernel-uki-virt`
-is absent from the base image — check for EXDEV errors in HWE and nvidia build logs whenever a centos-bootc
+is absent from the base image — check for EXDEV errors in LTS and nvidia build logs whenever a centos-bootc
 digest bump lands.
 
 | Command | Purpose | Time |
@@ -184,7 +179,7 @@ Recovery loop:
 ```bash
 just clean
 just check && just lint
-just build bluefin lts
+just build bluefin-lts lts 0 0
 ```
 
 ## Unit testing build scripts

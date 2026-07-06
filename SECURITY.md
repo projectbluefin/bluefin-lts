@@ -30,7 +30,7 @@ This ensures your report is handled confidentially before public disclosure.
 | Initial acknowledgment | 48 hours |
 | Assessment complete | 7 days |
 | Fix/mitigation delivered | 30 days (critical), 90 days (high/medium) |
-| Public disclosure | After fix ships to `:lts` |
+| Public disclosure | After fix ships to `:stable` |
 
 ## Disclosure Policy
 
@@ -40,7 +40,7 @@ We follow coordinated disclosure. Reporters are credited in the release notes un
 
 This policy covers the `projectbluefin/bluefin-lts` OCI image build pipeline, including:
 
-- `Containerfile` and build scripts in `build_files/`
+- `Containerfile` and build scripts in `build_scripts/`
 - GitHub Actions workflows in `.github/workflows/`
 - Supply chain: base image pinning, COPR repos, binary downloads
 - cosign signing and image integrity
