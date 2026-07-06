@@ -20,10 +20,6 @@ permissions:
   contents: read
   packages: write
 
-concurrency:
-  group: post-testing-e2e-${{ github.sha }}
-  cancel-in-progress: true
-
 jobs:
   e2e:
     if: github.event_name == 'workflow_dispatch'
