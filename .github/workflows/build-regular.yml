@@ -86,8 +86,9 @@ jobs:
     name: Trigger post-testing verification
     needs: [build]
     if: |
+      always() &&
       github.event_name != 'pull_request' &&
-      github.ref == 'refs/heads/testing' &&
+      github.ref_name == 'testing' &&
       needs.build.result == 'success'
     runs-on: ubuntu-latest
     permissions:
