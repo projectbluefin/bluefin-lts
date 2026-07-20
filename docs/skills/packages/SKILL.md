@@ -1,11 +1,7 @@
 ---
-name: bluefin-lts-packages
+name: packages
 description: >-
-  Adding, removing, or updating RPM packages in the bluefin-lts image.
-  Use when editing package lists, handling COPR packages, or debugging
-  dnf install failures in the build.
-metadata:
-  type: procedure
+  Add, remove, or update packages in the image. Use when changing package manifests, repositories, or package-related build scripts.
 ---
 
 # Package Management
@@ -56,6 +52,18 @@ readarray -t PKGS < <(python3 /run/context/build_scripts/scripts/read-packages \
 - **CentOS Stream 10 uses `dnf` not `dnf5`.** Do not copy `dnf5`-specific flags from the bluefin (Fedora) scripts.
 
 ## Common failure modes
+
+## Common Rationalizations
+
+- “The package exists on Fedora, so it exists here.” Verify the target platform and repository.
+
+## Red Flags
+
+- Unpinned repositories, incorrect manifest location, or package changes without tests.
+
+## Verification
+
+Run the package parser, applicable build checks, and targeted tests.
 
 | Symptom | Likely cause | Fix |
 |---|---|---|

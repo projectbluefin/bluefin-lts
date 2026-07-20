@@ -1,13 +1,7 @@
 ---
-name: bluefin-lts-release
+name: release
 description: >-
-  Production release pipeline, branch promotion, registry rollback, and ISO status for
-  projectbluefin/bluefin-lts. Use when cutting a release, debugging promotion automation,
-  performing an emergency rollback via skopeo, or verifying published images.
-metadata:
-  type: runbook
-  context7-sources:
-    - /websites/github_en_actions
+  Verify and promote published artifacts safely. Use when checking digests, signatures, stable releases, rollback, or emergency promotion.
 ---
 
 # Release
@@ -21,9 +15,9 @@ metadata:
 
 ## When NOT to Use
 
-- Package or image-content changes → `docs/skills/build.md`
-- Non-promotion CI failures → `docs/skills/ci-cd.md`
-- Hardware-specific image issues → `docs/skills/hardware.md`
+- Package or image-content changes → `docs/skills/build/SKILL.md`
+- Non-promotion CI failures → `docs/skills/ci-cd/SKILL.md`
+- Hardware-specific image issues → `docs/skills/hardware/SKILL.md`
 
 ## Branch model (factory standard)
 
@@ -176,6 +170,11 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 ## ISO status
 
 **LTS ISO is disabled. Do not re-enable.** Anaconda is broken on CentOS Stream base.
+
+## Common Rationalizations
+
+- “The tag is enough.” Record and verify the immutable digest.
+- “A green build means a release is trustworthy.” Check signatures and publication results.
 
 ## Red Flags
 

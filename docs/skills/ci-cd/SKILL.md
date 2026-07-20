@@ -1,0 +1,106 @@
+---
+name: ci-cd
+description: >-
+  Diagnose and change continuous-integration, promotion, and publication workflows.
+  Use when a workflow does not trigger, an artifact is not published, or CI logic changes.
+---
+
+# CI/CD
+
+## When to use
+
+- A workflow does not trigger or selects the wrong paths.
+- A testing artifact is not updated or a stable artifact is not promoted.
+- A workflow, reusable workflow input, action reference, or publication step changes.
+
+## When not to use
+
+- Local build commands: [`build`](../build/SKILL.md).
+- Artifact verification, rollback, or promotion procedure: [`release`](../release/SKILL.md).
+- Test selection: [`testing`](../testing/SKILL.md).
+
+## Procedure
+
+1. Read the affected workflow and its caller/callee relationship before editing.
+2. Confirm the triggering event, branch, path filters, permissions, secrets, and
+   concurrency behavior.
+3. Trace every reusable-workflow input from caller to implementation.
+4. Check the artifact name, tag, digest, and registry destination at each stage.
+5. Make the smallest change that fixes the event or data-flow defect.
+6. Validate syntax and repository policy locally.
+7. Inspect the resulting workflow run before declaring success.
+
+## Workflow map
+
+| Concern | Inspect first |
+|---|---|
+| Regular image build | `.github/workflows/build-regular.yml` |
+| NVIDIA image build | `.github/workflows/build-nvidia.yml` |
+| Promotion | `.github/workflows/promote-testing-to-main.yml` |
+| Stable publication | `.github/workflows/execute-release.yml` |
+| End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml` |
+| Syntax and repository checks | `.github/workflows/pr-testsuite.yml`, `unit-tests.yml` |
+| Dependency updates | `.github/renovate.json5`, Renovate workflows |
+
+The exact workflow files in the repository are authoritative. Update this table
+when a workflow is renamed or removed.
+
+## Branch and tag flow
+
+- Pull requests target `testing`.
+- Builds on `testing` publish the pre-release testing stream.
+- Promotion moves tested content toward `main`.
+- Release automation publishes stable artifacts from the promotion result.
+- Do not manually treat a testing tag as stable without following the release
+  skill and verifying the digest and signature.
+
+## Action references
+
+- Pin third-party actions to full commit SHAs with a version comment.
+- Use the repository's managed internal action tags where policy requires them.
+- Do not add a SHA pin when the repository's policy explicitly requires a managed
+  tag.
+- Never weaken workflow permissions to make a failing step pass.
+
+## Debugging a missing build
+
+Check in order:
+
+1. The event occurred on the expected branch.
+2. The changed path matches the workflow filters.
+3. The workflow is not disabled or skipped by an expression.
+4. Required permissions and secrets are available.
+5. The reusable-workflow reference and inputs are valid.
+6. Concurrency has not superseded the run.
+7. The publication step wrote the expected tag and digest.
+
+Use the GitHub workflow run, job summary, and logs as evidence. Do not infer
+success from a green caller job if the reusable job or publication step failed.
+
+## Common Rationalizations
+
+- “The caller is green, so publication succeeded.” Inspect the reusable job and artifact.
+
+## Red flags
+
+- Floating third-party action tags.
+- Direct calls to a reusable workflow's internal implementation instead of the
+  repository wrapper.
+- Workflow documentation naming files that no longer exist.
+- An artifact tag checked without its immutable digest.
+- Permissions broader than the job requires.
+- A release or signing failure hidden with `continue-on-error`.
+- Copying a workflow from another image variant without checking path and input
+  differences.
+
+## Verification
+
+```bash
+actionlint .github/workflows/*.yml
+just check
+pre-commit run --all-files
+```
+
+For behavior changes, inspect the completed run and record the workflow URL,
+commit, artifact tag, and digest. For signing or release changes, also follow
+[`release`](../release/SKILL.md).
