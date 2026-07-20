@@ -62,6 +62,21 @@ when a workflow is renamed or removed.
   tag.
 - Never weaken workflow permissions to make a failing step pass.
 
+## Multi-architecture publication
+
+The reusable build workflow pushes each architecture separately and returns a
+platform-to-digest map; it does not assemble the index. The regular and NVIDIA
+caller workflows must run a follow-on `create-manifest` job after the build,
+then sign the resulting manifest digest. Promotion copies the signed testing
+index to the stable tag with `skopeo copy --all`.
+
+When changing architecture inputs or publication tags, verify all of these:
+
+1. Both architecture builds complete.
+2. The reusable job output contains both `amd64` and `arm64` digests.
+3. The manifest job publishes the stream tag after the build matrix finishes.
+4. The manifest digest is signed before promotion can verify it.
+
 ## Debugging a missing build
 
 Check in order:

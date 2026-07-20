@@ -82,14 +82,50 @@ jobs:
       # post-merge-e2e removed — builds publish :testing directly.
       publish_stream_tag: ${{ github.event_name != 'pull_request' && 'true' || 'false' }}
 
+  create-manifest:
+    name: Publish multi-architecture manifest
+    needs: [build]
+    if: github.event_name != 'pull_request' && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Prepare runner
+        uses: projectbluefin/actions/bootc-build/setup-runner@v1
+        with:
+          storage-backend: remove-software
+          update-podman: 'true'
+
+      - name: Create and publish testing manifest
+        id: manifest
+        uses: projectbluefin/actions/bootc-build/create-manifest@v1
+        with:
+          image-name: bluefin-lts
+          digests-json: ${{ toJSON(fromJSON(needs.build.outputs.digests)['bluefin-lts']) }}
+          tags: testing
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sign testing manifest
+        uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
+        with:
+          image: ghcr.io/projectbluefin/bluefin-lts
+          digest: ${{ steps.manifest.outputs.digest }}
+          generate-sbom: 'false'
+          push-attestation: 'true'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
   trigger-post-testing:
     name: Trigger post-testing verification
-    needs: [build]
+    needs: [build, create-manifest]
     if: |
       always() &&
       github.event_name != 'pull_request' &&
       github.ref_name == 'testing' &&
-      needs.build.result == 'success'
+      needs.build.result == 'success' &&
+      needs.create-manifest.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
