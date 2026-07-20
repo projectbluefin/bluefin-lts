@@ -154,16 +154,16 @@ See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task
 
 ## Branch model
 
-- `testing` — all PRs target this branch. Builds push `:testing` on every push.
-- `main` — receives squash promotion commits only. Triggers `execute-release.yml` → `:stable`.
+- `testing` — active development. All PRs target this branch; builds push `:testing` on every push.
+- `main` — receives squash promotion commits only via `auto/promote-testing-to-main`; `execute-release.yml` promotes `:testing` to `:stable`.
+- `stable` — production image tag published by `execute-release.yml` after promotion to `main`.
 
-**All PRs target `testing`.** Never open a content PR against `main`.
-**Flow is one-way: `testing → main`.** Never merge `main → testing` manually.
+Promotion is one-way: `testing → main → :stable`. Never merge `main → testing` manually.
 
 ## Hard rules
 
 - **NEVER cancel builds** — 45–90 min, set 120+ min timeout
-- **Promotion PRs squash-merge by design** — `reusable-promote-squash.yml` rebuilds the squash branch fresh on every run. The PR auto-merges via the merge queue once `Lint & syntax` passes.
+- **Promotion PRs (`testing→main`) squash-merge by design** — `reusable-promote-squash.yml` rebuilds the squash branch fresh on every run. The PR auto-merges via the merge queue once `Lint & syntax` passes.
 - **NEVER re-enable LTS ISO builds** — Anaconda is broken on CentOS Stream base
 - **ALWAYS explicitly enable services from common** — systemd presets shipped from `projectbluefin/common` are NOT auto-applied in Containerfile builds. Every service must have `systemctl enable <service>` in `build_scripts/40-services.sh`. Missing this causes silent failures or unbootable images (e.g. `rechunker-group-fix.service`).
 
