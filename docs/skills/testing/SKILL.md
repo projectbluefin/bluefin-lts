@@ -1,4 +1,26 @@
+---
+name: testing
+description: >-
+  Choose and run the appropriate unit, container, VM, or integration test. Use when validating image or build-script changes.
+---
+
 # Testing — ghost lab and podman headless
+
+## When to Use
+
+Use when validating build scripts, image content, boot behavior, services, or hardware.
+
+## When NOT to Use
+
+Do not use this skill to change CI workflow design or release promotion policy.
+
+## Common Rationalizations
+
+- “A container test proves boot behavior.” Use a VM or integration test for systemd and reboot behavior.
+
+## Red Flags
+
+- Testing only a mutable tag, skipping the affected variant, or treating a cached image as fresh evidence.
 
 This file documents when and how to test changes in the ghost lab.
 For cluster operations and KubeVirt VM tests, see the `lab-test` agent skill.
@@ -131,25 +153,6 @@ Images are cached in the cluster after first pull. Subsequent runs of the same t
 are ~5 seconds. Use pinned tags (`:lts`, `:testing`) not `:latest` — floating tags
 bypass the cache if the digest changes.
 
-## Real example: lts-migration-smoke (2026-06-21)
-
-Tested the `bluefin-lts-migrate` service logic across all 5 old-LTS variants.
-All 5 tasks Succeeded in ~5 seconds each using cached images.
-
-**What was proven:**
-1. `python3` JSON parsing of `bootc status --format=json` works in the real old image
-2. All variant → target mappings are correct (`bluefin-gdx` → `bluefin-lts-nvidia`, etc.)
-3. Required tools (`python3`, `bootc`, `systemctl`) exist in `ghcr.io/ublue-os/bluefin:lts`
-4. `/etc/motd.d/` is writable at container start
-5. `/etc/containers/policy.json` has `insecureAcceptAnything` for `ghcr.io/projectbluefin`
-   (meaning `bootc switch --enforce-container-sigpolicy` will succeed)
-
-**Key finding on signing:** Both the old image (`ghcr.io/ublue-os/bluefin:lts`) and the
-new image (`ghcr.io/projectbluefin/bluefin-lts:stable`) ship the same `policy.json` from
-`projectbluefin/common`. The `ghcr.io/projectbluefin` registry is not listed explicitly
-and falls through to the `""` catch-all (`insecureAcceptAnything`). The migration
-`bootc switch --enforce-container-sigpolicy` call succeeds.
-
 ## KubeVirt VMs (full boot test)
 
 Use the `lab-test` skill for full boot tests. Required when:
@@ -159,3 +162,10 @@ Use the `lab-test` skill for full boot tests. Required when:
 - Any test requiring a running OS, not just a container
 
 See: `~/.agents/skills/lab-test/SKILL.md`
+
+## Verification
+
+- Choose the smallest test layer that exercises the changed behavior.
+- Record the image reference, source revision, command or workflow, and result.
+- Run a VM test when boot, systemd, hardware, or `bootc switch` behavior is involved.
+- Report skipped checks and why; do not treat container success as proof of boot success.

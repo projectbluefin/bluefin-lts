@@ -1,12 +1,7 @@
 ---
-name: bluefin-lts-gnome-extensions
+name: gnome-extensions
 description: >-
-  Adding, removing, and building GNOME Shell extensions in projectbluefin/bluefin-lts. Extensions
-  are git submodules in system_files/usr/share/gnome-shell/extensions/<UUID>/. Use when adding a
-  new GNOME Shell extension, removing one, debugging schema compile failures, or updating the
-  build step in 21-build-gnome-extensions.sh.
-metadata:
-  type: procedure
+  Add, remove, and build desktop shell extensions. Use when changing extension sources, submodules, schemas, or build integration.
 ---
 
 # GNOME Shell Extensions
@@ -125,10 +120,29 @@ Example path: `system_files/etc/dconf/db/distro.d/05-bluefin-lts-custom-command-
 
 Use numeric prefix to control override priority. Higher numbers win.
 
-## Validation
+## When to Use
+
+Use when adding, removing, updating, or building a desktop extension.
+
+## When NOT to Use
+
+Do not use for general package changes or release verification.
+
+## Common Rationalizations
+
+- “The source submodule is enough.” Verify the build block, schemas, and installed files.
+
+## Red Flags
+
+- Missing UUID validation, schema compilation, or cleanup of a removed submodule.
+
+## Verification
 
 ```bash
 just check && just lint
 ```
 
-Both must exit 0. `just lint` runs shellcheck on `build_scripts/**/*.sh` including the extensions build script.
+Both must exit 0. `just lint` runs shellcheck on `build_scripts/**/*.sh`,
+including the extensions build script. Confirm that the extension is installed
+at the expected UUID path and that schemas compile when the extension provides
+schemas.
