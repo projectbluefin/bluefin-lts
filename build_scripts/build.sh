@@ -69,6 +69,11 @@ if [ "$ENABLE_NVIDIA" == "1" ]; then
 	run_buildscripts_for "$(arch)/nvidia"
 fi
 
+if [ "${ENABLE_ASAHI:-0}" == "1" ]; then
+	copy_systemfiles_for asahi
+	run_buildscripts_for asahi
+fi
+
 printf "::group:: ===Image Cleanup===\n"
 # Ensure these get run at the _end_ of the build no matter what
 "${BUILD_SCRIPTS_PATH}/cleanup.sh"

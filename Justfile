@@ -109,7 +109,7 @@ _ensure-yq:
     fi
 
 # Build the image using the specified parameters
-build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43": _ensure-yq
+build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43" $asahi="0": _ensure-yq
     #!/usr/bin/env bash
 
     # Get Version
@@ -128,6 +128,7 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR=${repo_organization}")
     BUILD_ARGS+=("--build-arg" "ENABLE_DX=${dx}")
     BUILD_ARGS+=("--build-arg" "ENABLE_NVIDIA=${nvidia}")
+    BUILD_ARGS+=("--build-arg" "ENABLE_ASAHI=${asahi}")
     BUILD_ARGS+=("--build-arg" "GNOME_VERSION=${gnome_version}")
     # Select akmods source tag for mounted ZFS/NVIDIA images (always CoreOS stable)
     ARCH=$(uname -m)
@@ -452,7 +453,9 @@ build-ghcr base="bluefin-lts" stream="stable" flavor="main" kernel_pin="":
     fi
     NVIDIA=0
     [[ "{{ base }}" == *"nvidia"* ]] && NVIDIA=1
-    {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${NVIDIA}" "{{ kernel_pin }}"
+    ASAHI=0
+    [[ "{{ base }}" == *"asahi"* ]] && ASAHI=1
+    {{ just_executable() }} build "{{ base }}" "{{ stream }}" "0" "${NVIDIA}" "{{ kernel_pin }}" "50" "43" "${ASAHI}"
 
 # Generate space-separated alias tags (dated + CentOS version aliases for production).
 [group('Utility')]
