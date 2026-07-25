@@ -97,6 +97,12 @@ jobs:
       attestations: write
 
     steps:
+      - name: Prepare runner
+        uses: projectbluefin/actions/bootc-build/setup-runner@v1
+        with:
+          storage-backend: remove-software
+          update-podman: 'true'
+
       - name: Create multi-arch manifest
         id: create-manifest
         uses: projectbluefin/actions/bootc-build/create-manifest@v1
@@ -112,6 +118,8 @@ jobs:
           image: ghcr.io/${{ github.repository_owner }}/bluefin-lts
           digest: ${{ steps.create-manifest.outputs.digest }}
           signing-mode: keyless
+          generate-sbom: 'false'
+          push-attestation: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           image-name: bluefin-lts
           certificate-identity-regexp: >-

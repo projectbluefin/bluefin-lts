@@ -35,7 +35,7 @@ testing → main → :stable
 ## Production release flow
 
 1. `promote-testing-to-main.yml` fires on push to `testing`, **daily at 04:00 UTC**, and on manual dispatch.
-   It calls `reusable-promote-squash.yml@v1` with `source_branch: testing`, `target_branch: main`, `use_merge_queue: true`.
+   It calls `reusable-promote-squash.yml@v1`; its defaults select `source_branch: testing` and `target_branch: main`, while the caller explicitly enables `use_merge_queue: true`.
    When trees differ it rebuilds the squash branch and upserts the `auto/promote-testing-to-main` PR.
 2. The PR enters the merge queue (ruleset 17070416 on `main` requires squash + merge queue).
    Required check: `Lint & syntax`. No approvals needed.
@@ -188,6 +188,6 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 
 - [ ] `promote-testing-to-main.yml` schedules daily at `0 4 * * *`
 - [ ] `use_merge_queue: true`
-- [ ] `source_branch: testing` and `target_branch: main`
+- [ ] The promotion caller relies on defaults selecting `source_branch: testing` and `target_branch: main`
 - [ ] `execute-release.yml` fires on `push: main`, detects `"^chore: promote testing to main"`, publishes `:stable`
 - [ ] Build workflows push `:testing` on push to `testing` branch
