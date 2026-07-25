@@ -465,9 +465,7 @@ generate-build-tags base="bluefin-lts" tag="stable" flavor="main" kernel_pin="" 
         echo "pr-{{ github_number }}-{{ tag }}-${TODAY} ${SHA_SHORT}-{{ tag }}-${TODAY}"
         exit 0
     fi
-    # ponytail: keep production publication to canonical stable/testing tags only.
-    # reusable-build publishes the default stream tag; no additional aliases.
-    echo ""
+    echo "${SHA_SHORT}-{{ tag }}-${TODAY} {{ tag }}.${TODAY}"
 
 # Apply alias tags to the local image.
 [group('Utility')]
