@@ -25,7 +25,9 @@ if [[ -n "${AKMODS_FEDORA_VERSION}" ]]; then
     FEDORA_VERSION="${AKMODS_FEDORA_VERSION}"
 fi
 
-curl -fsSLo - "https://negativo17.org/repos/fedora-nvidia.repo" | sed "s/\$releasever/${FEDORA_VERSION}/g" | tee "/etc/yum.repos.d/fedora-nvidia.repo"
+NVIDIA_REPO=$(curl -fsSL "https://negativo17.org/repos/fedora-nvidia.repo")
+NVIDIA_REPO="${NVIDIA_REPO//\$releasever/${FEDORA_VERSION}}"
+printf '%s\n' "${NVIDIA_REPO}" > /etc/yum.repos.d/fedora-nvidia.repo
 dnf config-manager --set-disabled "fedora-nvidia"
 
 ### install Nvidia driver packages and dependencies
