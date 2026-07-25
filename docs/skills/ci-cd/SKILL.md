@@ -26,7 +26,8 @@ description: >-
    concurrency behavior.
 3. Trace every reusable-workflow input from caller to implementation.
 4. Check the artifact name, tag, digest, and registry destination at each stage.
-5. Make the smallest change that fixes the event or data-flow defect.
+5. For manifest assembly, run `bootc-build/setup-runner@v1` first so the caller provides the required Podman tooling.
+6. Make the smallest change that fixes the event or data-flow defect.
 6. Validate syntax and repository policy locally.
 7. Inspect the resulting workflow run before declaring success.
 
@@ -92,6 +93,7 @@ success from a green caller job if the reusable job or publication step failed.
 - A release or signing failure hidden with `continue-on-error`.
 - Copying a workflow from another image variant without checking path and input
   differences.
+- Calling `create-manifest@v1` without first preparing the runner.
 
 ## Verification
 
