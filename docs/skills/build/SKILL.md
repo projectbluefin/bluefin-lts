@@ -47,7 +47,7 @@ Run before every commit.
 
 `gnome_version` defaults to `50`; override only when testing a future GNOME version.
 
-The Fedora CoreOS stable kernel version is resolved dynamically. Override with:
+LTS uses the Fedora CoreOS 43 akmods stream by default. Override it explicitly when validating a newer compatible stream:
 
 ```bash
 COREOS_STABLE_VERSION=44 just build bluefin-lts-nvidia lts 0 1

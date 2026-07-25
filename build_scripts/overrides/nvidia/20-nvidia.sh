@@ -75,9 +75,10 @@ if [[ -f /etc/modprobe.d/nvidia-modeset.conf ]]; then
     cp /etc/modprobe.d/nvidia-modeset.conf /usr/lib/modprobe.d/nvidia-modeset.conf
 fi
 # we must force driver load to fix black screen on boot for nvidia desktops
-sed -i 's@omit_drivers@force_drivers@g' /usr/lib/dracut/dracut.conf.d/99-nvidia.conf
+DRACUT_NVIDIA_CONFIG=/usr/lib/dracut/dracut.conf.d/99-nvidia.conf
+sed -i 's/omit_drivers/force_drivers/g' "${DRACUT_NVIDIA_CONFIG}"
 # as we need forced load, also mustpre-load intel/amd iGPU else chromium web browsers fail to use hardware acceleration
-sed -i 's@ nvidia @ i915 amdgpu nvidia @g' /usr/lib/dracut/dracut.conf.d/99-nvidia.conf
+sed -i 's/ nvidia / i915 amdgpu nvidia /g' "${DRACUT_NVIDIA_CONFIG}"
 
 # Make sure initramfs is rebuilt after nvidia drivers or kernel replacement
 /usr/bin/dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --reproducible --tmpdir /boot --zstd -v --add ostree -f "/lib/modules/$QUALIFIED_KERNEL/initramfs.img"
