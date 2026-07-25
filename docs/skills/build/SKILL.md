@@ -78,6 +78,14 @@ NVIDIA overrides live in `build_scripts/overrides/nvidia/`, `system_files_overri
 
 Do not run VMs in CI; they require KVM/graphics.
 
+## Fedora CoreOS kernel and microcode
+
+The akmods containers provide Fedora NVR kernels to the CentOS image. The
+CentOS `microcode_ctl` dracut module does not recognize those Fedora kernel
+versions and can abort initramfs generation. `kernel-swap.sh` temporarily omits
+that incompatible module for Fedora kernels and removes the build-only config
+in cleanup.
+
 ## Dracut cross-device failure (`EXDEV`)
 
 `/boot` and `/var/tmp` are on separate mounts during `RUN` layers. If `dnf install` triggers dracut and it stages in `/var/tmp`, `rename(2)` to `/boot` fails with `Invalid cross-device link`.
