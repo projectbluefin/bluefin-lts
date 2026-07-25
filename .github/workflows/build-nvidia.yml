@@ -80,3 +80,39 @@ jobs:
       stream_name: testing
       image_flavors: '["main"]'
       architecture: '["x86_64", "aarch64"]'
+      publish_stream_tag: 'false'
+
+  manifest:
+    name: Create and sign multi-arch manifest
+    needs: [build]
+    if: |
+      always() &&
+      github.event_name != 'pull_request' &&
+      needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Create multi-arch manifest
+        id: create-manifest
+        uses: projectbluefin/actions/bootc-build/create-manifest@v1
+        with:
+          image-name: bluefin-lts-nvidia
+          digests-json: ${{ toJson(fromJson(needs.build.outputs.digests)['bluefin-lts-nvidia']) }}
+          tags: testing
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sign, generate SBOM, and attest
+        uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/bluefin-lts-nvidia
+          digest: ${{ steps.create-manifest.outputs.digest }}
+          signing-mode: keyless
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image-name: bluefin-lts-nvidia
+          certificate-identity-regexp: >-
+            ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
