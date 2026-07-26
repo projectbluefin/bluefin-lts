@@ -32,6 +32,8 @@ NVIDIA_DNF_ARGS=(
     "--repofrompath=fedora-nvidia,${NVIDIA_REPO_URL}"
     '--setopt=fedora-nvidia.gpgcheck=1'
     '--setopt=fedora-nvidia.gpgkey=https://negativo17.org/repos/RPM-GPG-KEY-slaanesh'
+    '--setopt=retries=10'
+    '--setopt=timeout=60'
     '--enablerepo=fedora-nvidia'
 )
 ### install Nvidia driver packages and dependencies
