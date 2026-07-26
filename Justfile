@@ -5,6 +5,7 @@ export default_tag := env("DEFAULT_TAG", "stable")
 export bib_image := env("BIB_IMAGE", "quay.io/centos-bootc/bootc-image-builder:latest")
 # LTS follows the current CoreOS 44 akmods stream; override explicitly when updating it.
 export coreos_stable_version := env("COREOS_STABLE_VERSION", "44")
+export coreos_stable_kernel := env("COREOS_STABLE_KERNEL", "7.0.12-201.fc44")
 export HOME := env("HOME", "")
 export common_image := env("COMMON_IMAGE", "ghcr.io/projectbluefin/common:latest")
 export brew_image := env("BREW_IMAGE", "ghcr.io/ublue-os/brew:latest")
@@ -142,7 +143,7 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     if [[ -n "${kernel_pin}" ]]; then
         BUILD_ARGS+=("--build-arg" "AKMODS_VERSION=${AKMODS_BASE}-${kernel_pin}.${ARCH}")
     else
-        BUILD_ARGS+=("--build-arg" "AKMODS_VERSION=${AKMODS_BASE}")
+        BUILD_ARGS+=("--build-arg" "AKMODS_VERSION=${AKMODS_BASE}-${coreos_stable_kernel}")
     fi
     if [[ -z "$(git status -s)" ]]; then
         BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
