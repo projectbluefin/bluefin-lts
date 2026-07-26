@@ -36,8 +36,6 @@ enabled=1
 gpgcheck=1
 gpgkey=https://negativo17.org/repos/RPM-GPG-KEY-slaanesh
 EOF
-dnf config-manager --set-disabled "fedora-nvidia"
-
 ### install Nvidia driver packages and dependencies
 # */
 dnf -y install --enablerepo="fedora-nvidia" \
