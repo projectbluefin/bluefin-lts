@@ -128,3 +128,8 @@ pre-commit run --all-files
 For behavior changes, inspect the completed run and record the workflow URL,
 commit, artifact tag, and digest. For signing or release changes, also follow
 [`release`](../release/SKILL.md).
+
+## Sources
+
+- Context7: `/websites/github_en_actions` — `repository_dispatch` payloads and
+  the requirement that the workflow exist on the default branch.
