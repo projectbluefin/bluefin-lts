@@ -101,6 +101,16 @@ jobs:
           storage-backend: remove-software
           update-podman: 'true'
 
+      - name: Login to GHCR for manifest signing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          echo "${GH_TOKEN}" | skopeo login ghcr.io \
+            --username "${GH_ACTOR}" \
+            --password-stdin
+
       - name: Create and publish testing manifest
         id: manifest
         uses: projectbluefin/actions/bootc-build/create-manifest@v1
