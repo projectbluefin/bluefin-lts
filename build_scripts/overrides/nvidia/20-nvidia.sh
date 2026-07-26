@@ -2,10 +2,8 @@
 set ${CI:+-x} -euo pipefail
 
 # /*
-# Get Kernel Version
+# Get qualified kernel version
 # */
-KERNEL_NAME="kernel"
-KERNEL_VRA="$(rpm -q "$KERNEL_NAME" --queryformat '%{EVR}.%{ARCH}')"
 KERNEL_SUFFIX=""
 QUALIFIED_KERNEL="$(rpm -qa | grep -P 'kernel-(|'"$KERNEL_SUFFIX"'-)(\d+\.\d+\.\d+)' | sed -E 's/kernel-(|'"$KERNEL_SUFFIX"'-)//' | tail -n 1)"
 
@@ -42,9 +40,18 @@ NVIDIA_DNF_ARGS=(
 )
 ### install Nvidia driver packages and dependencies
 # */
+mapfile -t NVIDIA_KMOD_RPMS < <(
+    find /tmp/akmods-nvidia-open-rpms/kmods -type f -name '*.rpm' -print
+)
+mapfile -t NVIDIA_UBLUE_RPMS < <(
+    find /tmp/akmods-nvidia-open-rpms/ublue-os -maxdepth 1 -type f -name '*.rpm' -print
+)
+if ((${#NVIDIA_KMOD_RPMS[@]} == 0)); then
+    echo 'ERROR: no NVIDIA kmod RPMs were provided by the akmods image' >&2
+    exit 1
+fi
 dnf -y "${NVIDIA_DNF_ARGS[@]}" install \
-    /tmp/akmods-nvidia-open-rpms/kmods/kmod-nvidia-"${KERNEL_VRA}"-*.rpm \
-    /tmp/akmods-nvidia-open-rpms/ublue-os/*.rpm
+    "${NVIDIA_KMOD_RPMS[@]}" "${NVIDIA_UBLUE_RPMS[@]}"
 dnf config-manager --set-enabled "nvidia-container-toolkit"
 # Get the kmod-nvidia version to ensure driver packages match
 KMOD_VERSION="$(rpm -q --queryformat '%{VERSION}' kmod-nvidia)"
