@@ -3,8 +3,8 @@ export image_name := env("IMAGE_NAME", "bluefin")
 export centos_version := env("CENTOS_VERSION", "stream10")
 export default_tag := env("DEFAULT_TAG", "stable")
 export bib_image := env("BIB_IMAGE", "quay.io/centos-bootc/bootc-image-builder:latest")
-# LTS stays on the CoreOS 43 akmods stream; override explicitly when updating it.
-export coreos_stable_version := env("COREOS_STABLE_VERSION", "43")
+# LTS follows the current CoreOS 44 akmods stream; override explicitly when updating it.
+export coreos_stable_version := env("COREOS_STABLE_VERSION", "44")
 export HOME := env("HOME", "")
 export common_image := env("COMMON_IMAGE", "ghcr.io/projectbluefin/common:latest")
 export brew_image := env("BREW_IMAGE", "ghcr.io/ublue-os/brew:latest")

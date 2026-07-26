@@ -40,14 +40,20 @@ NVIDIA_DNF_ARGS=(
 )
 ### install Nvidia driver packages and dependencies
 # */
-mapfile -t NVIDIA_KMOD_RPMS < <(
-    find /tmp/akmods-nvidia-open-rpms/kmods -type f -name '*.rpm' -print
-)
+NVIDIA_KMOD_RPMS=()
+while IFS= read -r rpm_file; do
+    rpm_name="$(rpm -qp --qf '%{NAME}' "${rpm_file}")"
+    if [[ "${rpm_name}" == kmod-* ]] && ! rpm -qp --requires "${rpm_file}" \
+        | grep -Fqx "kernel-uname-r = ${QUALIFIED_KERNEL}"; then
+        continue
+    fi
+    NVIDIA_KMOD_RPMS+=("${rpm_file}")
+done < <(find /tmp/akmods-nvidia-open-rpms/kmods -type f -name '*.rpm' -print)
 mapfile -t NVIDIA_UBLUE_RPMS < <(
     find /tmp/akmods-nvidia-open-rpms/ublue-os -maxdepth 1 -type f -name '*.rpm' -print
 )
 if ((${#NVIDIA_KMOD_RPMS[@]} == 0)); then
-    echo 'ERROR: no NVIDIA kmod RPMs were provided by the akmods image' >&2
+    echo "ERROR: no NVIDIA kmod RPMs match kernel ${QUALIFIED_KERNEL}" >&2
     exit 1
 fi
 dnf -y "${NVIDIA_DNF_ARGS[@]}" install \
