@@ -27,7 +27,9 @@ fi
 
 NVIDIA_REPO=$(curl -fsSL "https://negativo17.org/repos/fedora-nvidia.repo")
 NVIDIA_REPO="${NVIDIA_REPO//\$releasever/${FEDORA_VERSION}}"
-NVIDIA_REPO="${NVIDIA_REPO//\$basearch/${NVIDIA_ARCH}}"
+# The repository uses the RPM architecture name; NVIDIA's SBSA name is only
+# used for selecting the driver package payload below.
+NVIDIA_REPO="${NVIDIA_REPO//\$basearch/${ARCH}}"
 printf '%s\n' "${NVIDIA_REPO}" > /etc/yum.repos.d/fedora-nvidia.repo
 dnf config-manager --set-disabled "fedora-nvidia"
 
