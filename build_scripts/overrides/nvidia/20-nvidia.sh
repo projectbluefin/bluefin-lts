@@ -25,20 +25,18 @@ if [[ -n "${AKMODS_FEDORA_VERSION}" ]]; then
     FEDORA_VERSION="${AKMODS_FEDORA_VERSION}"
 fi
 
-# Keep only the enabled binary repository. The upstream template also lists
-# disabled source/debug repositories whose architecture paths are not published
-# for every target and can make DNF reject the whole file.
-cat > /etc/yum.repos.d/fedora-nvidia.repo <<EOF
-[fedora-nvidia]
-name=negativo17 - Nvidia
-baseurl=https://negativo17.org/repos/nvidia/fedora-${FEDORA_VERSION}/${ARCH}/
-enabled=1
-gpgcheck=1
-gpgkey=https://negativo17.org/repos/RPM-GPG-KEY-slaanesh
-EOF
+# Use a transient repository definition instead of installing a .repo file;
+# this avoids DNF rejecting unavailable source/debug entries on SBSA builds.
+NVIDIA_REPO_URL="https://negativo17.org/repos/nvidia/fedora-${FEDORA_VERSION}/${ARCH}/"
+NVIDIA_DNF_ARGS=(
+    "--repofrompath=fedora-nvidia,${NVIDIA_REPO_URL}"
+    '--setopt=fedora-nvidia.gpgcheck=1'
+    '--setopt=fedora-nvidia.gpgkey=https://negativo17.org/repos/RPM-GPG-KEY-slaanesh'
+    '--enablerepo=fedora-nvidia'
+)
 ### install Nvidia driver packages and dependencies
 # */
-dnf -y install --enablerepo="fedora-nvidia" \
+dnf -y "${NVIDIA_DNF_ARGS[@]}" install \
     /tmp/akmods-nvidia-open-rpms/kmods/kmod-nvidia-"${KERNEL_VRA}"-*.rpm \
     /tmp/akmods-nvidia-open-rpms/ublue-os/*.rpm
 dnf config-manager --set-enabled "nvidia-container-toolkit"
@@ -47,7 +45,7 @@ KMOD_VERSION="$(rpm -q --queryformat '%{VERSION}' kmod-nvidia)"
 # Determine the expected package version format (epoch:version-release)
 NVIDIA_PKG_VERSION="3:${KMOD_VERSION}"
 
-dnf install -y --enablerepo="fedora-nvidia" \
+dnf install -y "${NVIDIA_DNF_ARGS[@]}" \
     "libnvidia-fbc-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-cuda-${NVIDIA_PKG_VERSION}" \
