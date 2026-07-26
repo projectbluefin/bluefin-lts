@@ -2,6 +2,9 @@
 name: release
 description: >-
   Verify and promote published artifacts safely. Use when checking digests, signatures, stable releases, rollback, or emergency promotion.
+metadata:
+  context7-sources:
+    - /podman-container-tools/skopeo
 ---
 
 # Release
@@ -78,6 +81,9 @@ A fix is published when:
 1. The `:stable` digest differs from the last known digest
 2. The `org.opencontainers.image.created` date is after the fix merged
 3. Both variants (bluefin-lts and bluefin-lts-nvidia) are updated
+4. `skopeo inspect --raw` shows a complete amd64/arm64 index when ARM artifacts are available;
+   an NVIDIA amd64-only fallback is accepted only when its standalone ARM workflow has failed
+   and the promoted artifact is verified as amd64.
 
 ## Build cascade — rapid commits cancel in-progress builds
 
@@ -141,7 +147,10 @@ Always copy by digest, not tag — prevents races with concurrent pushes.
 
 ### `:testing` is published directly by the build
 
-Build workflows push `:testing` on every push to the `testing` branch. No E2E gate.
+Build workflows push per-architecture aliases, then publish one signed `:testing`
+index after both architecture builds finish. Post-testing verification receives
+and checks the exact manifest digest. No stable promotion should proceed from a
+single-architecture stream tag.
 PR builds validate that the image builds but do not push to GHCR.
 
 ### `/boot/` is intentionally empty in the OCI image

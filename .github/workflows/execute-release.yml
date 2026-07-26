@@ -139,6 +139,28 @@ jobs:
             if ! skopeo copy --preserve-digests --all "$src" "$dest"; then
               echo "::warning::Promotion failed for variant ${image} -> :${target_tag}"
               failed_variants+=("${image}:${target_tag}")
+              continue
+            fi
+
+            promoted_digest=$(skopeo inspect --format '{{.Digest}}' "$dest")
+            if [[ "$promoted_digest" != "$digest" ]]; then
+              echo "::error::Promoted ${dest} resolved to ${promoted_digest}, expected ${digest}"
+              failed_variants+=("${image}:${target_tag}:digest-mismatch")
+              continue
+            fi
+
+            raw_manifest=$(skopeo inspect --raw "$dest")
+            media_type=$(jq -r '.mediaType // empty' <<<"$raw_manifest")
+            if [[ "$media_type" == "application/vnd.oci.image.index.v1+json" ||
+              "$media_type" == "application/vnd.docker.distribution.manifest.list.v2+json" ]]; then
+              if ! jq -e '([.manifests[]?.platform.architecture] | sort) == ["amd64", "arm64"]' \
+                <<<"$raw_manifest" >/dev/null; then
+                echo "::error::Promoted ${dest} image index is missing amd64 or arm64"
+                failed_variants+=("${image}:${target_tag}:platform-mismatch")
+              fi
+            elif [[ "$(skopeo inspect --format '{{.Architecture}}' "$dest")" != "amd64" ]]; then
+              echo "::error::Promoted ${dest} is neither an amd64 image nor a complete image index"
+              failed_variants+=("${image}:${target_tag}:platform-mismatch")
             fi
           done < <(jq -c '.[]' <<<"$VARIANTS_JSON")
 

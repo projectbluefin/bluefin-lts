@@ -79,40 +79,7 @@ jobs:
       brand_name: bluefin-lts-nvidia
       stream_name: testing
       image_flavors: '["main"]'
-      architecture: '["x86_64", "aarch64"]'
-      publish_stream_tag: 'false'
-
-  create-manifest:
-    name: Publish multi-architecture NVIDIA manifest
-    needs: [build]
-    if: github.event_name != 'pull_request' && needs.build.result == 'success'
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      attestations: write
-    steps:
-      - name: Prepare runner
-        uses: projectbluefin/actions/bootc-build/setup-runner@v1
-        with:
-          storage-backend: remove-software
-          update-podman: 'true'
-
-      - name: Create and publish testing manifest
-        id: manifest
-        uses: projectbluefin/actions/bootc-build/create-manifest@v1
-        with:
-          image-name: bluefin-lts-nvidia
-          digests-json: ${{ toJSON(fromJSON(needs.build.outputs.digests)['bluefin-lts-nvidia']) }}
-          tags: testing
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Sign testing manifest
-        uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
-        with:
-          image: ghcr.io/projectbluefin/bluefin-lts-nvidia
-          digest: ${{ steps.manifest.outputs.digest }}
-          generate-sbom: 'false'
-          push-attestation: 'true'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      architecture: '["x86_64"]'
+      # NVIDIA aarch64 is built independently in build-nvidia-aarch64.yml.
+      # The x86_64 publication path must not wait for an optional ARM build.
+      publish_stream_tag: 'true'
