@@ -85,7 +85,7 @@ jobs:
   create-manifest:
     name: Publish multi-architecture manifest
     needs: [build]
-    if: github.event_name != 'pull_request' && needs.build.result == 'success'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     outputs:
       manifest_digest: ${{ steps.manifest.outputs.digest }}
