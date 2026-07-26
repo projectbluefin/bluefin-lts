@@ -33,12 +33,8 @@ cat > /etc/yum.repos.d/fedora-nvidia.repo <<EOF
 name=negativo17 - Nvidia
 baseurl=https://negativo17.org/repos/nvidia/fedora-${FEDORA_VERSION}/${ARCH}/
 enabled=1
-skip_if_unavailable=1
 gpgcheck=1
 gpgkey=https://negativo17.org/repos/RPM-GPG-KEY-slaanesh
-enabled_metadata=1
-metadata_expire=6h
-repo_gpgcheck=0
 EOF
 dnf config-manager --set-disabled "fedora-nvidia"
 
