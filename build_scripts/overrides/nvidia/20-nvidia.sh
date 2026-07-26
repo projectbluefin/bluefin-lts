@@ -25,12 +25,21 @@ if [[ -n "${AKMODS_FEDORA_VERSION}" ]]; then
     FEDORA_VERSION="${AKMODS_FEDORA_VERSION}"
 fi
 
-NVIDIA_REPO=$(curl -fsSL "https://negativo17.org/repos/fedora-nvidia.repo")
-NVIDIA_REPO="${NVIDIA_REPO//\$releasever/${FEDORA_VERSION}}"
-# The repository uses the RPM architecture name; NVIDIA's SBSA name is only
-# used for selecting the driver package payload below.
-NVIDIA_REPO="${NVIDIA_REPO//\$basearch/${ARCH}}"
-printf '%s\n' "${NVIDIA_REPO}" > /etc/yum.repos.d/fedora-nvidia.repo
+# Keep only the enabled binary repository. The upstream template also lists
+# disabled source/debug repositories whose architecture paths are not published
+# for every target and can make DNF reject the whole file.
+cat > /etc/yum.repos.d/fedora-nvidia.repo <<EOF
+[fedora-nvidia]
+name=negativo17 - Nvidia
+baseurl=https://negativo17.org/repos/nvidia/fedora-${FEDORA_VERSION}/${ARCH}/
+enabled=1
+skip_if_unavailable=1
+gpgcheck=1
+gpgkey=https://negativo17.org/repos/RPM-GPG-KEY-slaanesh
+enabled_metadata=1
+metadata_expire=6h
+repo_gpgcheck=0
+EOF
 dnf config-manager --set-disabled "fedora-nvidia"
 
 ### install Nvidia driver packages and dependencies
