@@ -20,7 +20,6 @@ permissions:
   id-token: write
   attestations: write
   security-events: write
-  issues: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -36,6 +35,7 @@ jobs:
       id-token: write
       attestations: write
       security-events: write
+      issues: write
     secrets: inherit
     with:
       brand_name: bluefin-lts-nvidia
