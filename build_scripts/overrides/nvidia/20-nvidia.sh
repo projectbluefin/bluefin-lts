@@ -20,7 +20,11 @@ fi
 
 FEDORA_VERSION="${FEDORA_AKMODS_VERSION:-43}"
 # CentOS akmods currently expose .el10 RPMs, but future images may include Fedora NVRs.
-AKMODS_FEDORA_VERSION="$(find /tmp/akmods-nvidia-open-rpms -name "*.rpm" -print | grep -oPm1 '(?<=\.fc)\d+' || true)"
+AKMODS_FEDORA_VERSION="$(
+    find /tmp/akmods-nvidia-open-rpms -name '*.rpm' -print \
+        | grep -oPm1 '(?<=\.fc)\d+' \
+        | head -n1 || true
+)"
 if [[ -n "${AKMODS_FEDORA_VERSION}" ]]; then
     FEDORA_VERSION="${AKMODS_FEDORA_VERSION}"
 fi
