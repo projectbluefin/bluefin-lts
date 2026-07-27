@@ -43,10 +43,11 @@ testing → main → :stable
 2. The PR enters the merge queue (ruleset 17070416 on `main` requires squash + merge queue).
    Required check: `Lint & syntax`. No approvals needed.
 3. On merge, `execute-release.yml` fires on `push: main`, detects the commit message
-   `"^chore: promote testing to main"`, skopeo-copies `:testing → :stable` for all three variants,
+   `"^chore: promote testing to main"`, skopeo-copies `:testing → :stable` for both image variants,
    and creates a GitHub release with changelog via `reusable-release.yml@v1`.
-   Stable promotion writes an OCI index, then signs and verifies the promoted
-   digest because registry media-type conversion can change the index digest.
+   Stable promotion writes an OCI index, verifies its amd64/arm64 child digests,
+   then signs and verifies the promoted digest because registry media-type
+   conversion can change the index digest.
 
 ```bash
 # Check promotion PR status
@@ -199,6 +200,6 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 
 - [ ] `promote-testing-to-main.yml` schedules daily at `0 4 * * *`
 - [ ] `use_merge_queue: true`
-- [ ] The promotion caller relies on defaults selecting `source_branch: testing` and `target_branch: main`
+- [ ] The promotion caller explicitly sets `source_branch: testing` and `target_branch: main`
 - [ ] `execute-release.yml` fires on `push: main`, detects `"^chore: promote testing to main"`, publishes `:stable`
 - [ ] Build workflows push `:testing` on push to `testing` branch
