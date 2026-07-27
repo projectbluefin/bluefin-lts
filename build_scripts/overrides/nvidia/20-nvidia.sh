@@ -31,12 +31,20 @@ fi
 # this avoids DNF rejecting unavailable source/debug entries on SBSA builds.
 NVIDIA_REPO_URL="https://negativo17.org/repos/nvidia/fedora-${FEDORA_VERSION}/${ARCH}/"
 NVIDIA_DNF_ARGS=(
-    "--repofrompath=fedora-nvidia-lts,${NVIDIA_REPO_URL}"
-    '--setopt=fedora-nvidia-lts.gpgcheck=1'
-    '--setopt=fedora-nvidia-lts.gpgkey=https://negativo17.org/repos/RPM-GPG-KEY-slaanesh'
+    "--repofrompath=fedora-nvidia-lts-install,${NVIDIA_REPO_URL}"
+    '--setopt=fedora-nvidia-lts-install.gpgcheck=1'
+    '--setopt=fedora-nvidia-lts-install.gpgkey=https://negativo17.org/repos/RPM-GPG-KEY-slaanesh'
     '--setopt=retries=10'
     '--setopt=timeout=60'
-    '--enablerepo=fedora-nvidia-lts'
+    '--enablerepo=fedora-nvidia-lts-install'
+)
+NVIDIA_DNF_DRIVER_ARGS=(
+    "--repofrompath=fedora-nvidia-lts-driver,${NVIDIA_REPO_URL}"
+    '--setopt=fedora-nvidia-lts-driver.gpgcheck=1'
+    '--setopt=fedora-nvidia-lts-driver.gpgkey=https://negativo17.org/repos/RPM-GPG-KEY-slaanesh'
+    '--setopt=retries=10'
+    '--setopt=timeout=60'
+    '--enablerepo=fedora-nvidia-lts-driver'
 )
 ### install Nvidia driver packages and dependencies
 # */
@@ -64,7 +72,7 @@ KMOD_VERSION="$(rpm -q --queryformat '%{VERSION}' kmod-nvidia)"
 # Determine the expected package version format (epoch:version-release)
 NVIDIA_PKG_VERSION="3:${KMOD_VERSION}"
 
-dnf install -y "${NVIDIA_DNF_ARGS[@]}" \
+dnf install -y "${NVIDIA_DNF_DRIVER_ARGS[@]}" \
     "libnvidia-fbc-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-cuda-${NVIDIA_PKG_VERSION}" \

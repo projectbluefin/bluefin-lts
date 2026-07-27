@@ -107,6 +107,11 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
         run: |
           set -euo pipefail
+          mkdir -p "${HOME}/.docker"
+          echo "${GH_TOKEN}" | podman login ghcr.io \
+            --authfile "${HOME}/.docker/config.json" \
+            --username "${GH_ACTOR}" \
+            --password-stdin
           echo "${GH_TOKEN}" | skopeo login ghcr.io \
             --username "${GH_ACTOR}" \
             --password-stdin
