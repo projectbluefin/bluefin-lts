@@ -1,0 +1,47 @@
+name: Build Bluefin Nvidia (aarch64)
+
+# ARM is intentionally isolated from the x86_64 NVIDIA publication path.
+# A missing ARM kmod or transient ARM build failure must not block amd64 users.
+
+on:
+  push:
+    branches:
+      - testing
+    paths-ignore:
+      - '.github/workflows/**'
+      - 'docs/**'
+      - '**.md'
+      - 'AGENTS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build bluefin-lts-nvidia image (aarch64)
+    uses: projectbluefin/actions/.github/workflows/reusable-build.yml@v1
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      security-events: write
+      issues: write
+    secrets: inherit
+    with:
+      brand_name: bluefin-lts-nvidia
+      stream_name: testing
+      image_flavors: '["main"]'
+      architecture: '["aarch64"]'
+      # Publish immutable architecture-specific aliases only. A later manifest
+      # assembly can consume these without racing the amd64 :testing tag.
+      publish_stream_tag: 'false'

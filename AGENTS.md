@@ -1,216 +1,87 @@
-# Bluefin LTS — Agent & Copilot Instructions
+# Agent instructions
 
-**Bluefin LTS** is the long-term support variant of Bluefin, built on CentOS Stream with bootc.
-Home repo: [projectbluefin/bluefin-lts](https://github.com/projectbluefin/bluefin-lts)
+## Purpose
 
-> This repo is part of an agentic operating system built by agentic workflows. Agents implement.
-> Humans approve design, security-sensitive changes, and merge. See also the
-> [org-wide AGENTS.md](https://github.com/projectbluefin/.github/blob/main/AGENTS.md).
+This repository builds and publishes a long-term-support bootable image. Source
+files and workflows are the authoritative definition of behavior. This file
+provides navigation, safety boundaries, and required validation for coding
+agents.
 
-> **Before using any tool or library: look up its docs via Context7 first. Always.**
-> bootc, cosign, skopeo, buildah, GitHub Actions, rpm-ostree — every tool has live, authoritative docs.
-> Pattern: `resolve-library-id` → `get-library-docs` → implement → cite the section.
-> Guessing, flag-hunting, and trial-and-error are banned. The docs exist. Read them.
+## Navigation
 
-## Agent fast path
+1. Read this file.
+2. Read [`docs/skills/INDEX.md`](docs/skills/INDEX.md).
+3. Load only the skill matching the task.
+4. Inspect the source file or workflow that owns the behavior.
+5. Update the owning documentation when a durable rule changes.
 
-```
-1. docs/SKILL.md                     # find the skill for your task
-2. https://github.com/projectbluefin/common/blob/main/docs/factory/agentic-model.md  # cross-repo hard rules, branch targets, PR policy (canonical — in common)
-3. just check && pre-commit run --all-files  # before every commit
-```
+Do not load every skill for a narrow task.
 
-**Doc-only changes** (`docs/` and `AGENTS.md`) → push directly to `main`, no PR needed.
-Verify before using this exception:
-```bash
-git diff --cached --name-only  # must show only docs/* or AGENTS.md
-```
+## Repository map
 
-## Skills
+- `Containerfile`: image build definition.
+- `build_scripts/`: package, service, extension, and metadata steps.
+- `system_files/`: files installed into the image.
+- `system_files_overrides/`: variant- and architecture-specific files.
+- `.github/workflows/`: CI, testing, promotion, and release automation.
+- `docs/`: contributor, architecture, quality, release, and agent skills.
 
-See [`docs/SKILL.md`](docs/SKILL.md) for the task router and [`docs/skills/INDEX.md`](docs/skills/INDEX.md) for the full catalog.
-
-| Task | Load |
-|---|---|
-| Local build, validation, packages | `docs/skills/build.md` |
-| CI/CD workflows, publish logic, tag namespaces | `docs/skills/ci-cd.md` |
-| Release pipeline, rollback, registry, ISO status | `docs/skills/release.md` |
-| CentOS-vs-Fedora package/repo decisions | `docs/skills/centos-vs-fedora.md` |
-| GNOME Shell extensions (add/remove/build) | `docs/skills/gnome-extensions.md` |
-| OEM hardware hooks | `docs/skills/hardware.md` |
-| Writing or updating a skill file | `docs/skills/skill-improvement.md` |
-| skill-drift CI check failing | `docs/skills/skill-drift.md` |
-| Cross-repo rules, branch targets | [`projectbluefin/common` docs/factory/agentic-model.md](https://github.com/projectbluefin/common/blob/main/docs/factory/agentic-model.md) |
-
-
-## The Self-Improvement Loop
-
-Every session produces two outputs: the work and the learning. See [`docs/skills/skill-improvement.md`](docs/skills/skill-improvement.md) for the full mandate, canonical skill format, and commit procedure.
-
----
-
-## Human Decision Points — Stop and Ask
-
-Agents implement autonomously **except** at these gates:
-
-| Gate | When |
-|---|---|
-| **Design Gate** | Architecture changes, new subsystem design, behavioral changes visible to users |
-| **Security Gate** | Auth, signing, supply chain, secrets handling, COPR/third-party sources |
-| **Breakage Gate** | Cross-repo breaking changes — removing/renaming inputs, changing defaults that affect consuming repos |
-
-When in doubt, open a draft PR with your implementation and ask explicitly.
-
----
-
-## Verification — Implement and Verify; Humans Approve and Merge
-
-Do not request review without evidence. Before opening a PR for review:
-- Link to a CI run, workflow run, or test output that exercises your change
-- If no automated test exists, describe how you manually verified the change
-- Skill file update must be committed in the **same PR** (not a follow-up)
-
----
-
-## 🚫 Absolute Prohibition — ublue-os org
-
-**NEVER create issues, pull requests, comments, forks, webhook calls, API writes, automated
-reports, or any other programmatic action targeting any `ublue-os/*` repository.**
-
-If a task requires touching upstream `ublue-os` repos → **stop and tell the human to report it manually.**
-
----
-
-## Org pipeline — projectbluefin
-
-### Repo map
-
-```
-common ──────────────────────────┐
-(shared OCI layer)               │
-                                 ▼
-bluefin  (PRs→testing; testing→main; main→:stable)
-bluefin-lts (PRs→testing; testing→main; main→:stable)
-dakota  (PRs→testing; testing→main; main→:stable)
-                                 │
-                                 ▼
-                                iso (installation media)
-```
-
-**Release model:** All three repos use the same testing-first model.
-`promote-testing-to-main.yml` maintains an always-open `auto/promote-testing-to-main` PR.
-It auto-merges via the merge queue (0 approvals required — fully automated).
-`execute-release.yml` fires on the resulting push to `main`, copies `:testing` → `:stable`,
-and creates a GitHub release. Daily cadence: 04:00 UTC.
-
-### Issue lifecycle
-
-`filed → approved → queued → claimed → done`
-
-| Stage | How |
-|---|---|
-| `filed` | Issue opened |
-| `approved` | Maintainer adds `status/approved` or comments `/approve` |
-| `queued` | `status/queued` auto-added alongside approval |
-| `claimed` | Comment `/claim` — assigned, removed from pool |
-| `done` | Fix shipped + 3× `ujust verify` or maintainer override |
-
-No PR activity in 7 days returns a claimed issue to the queue automatically.
-
-**When an agent opens a PR:** remove `status/queued` from the issue, add `status/claimed` to both the issue and the PR. This signals the work is done and a human is next to review.
-
-### PR comment policy
-
-One comment per PR event, max. Combine all findings. Never post a follow-up — edit the existing comment.
-Never duplicate GitHub UI state (approvals, CI status).
-Test reports: what ran + pass/fail + blockers only. No diff summaries.
-@ mentions only when asking someone to do something specific. Never standalone.
-When in doubt, post nothing.
-
-### Mandatory gates
-
-- `just check && pre-commit run --all-files` before every commit
-- **Pre-commit guard:** `no-floating-action-tags` blocks third-party `@main`/`@v*` floating action tags at commit time. `projectbluefin/actions/`, `projectbluefin/bonedigger/`, and `projectbluefin/testsuite/` refs are intentional managed tags and are exempted. `no-sha-pins-for-internal-actions` blocks SHA pins on `projectbluefin/actions` and `projectbluefin/testsuite` — both use `@v1` managed tags.
-- PR title: Conventional Commits format
-- Attribution on every AI-authored commit: `Assisted-by: <Model> via <Tool>`
-- Max 4 open PRs at a time per agent
-- No WIP PRs
-- **Agents MUST NOT push directly to `main`.** All changes via PR to `testing`. Branch protection enforces this.
-- **Releases** are fully automated. `execute-release.yml` fires on every promotion squash commit to `main`. Do not manually trigger releases.
-- **bluefin-lts workflow path overrides are intentional:** use `build_scripts/` and `image-versions.yaml`, not bluefin's `build_files/` and `image-versions.yml`.
-- **`.github/workflows/`, `Justfile`, and `build_scripts/` are CODEOWNERS-protected** — PRs touching these paths require maintainer review.
-
-## Skills
-
-See [`docs/SKILL.md`](docs/SKILL.md) for the full index. Load only what the task needs:
-
-| Task | Load |
-|---|---|
-| Local build, validation, packages | `docs/skills/build.md` |
-| CI/CD workflows, publish logic, tag namespaces | `docs/skills/ci-cd.md` |
-| CentOS-vs-Fedora package/repo decisions | `docs/skills/centos-vs-fedora.md` |
-| GNOME Shell extensions (add/remove/build) | `docs/skills/gnome-extensions.md` |
-| Release, rollback, registry, ISO status | `docs/skills/release.md` |
-
-## Branch model
-
-- `testing` — all PRs target this branch. Builds push `:testing` on every push.
-- `main` — receives squash promotion commits only. Triggers `execute-release.yml` → `:stable`.
-
-**All PRs target `testing`.** Never open a content PR against `main`.
-**Flow is one-way: `testing → main`.** Never merge `main → testing` manually.
-
-## Hard rules
-
-- **NEVER cancel builds** — 45–90 min, set 120+ min timeout
-- **Promotion PRs squash-merge by design** — `reusable-promote-squash.yml` rebuilds the squash branch fresh on every run. The PR auto-merges via the merge queue once `Lint & syntax` passes.
-- **NEVER re-enable LTS ISO builds** — Anaconda is broken on CentOS Stream base
-- **ALWAYS explicitly enable services from common** — systemd presets shipped from `projectbluefin/common` are NOT auto-applied in Containerfile builds. Every service must have `systemctl enable <service>` in `build_scripts/40-services.sh`. Missing this causes silent failures or unbootable images (e.g. `rechunker-group-fix.service`).
-
-## Emergency production promotion
-
-When production is bricking machines, skip the release gate:
-
-1. Push fix to `testing` — builds trigger automatically on push to `testing`.
-2. Wait for all 3 builds to finish (~45–90 min). Never promote before builds finish.
-3. Verify the new `:testing` image has a fresh initramfs (see `docs/skills/release.md`).
-4. Skopeo-copy `:testing` → `:stable` by digest using the credentials in your local keychain.
-   Do not hardcode registry credentials in code or documentation.
-   Full skopeo runbook: `docs/skills/release.md` — "Emergency promotion for production-bricking bugs"
-5. The PR you opened for the fix will go through normal testing→main promotion.
-
-## Commit standards
-
-### Format (required)
-
-[Conventional Commits](https://www.conventionalcommits.org/): `<type>(<scope>): <description>`
-
-Common types: `feat` `fix` `docs` `ci` `refactor` `chore` `build`
-
-### AI attribution (required on every AI-authored commit)
-
-```
-feat(ci): add container build optimization
-
-Optimize multi-stage build to reduce image size.
-
-Assisted-by: Claude Sonnet 4.5 via pi
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
-```
-
-### SHA pinning (third-party actions)
-
-All `uses:` references to **external** actions must be pinned to a full commit SHA with a version
-comment. Never use floating `@main` or `@vN` tags for third-party actions.
-`projectbluefin/actions` refs (`@v1`) are intentional managed tags and are exempt.
-`projectbluefin/testsuite` refs use `@v1` in `run-testsuite.yml`; the testsuite's
-`update-v1-tag.yml` auto-tracks `v1` to main on every merge — no manual SHA bumps needed.
-
----
-
-## Quick commands
+## Common commands
 
 ```bash
-just check && pre-commit run --all-files   # validate before every commit
-just build bluefin lts                     # full build (120+ min timeout)
+just check
+just lint
+just unit-tests
+pre-commit run --all-files
+actionlint .github/workflows/*.yml
 ```
+
+Before requesting review, run:
+
+```bash
+just check && pre-commit run --all-files
+```
+
+Use the build and testing skills before starting a long image or VM test.
+
+## Required boundaries
+
+Stop and request human direction before:
+
+- changing architecture or user-visible behavior;
+- changing authentication, signing, secrets, supply-chain inputs, or release gates;
+- making a breaking change for downstream consumers;
+- bypassing validation, signature checks, or branch protection.
+
+Do not cancel long-running image builds. Use an appropriate timeout.
+
+Do not modify installed upstream/vendor documentation unless the task explicitly
+concerns that vendor content.
+
+## Branch and release safety
+
+Follow the branch and promotion behavior defined by the current workflows. Do
+not infer release behavior from tags alone. Verify published artifacts by
+immutable digest and signature.
+
+## Documentation rules
+
+- Keep durable rules in one canonical document.
+- Keep skills actionable and under their size budget.
+- Update the relevant skill in the same change as the behavior it documents.
+- Do not add session logs, dated status, issue histories, or duplicate policy.
+- Use standard Markdown and repository-relative links.
+
+## Completion evidence
+
+Before handoff, report:
+
+- checks and tests run;
+- workflow or artifact evidence where applicable;
+- skipped checks and why;
+- remaining risks or unverified live behavior.
+
+## Commit convention
+
+Use Conventional Commits and include the repository-required AI attribution
+trailer.

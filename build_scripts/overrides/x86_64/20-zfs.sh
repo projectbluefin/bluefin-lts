@@ -12,13 +12,15 @@ QUALIFIED_KERNEL="$(rpm -qa | grep -P 'kernel-(|'"$KERNEL_SUFFIX"'-)(\d+\.\d+\.\
 # /*
 ### install base server ZFS packages and sanoid dependencies
 # */
-dnf -y install \
-    /tmp/akmods-zfs-rpms/kmods/zfs/kmod-zfs-"${KERNEL_VRA}"-*.rpm \
-    /tmp/akmods-zfs-rpms/kmods/zfs/libnvpair3-*.rpm \
-    /tmp/akmods-zfs-rpms/kmods/zfs/libuutil3-*.rpm \
-    /tmp/akmods-zfs-rpms/kmods/zfs/libzfs6-*.rpm \
-    /tmp/akmods-zfs-rpms/kmods/zfs/libzpool6-*.rpm \
-    /tmp/akmods-zfs-rpms/kmods/zfs/zfs-*.rpm \
+mapfile -t ZFS_RPMS < <(
+    find /tmp/akmods-zfs-rpms/kmods/zfs -maxdepth 1 -type f -name '*.rpm' \
+        ! -name 'python3-pyzfs-*.rpm' -print
+)
+if ((${#ZFS_RPMS[@]} == 0)); then
+    echo 'ERROR: no ZFS RPMs were provided by the akmods image' >&2
+    exit 1
+fi
+dnf -y install "${ZFS_RPMS[@]}"
 
 
   # python3-pyzfs requires python3.13dist(cffi) which is not available in CentOS Stream 10
