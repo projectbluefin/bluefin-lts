@@ -5,6 +5,7 @@ description: >-
 metadata:
   context7-sources:
     - /podman-container-tools/skopeo
+    - /sigstore/cosign
 ---
 
 # Release
@@ -202,4 +203,6 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 - [ ] `use_merge_queue: true`
 - [ ] The promotion caller explicitly sets `source_branch: testing` and `target_branch: main`
 - [ ] `execute-release.yml` fires on `push: main`, detects `"^chore: promote testing to main"`, publishes `:stable`
+- [ ] Stable OCI indexes retain the testing child digests/platforms even when the top-level digest changes during media-type conversion
+- [ ] Stable digests verify with cosign using the GitHub Actions OIDC issuer and workflow identity
 - [ ] Build workflows push `:testing` on push to `testing` branch
