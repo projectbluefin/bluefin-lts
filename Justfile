@@ -3,7 +3,9 @@ export image_name := env("IMAGE_NAME", "bluefin")
 export centos_version := env("CENTOS_VERSION", "stream10")
 export default_tag := env("DEFAULT_TAG", "stable")
 export bib_image := env("BIB_IMAGE", "quay.io/centos-bootc/bootc-image-builder:latest")
-export coreos_stable_version := env("COREOS_STABLE_VERSION", "")
+# LTS follows the current CoreOS 44 akmods stream; override explicitly when updating it.
+export coreos_stable_version := env("COREOS_STABLE_VERSION", "44")
+export coreos_stable_kernel := env("COREOS_STABLE_KERNEL", "7.0.12-201.fc44")
 export HOME := env("HOME", "")
 export common_image := env("COMMON_IMAGE", "ghcr.io/projectbluefin/common:latest")
 export brew_image := env("BREW_IMAGE", "ghcr.io/ublue-os/brew:latest")
@@ -129,20 +131,19 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     BUILD_ARGS+=("--build-arg" "ENABLE_DX=${dx}")
     BUILD_ARGS+=("--build-arg" "ENABLE_NVIDIA=${nvidia}")
     BUILD_ARGS+=("--build-arg" "GNOME_VERSION=${gnome_version}")
-    # Select akmods source tag for mounted ZFS/NVIDIA images (always CoreOS stable)
+    # Select the pinned CoreOS akmods stream for mounted ZFS/NVIDIA images.
     ARCH=$(uname -m)
-    # Dynamically follow Fedora CoreOS stable; override with COREOS_STABLE_VERSION env if set
-    if [[ -n "${coreos_stable_version:-}" ]]; then
-        coreos_fedora_ver="${coreos_stable_version}"
-    else
-        coreos_fedora_ver=$(skopeo inspect --retry-times 3 docker://quay.io/fedora/fedora-coreos:stable | jq -r '.Labels["org.opencontainers.image.version"]' | grep -oP '^[0-9]+')
+    coreos_fedora_ver="${coreos_stable_version}"
+    if ! [[ "${coreos_fedora_ver}" =~ ^[0-9]+$ ]]; then
+        echo "ERROR: COREOS_STABLE_VERSION must be a numeric Fedora CoreOS major version" >&2
+        exit 1
     fi
     AKMODS_BASE="coreos-stable-${coreos_fedora_ver}"
     BUILD_ARGS+=("--build-arg" "FEDORA_AKMODS_VERSION=${coreos_fedora_ver}")
     if [[ -n "${kernel_pin}" ]]; then
         BUILD_ARGS+=("--build-arg" "AKMODS_VERSION=${AKMODS_BASE}-${kernel_pin}.${ARCH}")
     else
-        BUILD_ARGS+=("--build-arg" "AKMODS_VERSION=${AKMODS_BASE}")
+        BUILD_ARGS+=("--build-arg" "AKMODS_VERSION=${AKMODS_BASE}-${coreos_stable_kernel}")
     fi
     if [[ -z "$(git status -s)" ]]; then
         BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
@@ -465,9 +466,7 @@ generate-build-tags base="bluefin-lts" tag="stable" flavor="main" kernel_pin="" 
         echo "pr-{{ github_number }}-{{ tag }}-${TODAY} ${SHA_SHORT}-{{ tag }}-${TODAY}"
         exit 0
     fi
-    # ponytail: keep production publication to canonical stable/testing tags only.
-    # reusable-build publishes the default stream tag; no additional aliases.
-    echo ""
+    echo "${SHA_SHORT}-{{ tag }}-${TODAY} {{ tag }}.${TODAY}"
 
 # Apply alias tags to the local image.
 [group('Utility')]

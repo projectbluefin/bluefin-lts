@@ -62,7 +62,7 @@ jobs:
 
       - name: Build composed test image
         id: build
-        uses: redhat-actions/buildah-build@27e5954dfd56a621f706827f2de689dc955e8711 # v3
+        uses: redhat-actions/buildah-build@3a51aade9afa17e5c78256bcbe2e1ee08c7b995b # v3
         with:
           containerfiles: ./Containerfile.pr-e2e
           image: ${{ env.IMAGE_NAME }}

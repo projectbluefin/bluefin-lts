@@ -47,10 +47,11 @@ Run before every commit.
 
 `gnome_version` defaults to `50`; override only when testing a future GNOME version.
 
-The Fedora CoreOS stable kernel version is resolved dynamically. Override with:
+LTS uses the Fedora CoreOS 44 akmods stream by default. Override it explicitly when validating another compatible stream:
 
 ```bash
-COREOS_STABLE_VERSION=44 just build bluefin-lts-nvidia lts 0 1
+COREOS_STABLE_VERSION=44 COREOS_STABLE_KERNEL=7.0.12-201.fc44 \
+  just build bluefin-lts-nvidia lts 0 1
 ```
 
 **Never cancel builds.** Use a 120+ minute timeout.
@@ -77,6 +78,14 @@ NVIDIA overrides live in `build_scripts/overrides/nvidia/`, `system_files_overri
 | `just create-test-vm [name] [tag] [ssh-key]` | Lima VM with SSH injected |
 
 Do not run VMs in CI; they require KVM/graphics.
+
+## Fedora CoreOS kernel and microcode
+
+The akmods containers provide Fedora NVR kernels to the CentOS image. The
+CentOS `microcode_ctl` dracut module does not recognize those Fedora kernel
+versions and can abort initramfs generation. `kernel-swap.sh` temporarily omits
+that incompatible module for Fedora kernels and removes the build-only config
+in cleanup.
 
 ## Dracut cross-device failure (`EXDEV`)
 
@@ -111,7 +120,7 @@ Known required enables:
 | missing command | `which just podman git` |
 | storage errors | `just clean`; verify free disk |
 | script `Permission denied` | ensure `.sh` files are committed `100755` (`git update-index --chmod=+x`) |
-| NVIDIA driver mismatch | pin `COREOS_STABLE_VERSION=NN` |
+| NVIDIA driver mismatch | pin `COREOS_STABLE_VERSION=NN` and the matching `COREOS_STABLE_KERNEL=NVR` |
 | dracut EXDEV | kernel-swap.sh tmpdir config |
 
 ## Unit testing

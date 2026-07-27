@@ -11,7 +11,7 @@ dnf config-manager --set-disabled baseos-compose,appstream-compose
 
 dnf clean all
 
-rm -rf /.gitkeep
+rm -rf /.gitkeep /etc/dracut.conf.d/02-omit-unsupported-microcode.conf
 find /var -mindepth 1 -delete
 find /boot -mindepth 1 -delete
 mkdir -p /var /boot

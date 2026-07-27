@@ -3,6 +3,9 @@ name: ci-cd
 description: >-
   Diagnose and change continuous-integration, promotion, and publication workflows.
   Use when a workflow does not trigger, an artifact is not published, or CI logic changes.
+metadata:
+  context7-sources:
+    - /podman-container-tools/skopeo
 ---
 
 # CI/CD
@@ -26,9 +29,12 @@ description: >-
    concurrency behavior.
 3. Trace every reusable-workflow input from caller to implementation.
 4. Check the artifact name, tag, digest, and registry destination at each stage.
-5. Make the smallest change that fixes the event or data-flow defect.
-6. Validate syntax and repository policy locally.
-7. Inspect the resulting workflow run before declaring success.
+5. For manifest assembly, run `bootc-build/setup-runner@v1` first so the caller provides the required Podman tooling.
+6. Verify the published manifest digest is an image index containing every expected
+   architecture before signing or triggering post-build verification.
+7. Make the smallest change that fixes the event or data-flow defect.
+8. Validate syntax and repository policy locally.
+9. Inspect the resulting workflow run before declaring success.
 
 ## Workflow map
 
@@ -36,6 +42,7 @@ description: >-
 |---|---|
 | Regular image build | `.github/workflows/build-regular.yml` |
 | NVIDIA image build | `.github/workflows/build-nvidia.yml` |
+| NVIDIA ARM build | `.github/workflows/build-nvidia-aarch64.yml` |
 | Promotion | `.github/workflows/promote-testing-to-main.yml` |
 | Stable publication | `.github/workflows/execute-release.yml` |
 | End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml` |
@@ -66,17 +73,21 @@ when a workflow is renamed or removed.
 ## Multi-architecture publication
 
 The reusable build workflow pushes each architecture separately and returns a
-platform-to-digest map; it does not assemble the index. The regular and NVIDIA
-caller workflows must run a follow-on `create-manifest` job after the build,
-then sign the resulting manifest digest. Promotion copies the signed testing
-index to the stable tag with `skopeo copy --all`.
+platform-to-digest map; it does not assemble the index. The regular caller runs
+a follow-on `create-manifest` job after both architectures complete, then signs
+the resulting manifest digest. NVIDIA amd64 publication is independent; its
+aarch64 build runs in a standalone non-gating workflow and publishes only
+architecture-specific aliases until a later manifest assembly. Promotion copies
+the signed testing artifact to the stable tag with `skopeo copy --all`.
 
 When changing architecture inputs or publication tags, verify all of these:
 
-1. Both architecture builds complete.
-2. The reusable job output contains both `amd64` and `arm64` digests.
-3. The manifest job publishes the stream tag after the build matrix finishes.
-4. The manifest digest is signed before promotion can verify it.
+1. The required amd64 build completes and publishes its verified artifact.
+2. When a multi-architecture release is intended, the reusable output contains both `amd64` and `arm64` digests.
+3. The manifest job publishes the stream tag only after all required architectures finish.
+4. The manifest digest resolves to an index containing both platforms.
+5. The manifest digest is signed before promotion can verify it.
+6. Post-testing verification checks the same immutable digest that the manifest job published.
 
 ## Debugging a missing build
 
@@ -116,6 +127,7 @@ SHA. Do not duplicate the result in a PR comment or commit status.
 - Copying a workflow from another image variant without checking path and input
   differences.
 - Posting a lab result as a PR comment instead of updating the MergeRaptor Check Run.
+- Calling `create-manifest@v1` without first preparing the runner.
 
 ## Verification
 

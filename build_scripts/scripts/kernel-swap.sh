@@ -71,6 +71,12 @@ depmod -a "${CACHED_VERSION}"
 
 # Generate initramfs explicitly — mirrors the approach used in 20-nvidia.sh.
 # Direct -f output avoids the cross-device rename that kernel-install uses internally.
+# microcode_ctl only recognizes RHEL kernel versions. The mounted CoreOS
+# kernel uses Fedora NVRs, so its dracut module aborts on x86_64 even though
+# the firmware is not required to build the image.
+if [[ "${CACHED_VERSION}" == *.fc* ]]; then
+  echo 'omit_dracutmodules+=" microcode_ctl microcode_ctl-fw_dir_override "' > /etc/dracut.conf.d/02-omit-unsupported-microcode.conf
+fi
 dracut --no-hostonly --kver "${CACHED_VERSION}" --reproducible --tmpdir /boot --zstd -v --add ostree -f "/lib/modules/${CACHED_VERSION}/initramfs.img"
 
 # HWE CoreOS kernel: Install common akmods

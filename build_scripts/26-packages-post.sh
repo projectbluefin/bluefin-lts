@@ -22,11 +22,17 @@ mkdir -p /etc/flatpak/remotes.d
 curl --retry 3 -o /etc/flatpak/remotes.d/flathub.flatpakrepo "https://dl.flathub.org/repo/flathub.flatpakrepo"
 
 # There is no `-defaults` subpackage on c10s
-curl -fsSLo /usr/lib/systemd/zram-generator.conf "https://src.fedoraproject.org/rpms/zram-generator/raw/rawhide/f/zram-generator.conf"
+curl --fail --silent --show-error --location \
+  --retry 10 --retry-all-errors --retry-delay 5 \
+  -o /usr/lib/systemd/zram-generator.conf \
+  "https://src.fedoraproject.org/rpms/zram-generator/raw/rawhide/f/zram-generator.conf"
 grep -F -e "zram-size =" /usr/lib/systemd/zram-generator.conf
 
 # https://src.fedoraproject.org/rpms/firewalld/blob/rawhide/f/firewalld.spec
-curl -fsSLo /usr/lib/firewalld/zones/FedoraWorkstation.xml "https://src.fedoraproject.org/rpms/firewalld/raw/rawhide/f/FedoraWorkstation.xml"
+curl --fail --silent --show-error --location \
+  --retry 10 --retry-all-errors --retry-delay 5 \
+  -o /usr/lib/firewalld/zones/FedoraWorkstation.xml \
+  "https://src.fedoraproject.org/rpms/firewalld/raw/rawhide/f/FedoraWorkstation.xml"
 grep -F -e '<port protocol="udp" port="1025-65535"/>' /usr/lib/firewalld/zones/FedoraWorkstation.xml
 
 # https://src.fedoraproject.org/rpms/firewalld/blob/rawhide/f/firewalld.spec#_178
