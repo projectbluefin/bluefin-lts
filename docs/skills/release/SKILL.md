@@ -38,7 +38,7 @@ testing → main → :stable
 ## Production release flow
 
 1. `promote-testing-to-main.yml` fires on push to `testing`, **daily at 04:00 UTC**, and on manual dispatch.
-   It calls `reusable-promote-squash.yml@v1`; its defaults select `source_branch: testing` and `target_branch: main`, while the caller explicitly enables `use_merge_queue: true`.
+   It calls `reusable-promote-squash.yml@v1` with explicit `source_branch: testing` and `target_branch: main`, and enables `use_merge_queue: true`.
    When trees differ it rebuilds the squash branch and upserts the `auto/promote-testing-to-main` PR.
 2. The PR enters the merge queue (ruleset 17070416 on `main` requires squash + merge queue).
    Required check: `Lint & syntax`. No approvals needed.
