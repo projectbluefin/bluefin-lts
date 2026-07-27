@@ -54,7 +54,7 @@ jobs:
           {"image":"bluefin-lts","source_tag":"testing","target_tag":"stable"},
           {"image":"bluefin-lts-nvidia","source_tag":"testing","target_tag":"stable"}
         ]
-      COSIGN_IDENTITY_REGEXP: ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
+      COSIGN_IDENTITY_REGEXP: ^https://github\.com/projectbluefin/(bluefin-lts|actions|execute-release)/\.github/workflows/
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -77,6 +77,11 @@ jobs:
           set -euo pipefail
           registry_host="${REGISTRY#docker://}"
           registry_host="${registry_host%%/*}"
+          mkdir -p "${HOME}/.docker"
+          echo "$GH_TOKEN" | podman login "$registry_host" \
+            --authfile "${HOME}/.docker/config.json" \
+            --username "${{ github.actor }}" \
+            --password-stdin
           echo "$GH_TOKEN" | skopeo login "$registry_host" --username "${{ github.actor }}" --password-stdin
 
       - name: Resolve source digests
@@ -136,7 +141,7 @@ jobs:
             src="docker://${REGISTRY}/${image}@${digest}"
             dest="docker://${REGISTRY}/${image}:${target_tag}"
             echo "Promoting ${src} to ${dest}"
-            if ! skopeo copy --preserve-digests --all "$src" "$dest"; then
+            if ! skopeo copy --all --format oci "$src" "$dest"; then
               echo "::warning::Promotion failed for variant ${image} -> :${target_tag}"
               failed_variants+=("${image}:${target_tag}")
               continue
@@ -161,6 +166,19 @@ jobs:
             elif [[ "$(skopeo inspect --format '{{.Architecture}}' "$dest")" != "amd64" ]]; then
               echo "::error::Promoted ${dest} is neither an amd64 image nor a complete image index"
               failed_variants+=("${image}:${target_tag}:platform-mismatch")
+            fi
+
+            if ! cosign sign -y "${REGISTRY}/${image}@${promoted_digest}" >/dev/null; then
+              echo "::error::Failed to sign promoted ${dest}@${promoted_digest}"
+              failed_variants+=("${image}:${target_tag}:signature-failed")
+              continue
+            fi
+            if ! cosign verify \
+              --certificate-identity-regexp "$COSIGN_IDENTITY_REGEXP" \
+              --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+              "${REGISTRY}/${image}@${promoted_digest}" >/dev/null; then
+              echo "::error::Failed to verify promoted ${dest}@${promoted_digest}"
+              failed_variants+=("${image}:${target_tag}:signature-mismatch")
             fi
           done < <(jq -c '.[]' <<<"$VARIANTS_JSON")
 
@@ -262,7 +280,7 @@ jobs:
       badge_label: LTS
       accent_color: "#0ea5e9"
       cert_identity_regexp: >-
-        ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
+        ^https://github\.com/projectbluefin/(bluefin-lts|actions|execute-release)/\.github/workflows/
       notable_packages: >-
         [
           {"sbom_name": "kernel", "label": "Kernel (LTS)"},

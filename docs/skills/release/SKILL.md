@@ -45,6 +45,8 @@ testing → main → :stable
 3. On merge, `execute-release.yml` fires on `push: main`, detects the commit message
    `"^chore: promote testing to main"`, skopeo-copies `:testing → :stable` for all three variants,
    and creates a GitHub release with changelog via `reusable-release.yml@v1`.
+   Stable promotion writes an OCI index, then signs and verifies the promoted
+   digest because registry media-type conversion can change the index digest.
 
 ```bash
 # Check promotion PR status
