@@ -18,6 +18,21 @@ bluefin-lts is built on **CentOS Stream 10**, not Fedora. Stock builds use the F
 | `dnf5 copr` subcommand | not available |
 | Fedora-versioned akmods tags | `ghcr.io/ublue-os/akmods-*:coreos-stable-<fedora_version>` |
 
+## dnf vs dnf5 on CentOS Stream 10
+
+CentOS Stream 10 ships **DNF4** (`/usr/bin/dnf`) as the default package manager.
+**DNF5** (`/usr/bin/dnf5`) is available in the BaseOS repo but is NOT installed
+by default and must be added explicitly to `build_scripts/packages/base.toml`.
+
+DNF4 cannot expand `${releasever_minor:+-z}` in EPEL 10 metalink URLs, causing
+HTTP 404 errors on `makecache`. DNF5 handles this correctly. Where this matters:
+
+- `bluefin-lts-countme.service` calls `/usr/bin/dnf5 makecache` specifically to
+  avoid the DNF4 metalink expansion bug (see `coreos/rpm-ostree#5464`). DNF5
+  must be in the package list for this service to work.
+- Build scripts (`build_scripts/`) use `dnf` (DNF4) throughout — this is correct
+  for the build container context where metalink expansion is not an issue.
+
 ## What to use instead
 
 - **Extra packages**: EPEL (`dnf install epel-release`).
@@ -51,6 +66,7 @@ dnf config-manager --add-repo \
 - Using `dnf5 copr enable`.
 - Assuming `centos-stream-10` is the correct chroot.
 - Using Fedora-version akmods tags directly.
+- Assuming `dnf5` is installed in the runtime image — it must be listed explicitly in `base.toml`.
 
 ## When to Use
 

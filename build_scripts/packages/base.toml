@@ -63,6 +63,7 @@ packages = [
     "containerd",
     "ddcutil",
     "distrobox",
+    "dnf5",
     "fastfetch",
     "firewalld",
     "flatpak",
