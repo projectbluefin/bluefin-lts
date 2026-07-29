@@ -134,6 +134,13 @@ teardown() {
     grep -q "enable gdm.service" "${SYSTEMCTL_LOG}"
 }
 
+@test "services: does not enable rechunker-group-fix.service" {
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+    run grep -q "rechunker-group-fix.service" "${SYSTEMCTL_LOG}"
+    [ "$status" -ne 0 ]
+}
+
 @test "services: enables firewalld.service" {
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]

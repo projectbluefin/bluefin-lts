@@ -104,13 +104,11 @@ For explicit dracut calls, add `--tmpdir /boot` directly.
 
 ## Services from common must be explicitly enabled
 
-systemd presets from `projectbluefin/common` are inert at Containerfile build time. Every service LTS needs must have a matching `systemctl enable <service>` in `build_scripts/40-services.sh`. A missing enable can leave the system unbootable.
+Systemd presets from `projectbluefin/common` are inert at Containerfile build time. Every service LTS needs must have a matching `systemctl enable <service>` in `build_scripts/40-services.sh`. A missing enable can leave the system unbootable.
 
-Known required enables:
-
-| Service | Why |
-|---|---|
-| `rechunker-group-fix.service` | Prevents boot failure on legacy-rechunked group state |
+Do not explicitly enable `rechunker-group-fix.service`. Its `local-fs.target`
+ordering can create a boot cycle on systems migrating from legacy-rechunked
+images; the unit remains available from `common` for migration handling.
 
 ## Debugging checklist
 
