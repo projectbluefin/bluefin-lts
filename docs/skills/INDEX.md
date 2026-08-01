@@ -13,7 +13,6 @@ matches the task; supporting references are loaded on demand.
 | Change hardware integration | [`hardware`](hardware/SKILL.md) |
 | Test build or image changes | [`testing`](testing/SKILL.md) |
 | Verify, promote, or roll back artifacts | [`release`](release/SKILL.md) |
-| Diagnose documentation-to-code drift | [`skill-drift`](skill-drift/SKILL.md) |
 | Add or refactor a skill | [`skill-improvement`](skill-improvement/SKILL.md) |
 
 ## Loading rules
