@@ -151,6 +151,41 @@ Keep this wiring aligned with the shared NVIDIA image-layer implementation. When
 that implementation changes, verify the corresponding toolkit configuration,
 systemd presets, and runtime test before updating this image.
 
+## NVIDIA — why bluefin-lts does not use upstream `nvidia-install.sh`
+
+`build_scripts/overrides/nvidia/20-nvidia.sh` intentionally does not call the
+upstream-blessed `ublue-os/akmods` `nvidia-install.sh` used by bluefin and
+Bazzite (tracked in projectbluefin/bluefin-lts#435, parent
+projectbluefin/bluefin-lts#223). This was evaluated and rejected for the
+CentOS Stream 10 base; re-evaluate only if the blockers below change.
+
+| Layer | Upstream `nvidia-install.sh` (Fedora bluefin/Bazzite) | bluefin-lts `20-nvidia.sh` (CentOS Stream 10) |
+|---|---|---|
+| Package manager | Requires `dnf5` (`dnf5 config-manager`, `dnf5 copr enable`) | CentOS Stream 10 ships `dnf` 4.20 by default, no `dnf5`/COPR CLI (see `centos-vs-fedora` skill) — script uses `dnf`/`dnf config-manager` only |
+| Repository setup | Enables/disables a `.repo` file (`negativo17-fedora-nvidia.repo`) baked into the `ublue-os-nvidia-addons` RPM at akmods-image build time for one Fedora release | Builds a transient `--repofrompath` repo pointed at `negativo17.org/repos/nvidia/fedora-<version>/<arch>/`, substituting the Fedora NVR parsed from the mounted akmods RPM filenames (falls back to `FEDORA_AKMODS_VERSION`) |
+| Why the repo differs | The packaged `.repo` file assumes Fedora's `$releasever` resolves to a Fedora release number | CentOS Stream 10's `$releasever` does not resolve to a Fedora release, so the packaged repo would point at the wrong (or a nonexistent) negativo17 path; the transient repo avoids DNF rejecting unavailable source/debug entries on SBSA too |
+| akmods/kernel source | `skopeo copy` of `ghcr.io/ublue-os/akmods-nvidia-open:<flavor>-<fedora>-<kernel>` inline in the build script | Same image family, mounted via Containerfile `--mount=type=bind,from=akmods_nvidia_open` using `AKMODS_VERSION=coreos-stable-<fedora>[-<kernel_pin>]` (see `Containerfile`, `Justfile`) |
+| kmod-to-kernel matching | Installs the single kmod RPM named for `KERNEL_VERSION`/`NVIDIA_AKMOD_VERSION` from `nvidia-vars` | Filters `/tmp/akmods-nvidia-open-rpms/kmods/*.rpm` for the one whose `Requires` matches the running `kernel-uname-r` — more defensive against multiple staged kmods |
+| Driver/kmod version check | Compares `kmod-nvidia` and `nvidia-driver` `%{VERSION}` | Same check, same failure mode |
+| CDI / post-install | Enables `ublue-nvctk-cdi.service`, installs the `nvidia-container.pp` SELinux module, forces `i915 amdgpu nvidia` in dracut | Same steps, plus the bootc-specific `nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place` documented above (upstream Fedora images run privileged enough not to need it) |
+
+### Decision: keep the manual flow
+
+Migrating to `nvidia-install.sh` as-is is blocked by two hard CentOS Stream 10
+constraints documented in the `centos-vs-fedora` skill:
+
+1. No `dnf5` by default — the script's `dnf5 config-manager`/`dnf5 copr enable`
+   calls would fail outright.
+2. No Fedora-resolving `$releasever` — the packaged negativo17 `.repo` file
+   would enable against the wrong path, silently breaking signature/repo
+   validation instead of failing loudly.
+
+Both constraints are properties of the CentOS Stream 10 base image, not of
+this repository's build scripts, so they cannot be fixed locally. The manual
+`20-nvidia.sh` flow is the intentional, supported path for this image. Revisit
+convergence only if CentOS Stream 10 ships `dnf5` by default, or if
+`ublue-os/akmods` adds a CentOS/EL-targeted `nvidia-install.sh` variant.
+
 ## Verification
 
 - Confirm the hook or override is owned by the correct image layer.
