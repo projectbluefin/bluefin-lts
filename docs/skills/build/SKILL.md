@@ -110,7 +110,7 @@ Known required enables:
 
 | Service | Why |
 |---|---|
-| `rechunker-group-fix.service` | Prevents boot failure on legacy-rechunked group state |
+| `rechunker-group-fix.service` | Prevents boot failure on legacy-rechunked group state; LTS overrides its ordering to run before `local-fs-pre.target` and avoid the common-layer local-fs ordering cycle |
 
 ## Debugging checklist
 

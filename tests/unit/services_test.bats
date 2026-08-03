@@ -128,6 +128,21 @@ teardown() {
 # systemctl enable/disable/mask calls
 # ──────────────────────────────────────────────────────────────────────────────
 
+@test "services: enables rechunker-group-fix.service" {
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+    grep -q "enable rechunker-group-fix.service" "${SYSTEMCTL_LOG}"
+}
+
+@test "rechunker group fix: LTS drop-in resets local-fs ordering and runs before local-fs-pre and sysusers" {
+    grep -q '^After=$' \
+        "${BATS_TEST_DIRNAME}/../../system_files/usr/lib/systemd/system/rechunker-group-fix.service.d/10-lts-ordering.conf"
+    grep -q '^Before=local-fs-pre.target systemd-sysusers.service$' \
+        "${BATS_TEST_DIRNAME}/../../system_files/usr/lib/systemd/system/rechunker-group-fix.service.d/10-lts-ordering.conf"
+    ! grep -q '^After=local-fs.target$' \
+        "${BATS_TEST_DIRNAME}/../../system_files/usr/lib/systemd/system/rechunker-group-fix.service.d/10-lts-ordering.conf"
+}
+
 @test "services: enables gdm.service" {
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
