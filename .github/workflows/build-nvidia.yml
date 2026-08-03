@@ -80,6 +80,12 @@ jobs:
       stream_name: testing
       image_flavors: '["main"]'
       architecture: '["x86_64"]'
-      # NVIDIA aarch64 is built independently in build-nvidia-aarch64.yml.
-      # The x86_64 publication path must not wait for an optional ARM build.
-      publish_stream_tag: 'true'
+      # NVIDIA aarch64 is built independently in build-nvidia-aarch64.yml, so
+      # this workflow must not wait for an optional/less-reliable ARM build.
+      # It must also never publish :testing directly: that raced against
+      # build-nvidia-aarch64.yml's own publish and could leave :testing
+      # resolving to whichever architecture published last (issue #421).
+      # build-nvidia-manifest.yml is the only place :testing is written; it
+      # assembles both architectures' digests into a signed multi-arch index
+      # once available, without blocking this build on ARM.
+      publish_stream_tag: 'false'
