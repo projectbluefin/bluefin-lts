@@ -47,9 +47,6 @@ clean:
     set -eoux pipefail
     touch _build
     find *_build* -exec rm -rf {} \;
-    rm -f previous.manifest.json
-    rm -f changelog.md
-    rm -f output.env
 
 # Sudo Clean Repo
 [group('Utility')]
