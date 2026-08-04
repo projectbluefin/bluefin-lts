@@ -43,10 +43,12 @@ metadata:
 | Regular image build | `.github/workflows/build-regular.yml` |
 | NVIDIA image build | `.github/workflows/build-nvidia.yml` |
 | NVIDIA ARM build | `.github/workflows/build-nvidia-aarch64.yml` |
+| NVIDIA manifest assembly | `.github/workflows/build-nvidia-manifest.yml` |
 | Promotion | `.github/workflows/promote-testing-to-main.yml` |
 | Stable publication | `.github/workflows/execute-release.yml` |
 | End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml` |
 | Syntax and repository checks | `.github/workflows/pr-testsuite.yml`, `unit-tests.yml` |
+| Lab PR Check Run | `.github/workflows/lab-check.yml` |
 | Dependency updates | `.github/renovate.json5`, Renovate workflows |
 
 The exact workflow files in the repository are authoritative. Update this table
@@ -74,10 +76,22 @@ when a workflow is renamed or removed.
 The reusable build workflow pushes each architecture separately and returns a
 platform-to-digest map; it does not assemble the index. The regular caller runs
 a follow-on `create-manifest` job after both architectures complete, then signs
-the resulting manifest digest. NVIDIA amd64 publication is independent; its
-aarch64 build runs in a standalone non-gating workflow and publishes only
-architecture-specific aliases until a later manifest assembly. Promotion copies
-the signed testing artifact to the stable tag with `skopeo copy --all`.
+the resulting manifest digest. NVIDIA amd64 (`build-nvidia.yml`) and aarch64
+(`build-nvidia-aarch64.yml`) build as fully independent, differently-timed
+workflow runs so that an ARM build failure never blocks amd64 publication.
+Neither publishes `:testing` directly (`publish_stream_tag: 'false'`); both
+publish only immutable architecture-specific aliases. `build-nvidia-manifest.yml`
+is triggered by either sibling's `workflow_run` completion, finds the latest
+successful run of each per-arch workflow for the same commit via `gh api`,
+downloads their digest artifacts cross-run, and only assembles, verifies, and
+signs the multi-arch `:testing` index once both architectures are present; if
+the sibling isn't done yet it exits cleanly and relies on the sibling's own
+completion to retry. `workflow_run` triggers only activate for workflow files
+present on the repository's default branch (`main`), so changes to
+`build-nvidia-manifest.yml` take effect only after promotion to `main`.
+Promotion copies the signed testing artifact to the stable tag with
+`skopeo copy --all --format oci`, and `execute-release.yml` refuses to promote
+any source that is not already a verified amd64+arm64 image index.
 
 When changing architecture inputs or publication tags, verify all of these:
 
@@ -103,6 +117,13 @@ Check in order:
 Use the GitHub workflow run, job summary, and logs as evidence. Do not infer
 success from a green caller job if the reusable job or publication step failed.
 
+Every open Bluefin LTS PR is discovered by the lab's five-minute PR poller. The
+lab runs smoke QA against `bluefin-lts:testing` and sends bounded
+`repository_dispatch` lifecycle events to `lab-check.yml`, which must exist on
+the default branch. That workflow uses a short-lived MergeRaptor installation
+token to update one `testing-lab / bluefin-lts` Check Run for the exact PR head
+SHA. Do not duplicate the result in a PR comment or commit status.
+
 ## Common Rationalizations
 
 - “The caller is green, so publication succeeded.” Inspect the reusable job and artifact.
@@ -118,6 +139,7 @@ success from a green caller job if the reusable job or publication step failed.
 - A release or signing failure hidden with `continue-on-error`.
 - Copying a workflow from another image variant without checking path and input
   differences.
+- Posting a lab result as a PR comment instead of updating the MergeRaptor Check Run.
 - Calling `create-manifest@v1` without first preparing the runner.
 
 ## Verification
@@ -131,3 +153,8 @@ pre-commit run --all-files
 For behavior changes, inspect the completed run and record the workflow URL,
 commit, artifact tag, and digest. For signing or release changes, also follow
 [`release`](../release/SKILL.md).
+
+## Sources
+
+- Context7: `/websites/github_en_actions` — `repository_dispatch` payloads and
+  the requirement that the workflow exist on the default branch.

@@ -42,6 +42,8 @@ jobs:
       stream_name: testing
       image_flavors: '["main"]'
       architecture: '["aarch64"]'
-      # Publish immutable architecture-specific aliases only. A later manifest
-      # assembly can consume these without racing the amd64 :testing tag.
+      # Publish immutable architecture-specific aliases only.
+      # build-nvidia-manifest.yml assembles these (and build-nvidia.yml's
+      # amd64 alias) into a signed multi-arch index and is the only place
+      # :testing is written, so this build never races the amd64 publish.
       publish_stream_tag: 'false'
