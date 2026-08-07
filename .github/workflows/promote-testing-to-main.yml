@@ -16,7 +16,10 @@ on:
   workflow_run:
     workflows: ["Post-Testing E2E"]
     types: [completed]
-    branches: [testing]
+    # auto/promote-testing-to-main: re-evaluate the gate once the e2e run
+    # dispatched against the promotion branch head (see dispatch-promotion-e2e
+    # below) completes, so the release gate can find it.
+    branches: [testing, auto/promote-testing-to-main]
   schedule:
     - cron: '0 4 * * *'
   workflow_dispatch:
@@ -51,6 +54,54 @@ jobs:
       # places the PR in the queue and lets it squash-merge once checks pass.
       use_merge_queue: true
     secrets: inherit
+
+  # The release gate in reusable-promote-squash.yml requires a successful
+  # Post-Testing E2E run recorded on the promotion PR's head SHA, but
+  # build-regular.yml only dispatches e2e against the testing branch head.
+  # The squash commit on auto/promote-testing-to-main never matches, so the
+  # gate fails every evaluation. Dispatch an e2e run against the promotion
+  # branch head here (even when the gate just failed), so the next gate
+  # evaluation — triggered by that run's completion — finds it and promotes.
+  dispatch-promotion-e2e:
+    name: Dispatch e2e for promotion PR head
+    needs: [promote]
+    if: always() && needs.promote.result != 'skipped'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+      pull-requests: read
+    steps:
+      - name: Dispatch Post-Testing E2E on promotion branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PROMOTION_BRANCH: auto/promote-testing-to-main
+        run: |
+          set -euo pipefail
+
+          pr_head="$(gh pr list --repo "$REPO" --state open --head "$PROMOTION_BRANCH" \
+            --json headRefOid --jq '.[0].headRefOid // empty')"
+          if [[ -z "$pr_head" ]]; then
+            echo "No open promotion PR; nothing to dispatch."
+            exit 0
+          fi
+
+          # Skip if a completed successful e2e run already exists for this head.
+          existing="$(gh run list --repo "$REPO" --workflow post-testing-e2e.yml \
+            --branch "$PROMOTION_BRANCH" --status success \
+            --json headSha --jq "[.[] | select(.headSha == \"$pr_head\")] | length")"
+          if [[ "$existing" != "0" ]]; then
+            echo "Successful e2e run already recorded for $pr_head; skipping dispatch."
+            exit 0
+          fi
+
+          gh workflow run post-testing-e2e.yml \
+            --repo "$REPO" \
+            --ref "$PROMOTION_BRANCH" \
+            -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
+            -f suites="smoke"
+          echo "Dispatched post-testing-e2e against $PROMOTION_BRANCH ($pr_head)."
 
   mirror-validate-to-merge-group:
     name: Mirror validate status to merge-group SHA
