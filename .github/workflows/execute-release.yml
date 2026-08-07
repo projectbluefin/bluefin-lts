@@ -137,6 +137,7 @@ jobs:
           while IFS= read -r variant; do
             [ -n "$variant" ] || continue
             image=$(jq -r '.image' <<<"$variant")
+            source_tag=$(jq -r '.source_tag' <<<"$variant")
             target_tag=$(jq -r '.target_tag' <<<"$variant")
             digest=$(jq -r --arg image "$image" '.[$image]' <<<"$DIGESTS_JSON")
             src="docker://${REGISTRY}/${image}@${digest}"
@@ -144,13 +145,19 @@ jobs:
             echo "Promoting ${src} to ${dest}"
             source_manifest=$(skopeo inspect --raw "$src")
             source_media_type=$(jq -r '.mediaType // empty' <<<"$source_manifest")
-            copy_args=(--all)
-            if [[ "$source_media_type" == "application/vnd.oci.image.index.v1+json" ||
-              "$source_media_type" == "application/vnd.docker.distribution.manifest.list.v2+json" ]]; then
-              copy_args+=(--format oci)
-            else
-              copy_args+=(--preserve-digests)
+            if [[ "$source_media_type" != "application/vnd.oci.image.index.v1+json" &&
+              "$source_media_type" != "application/vnd.docker.distribution.manifest.list.v2+json" ]]; then
+              echo "::error::${source_tag} for ${image} is a single-architecture manifest (mediaType=${source_media_type:-unknown}), not a multi-arch image index. Refusing to promote a single-arch build as :${target_tag} (see issue #421)."
+              failed_variants+=("${image}:${target_tag}:source-not-multiarch")
+              continue
             fi
+            if ! jq -e '([.manifests[]?.platform.architecture] | sort) == ["amd64", "arm64"]' \
+              <<<"$source_manifest" >/dev/null; then
+              echo "::error::${source_tag} for ${image} image index is missing amd64 or arm64. Refusing to promote as :${target_tag}."
+              failed_variants+=("${image}:${target_tag}:source-platform-mismatch")
+              continue
+            fi
+            copy_args=(--all --format oci)
             if ! skopeo copy "${copy_args[@]}" "$src" "$dest"; then
               echo "::warning::Promotion failed for variant ${image} -> :${target_tag}"
               failed_variants+=("${image}:${target_tag}")
@@ -160,23 +167,20 @@ jobs:
             promoted_digest=$(skopeo inspect --format '{{.Digest}}' "$dest")
             raw_manifest=$(skopeo inspect --raw "$dest")
             media_type=$(jq -r '.mediaType // empty' <<<"$raw_manifest")
-            if [[ "$media_type" == "application/vnd.oci.image.index.v1+json" ||
-              "$media_type" == "application/vnd.docker.distribution.manifest.list.v2+json" ]]; then
-              if ! jq -e '([.manifests[]?.platform.architecture] | sort) == ["amd64", "arm64"]' \
-                <<<"$raw_manifest" >/dev/null; then
-                echo "::error::Promoted ${dest} image index is missing amd64 or arm64"
-                failed_variants+=("${image}:${target_tag}:platform-mismatch")
-              elif ! diff -u \
-                <(jq -r '.manifests[] | [.platform.architecture,.digest] | @tsv' <<<"$source_manifest" | sort) \
-                <(jq -r '.manifests[] | [.platform.architecture,.digest] | @tsv' <<<"$raw_manifest" | sort) \
-                >/dev/null; then
-                echo "::error::Promoted ${dest} child digests differ from ${src}"
-                failed_variants+=("${image}:${target_tag}:child-digest-mismatch")
-              fi
-            elif [[ "$(skopeo inspect --format '{{.Architecture}}' "$dest")" != \
-              "$(skopeo inspect --format '{{.Architecture}}' "$src")" ]]; then
-              echo "::error::Promoted ${dest} is neither an amd64 image nor a complete image index"
+            if [[ "$media_type" != "application/vnd.oci.image.index.v1+json" &&
+              "$media_type" != "application/vnd.docker.distribution.manifest.list.v2+json" ]]; then
+              echo "::error::Promoted ${dest} is not an image index (mediaType=${media_type:-unknown}) even though the source was — the copy dropped the index"
               failed_variants+=("${image}:${target_tag}:platform-mismatch")
+            elif ! jq -e '([.manifests[]?.platform.architecture] | sort) == ["amd64", "arm64"]' \
+              <<<"$raw_manifest" >/dev/null; then
+              echo "::error::Promoted ${dest} image index is missing amd64 or arm64"
+              failed_variants+=("${image}:${target_tag}:platform-mismatch")
+            elif ! diff -u \
+              <(jq -r '.manifests[] | [.platform.architecture,.digest] | @tsv' <<<"$source_manifest" | sort) \
+              <(jq -r '.manifests[] | [.platform.architecture,.digest] | @tsv' <<<"$raw_manifest" | sort) \
+              >/dev/null; then
+              echo "::error::Promoted ${dest} child digests differ from ${src}"
+              failed_variants+=("${image}:${target_tag}:child-digest-mismatch")
             fi
 
             if ! cosign sign -y "${REGISTRY}/${image}@${promoted_digest}" >/dev/null; then
