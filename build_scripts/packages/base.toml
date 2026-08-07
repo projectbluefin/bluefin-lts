@@ -63,6 +63,9 @@ packages = [
     "containerd",
     "ddcutil",
     "distrobox",
+    # bluefin-lts-countme.service runs /usr/bin/dnf5 makecache; dnf5 is not in
+    # the centos-bootc base image, so install it or countme fails on every timer.
+    "dnf5",
     "fastfetch",
     "firewalld",
     "flatpak",
