@@ -128,6 +128,15 @@ teardown() {
     grep -q "dnf.*install" "${DNF_LOG}"
 }
 
+# Regression test for https://github.com/projectbluefin/bluefin-lts/issues/492:
+# without bootupd in the image, `bootc install to-disk` fails with
+# "bootupd is required for ostree-based installs".
+@test "packages: bootupd is in the base.toml [install] list" {
+    run python3 "${READ_PACKAGES}" "${PKGS_TOML}" install
+    [ "$status" -eq 0 ]
+    grep -qx "bootupd" <<< "$output"
+}
+
 @test "packages: passes -x exclusion flags for excluded packages" {
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
