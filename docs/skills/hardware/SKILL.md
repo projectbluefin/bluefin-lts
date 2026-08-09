@@ -1,14 +1,26 @@
 ---
 name: hardware
 description: >-
-  OEM hardware detection, first-boot setup hooks, and device-specific configuration in
-  bluefin-lts. Covers the ublue-user-setup hook architecture, Framework laptop support,
-  Ampere/Thelio Astra support, and the gap vs bluefin.
-metadata:
-  type: runbook
+  Change hardware hooks and device integration safely. Use when modifying setup hooks, services, or device-specific image behavior.
 ---
 
 # Hardware Setup — bluefin-lts
+
+## When to Use
+
+Use when changing setup hooks, hardware services, or device-specific image behavior.
+
+## When NOT to Use
+
+Do not use for generic package, CI, or release changes.
+
+## Common Rationalizations
+
+- “The hook can live locally.” Confirm which layer owns the shared behavior first.
+
+## Red Flags
+
+- Removing a local hook before the containing shared layer is pinned and verified.
 
 ## Hook architecture
 
@@ -44,7 +56,7 @@ systemctl enable ublue-user-setup.service
 **bluefin-lts does not ship any hardware hooks directly.** They are provided by
 `projectbluefin/common` and land automatically via the common OCI layer.
 
-Common ships (since commit `7e97675`, 2026-06-13, closes #651 #652 #653):
+The shared layer currently provides the following hooks:
 
 | File in common | Effect |
 |---|---|
@@ -62,7 +74,7 @@ If a new hardware quirk needs a hook:
 
 ### Removing a local hook that moved to common
 
-This has happened once (PR #208). The pattern to follow:
+Use this pattern when a local hook moves to the shared layer:
 
 1. Confirm the hook is present in the published common image — **check the digest date, not the PR date**
 2. Bump `image-versions.yaml` to a common digest that postdates the commit adding the hook
@@ -101,7 +113,7 @@ set -xeuo pipefail
 
 The `bluefin-lts-nvidia` variant ships full CDI configuration so `podman run --device nvidia.com/gpu=all` works out of the box without root or privileged containers.
 
-### What's wired (as of 2026-06)
+### NVIDIA CDI wiring
 
 **`build_scripts/overrides/nvidia/20-nvidia.sh`**
 ```bash
@@ -135,4 +147,14 @@ podman run --rm \
 
 ### Reference
 
-Mirrors `projectbluefin/dakota` elements/bluefin-nvidia/nvidia-container-toolkit-preset.bst. When dakota changes its CDI wiring, apply the same change here.
+Keep this wiring aligned with the shared NVIDIA image-layer implementation. When
+that implementation changes, verify the corresponding toolkit configuration,
+systemd presets, and runtime test before updating this image.
+
+## Verification
+
+- Confirm the hook or override is owned by the correct image layer.
+- Run `just check` and `just lint` after changing build scripts or overrides.
+- Test hardware-specific behavior on representative hardware or record why it
+  could not be tested.
+- Do not claim hardware support from a successful image build alone.

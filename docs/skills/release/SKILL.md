@@ -1,13 +1,10 @@
 ---
-name: bluefin-lts-release
+name: release
 description: >-
-  Production release pipeline, branch promotion, registry rollback, and ISO status for
-  projectbluefin/bluefin-lts. Use when cutting a release, debugging promotion automation,
-  performing an emergency rollback via skopeo, or verifying published images.
+  Verify and promote published artifacts safely. Use when checking digests, signatures, stable releases, rollback, or emergency promotion.
 metadata:
-  type: runbook
   context7-sources:
-    - /websites/github_en_actions
+    - /podman-container-tools/skopeo
 ---
 
 # Release
@@ -21,9 +18,9 @@ metadata:
 
 ## When NOT to Use
 
-- Package or image-content changes → `docs/skills/build.md`
-- Non-promotion CI failures → `docs/skills/ci-cd.md`
-- Hardware-specific image issues → `docs/skills/hardware.md`
+- Package or image-content changes → `docs/skills/build/SKILL.md`
+- Non-promotion CI failures → `docs/skills/ci-cd/SKILL.md`
+- Hardware-specific image issues → `docs/skills/hardware/SKILL.md`
 
 ## Branch model (factory standard)
 
@@ -41,13 +38,16 @@ testing → main → :stable
 ## Production release flow
 
 1. `promote-testing-to-main.yml` fires on push to `testing`, **daily at 04:00 UTC**, and on manual dispatch.
-   It calls `reusable-promote-squash.yml@v1` with `source_branch: testing`, `target_branch: main`, `use_merge_queue: true`.
+   It calls `reusable-promote-squash.yml@v1` with explicit `source_branch: testing` and `target_branch: main`, and enables `use_merge_queue: true`.
    When trees differ it rebuilds the squash branch and upserts the `auto/promote-testing-to-main` PR.
 2. The PR enters the merge queue (ruleset 17070416 on `main` requires squash + merge queue).
    Required check: `Lint & syntax`. No approvals needed.
 3. On merge, `execute-release.yml` fires on `push: main`, detects the commit message
-   `"^chore: promote testing to main"`, skopeo-copies `:testing → :stable` for all three variants,
+   `"^chore: promote testing to main"`, skopeo-copies `:testing → :stable` for both image variants,
    and creates a GitHub release with changelog via `reusable-release.yml@v1`.
+   Stable promotion writes an OCI index, verifies its amd64/arm64 child digests,
+   then signs and verifies the promoted digest because registry media-type
+   conversion can change the index digest.
 
 ```bash
 # Check promotion PR status
@@ -84,6 +84,9 @@ A fix is published when:
 1. The `:stable` digest differs from the last known digest
 2. The `org.opencontainers.image.created` date is after the fix merged
 3. Both variants (bluefin-lts and bluefin-lts-nvidia) are updated
+4. `skopeo inspect --raw` shows a complete amd64/arm64 index when ARM artifacts are available;
+   an NVIDIA amd64-only fallback is accepted only when its standalone ARM workflow has failed
+   and the promoted artifact is verified as amd64.
 
 ## Build cascade — rapid commits cancel in-progress builds
 
@@ -147,7 +150,10 @@ Always copy by digest, not tag — prevents races with concurrent pushes.
 
 ### `:testing` is published directly by the build
 
-Build workflows push `:testing` on every push to the `testing` branch. No E2E gate.
+Build workflows push per-architecture aliases, then publish one signed `:testing`
+index after both architecture builds finish. Post-testing verification receives
+and checks the exact manifest digest. No stable promotion should proceed from a
+single-architecture stream tag.
 PR builds validate that the image builds but do not push to GHCR.
 
 ### `/boot/` is intentionally empty in the OCI image
@@ -177,6 +183,11 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 
 **LTS ISO is disabled. Do not re-enable.** Anaconda is broken on CentOS Stream base.
 
+## Common Rationalizations
+
+- “The tag is enough.” Record and verify the immutable digest.
+- “A green build means a release is trustworthy.” Check signatures and publication results.
+
 ## Red Flags
 
 - `use_merge_queue: false` — main requires a merge queue (ruleset 17070416); always use `true`
@@ -189,6 +200,6 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 
 - [ ] `promote-testing-to-main.yml` schedules daily at `0 4 * * *`
 - [ ] `use_merge_queue: true`
-- [ ] `source_branch: testing` and `target_branch: main`
+- [ ] The promotion caller explicitly sets `source_branch: testing` and `target_branch: main`
 - [ ] `execute-release.yml` fires on `push: main`, detects `"^chore: promote testing to main"`, publishes `:stable`
 - [ ] Build workflows push `:testing` on push to `testing` branch

@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: false
 
@@ -32,7 +32,7 @@ jobs:
             echo "ERROR: Found COPR usage in build scripts."
             echo "bluefin-lts is built on CentOS Stream 10 where COPR does not exist."
             echo "Use EPEL or CentOS Stream repos instead."
-            echo "See docs/skills/centos-vs-fedora.md for details."
+            echo "See docs/skills/centos-vs-fedora/SKILL.md for details."
             exit 1
           fi
           echo "No COPR usage found."

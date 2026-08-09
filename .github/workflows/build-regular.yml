@@ -44,7 +44,7 @@ jobs:
     outputs:
       should_build: ${{ steps.detect.outputs.should_build }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: projectbluefin/actions/bootc-build/detect-changes@v1
         id: detect
         with:
@@ -79,17 +79,85 @@ jobs:
       stream_name: testing
       image_flavors: '["main"]'
       architecture: '["x86_64", "aarch64"]'
-      # post-merge-e2e removed — builds publish :testing directly.
-      publish_stream_tag: ${{ github.event_name != 'pull_request' && 'true' || 'false' }}
+      # The manifest job publishes :testing after both architecture builds finish.
+      publish_stream_tag: 'false'
+
+  create-manifest:
+    name: Publish multi-architecture manifest
+    needs: [build]
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    outputs:
+      manifest_digest: ${{ steps.manifest.outputs.digest }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Prepare runner
+        uses: projectbluefin/actions/bootc-build/setup-runner@v1
+        with:
+          storage-backend: remove-software
+          update-podman: 'true'
+
+      - name: Login to GHCR for manifest signing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${HOME}/.docker"
+          echo "${GH_TOKEN}" | podman login ghcr.io \
+            --authfile "${HOME}/.docker/config.json" \
+            --username "${GH_ACTOR}" \
+            --password-stdin
+          echo "${GH_TOKEN}" | skopeo login ghcr.io \
+            --username "${GH_ACTOR}" \
+            --password-stdin
+
+      - name: Create and publish testing manifest
+        id: manifest
+        uses: projectbluefin/actions/bootc-build/create-manifest@v1
+        with:
+          image-name: bluefin-lts
+          digests-json: ${{ toJSON(fromJSON(needs.build.outputs.digests)['bluefin-lts']) }}
+          tags: testing
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify testing manifest
+        env:
+          IMAGE: ghcr.io/projectbluefin/bluefin-lts
+          DIGEST: ${{ steps.manifest.outputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw_manifest="$(skopeo inspect --raw "docker://${IMAGE}@${DIGEST}")"
+          echo "${raw_manifest}" | jq -e '
+            (.mediaType == "application/vnd.oci.image.index.v1+json"
+              or .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json")
+            and ([.manifests[]?.platform.architecture] | sort) == ["amd64", "arm64"]
+          ' >/dev/null
+          echo "Verified ${IMAGE}@${DIGEST} is a signed-pending amd64/arm64 image index."
+
+      - name: Sign testing manifest
+        uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
+        with:
+          image: ghcr.io/projectbluefin/bluefin-lts
+          digest: ${{ steps.manifest.outputs.digest }}
+          generate-sbom: 'false'
+          push-attestation: 'true'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   trigger-post-testing:
     name: Trigger post-testing verification
-    needs: [build]
+    needs: [build, create-manifest]
     if: |
       always() &&
       github.event_name != 'pull_request' &&
       github.ref_name == 'testing' &&
-      needs.build.result == 'success'
+      needs.build.result == 'success' &&
+      needs.create-manifest.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -98,10 +166,12 @@ jobs:
       - name: Dispatch post-testing workflow
         env:
           GH_TOKEN: ${{ github.token }}
+          TESTING_DIGEST: ${{ needs.create-manifest.outputs.manifest_digest }}
         run: |
           set -euo pipefail
           gh workflow run post-testing-e2e.yml \
             --repo "${{ github.repository }}" \
             --ref "${GITHUB_REF_NAME}" \
             -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
+            -f expected-digest="${TESTING_DIGEST}" \
             -f suites="smoke"

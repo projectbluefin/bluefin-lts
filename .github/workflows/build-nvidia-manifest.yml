@@ -1,0 +1,190 @@
+name: Build Bluefin Nvidia Manifest
+
+# Assembles bluefin-lts-nvidia's independently-built amd64 (build-nvidia.yml)
+# and aarch64 (build-nvidia-aarch64.yml) images into one signed multi-arch
+# manifest index and publishes it as :testing.
+#
+# Both per-arch workflows publish immutable architecture-specific aliases
+# only (publish_stream_tag: 'false') — neither pushes :testing directly.
+# This workflow is the single place :testing is written for
+# bluefin-lts-nvidia, which removes the amd64/aarch64 publish race from
+# issue #421 (":stable tag resolving to arm64-only manifest") without
+# making the amd64 build wait on the less reliable ARM build (see #455).
+#
+# Triggered by either sibling workflow completing. It looks up the latest
+# successful run of BOTH workflows for the same commit and only proceeds
+# once both are available; if the sibling architecture hasn't finished yet
+# (or failed) it exits cleanly and does nothing — the sibling's own
+# workflow_run trigger will retry assembly once it succeeds.
+#
+# NOTE: workflow_run only fires for workflow files present on the
+# repository's default branch (main). This workflow will not trigger until
+# it has been promoted from testing to main at least once.
+
+on:
+  workflow_run:
+    workflows:
+      - "Build Bluefin Nvidia"
+      - "Build Bluefin Nvidia (aarch64)"
+    types: [completed]
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+  actions: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  assemble-manifest:
+    name: Assemble bluefin-lts-nvidia multi-arch manifest
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'testing'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    outputs:
+      ready: ${{ steps.find-runs.outputs.ready }}
+    steps:
+      - name: Find latest successful per-arch runs for this commit
+        id: find-runs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          find_run() {
+            local workflow_file="$1"
+            gh api "repos/${{ github.repository }}/actions/workflows/${workflow_file}/runs" \
+              -f head_sha="${HEAD_SHA}" -f status=success \
+              --jq '.workflow_runs[0].id // empty'
+          }
+
+          amd64_run="$(find_run build-nvidia.yml)"
+          arm64_run="$(find_run build-nvidia-aarch64.yml)"
+          echo "amd64_run=${amd64_run}" >> "$GITHUB_OUTPUT"
+          echo "arm64_run=${arm64_run}" >> "$GITHUB_OUTPUT"
+
+          if [[ -z "${amd64_run}" || -z "${arm64_run}" ]]; then
+            echo "Sibling architecture build for ${HEAD_SHA} is not complete yet (amd64=${amd64_run:-none}, arm64=${arm64_run:-none}) — skipping. The sibling's own completion will retry this."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Found amd64 run ${amd64_run} and arm64 run ${arm64_run} for ${HEAD_SHA}."
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download amd64 digest artifact
+        if: steps.find-runs.outputs.ready == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.find-runs.outputs.amd64_run }}
+          pattern: image-digest-testing-bluefin-lts-nvidia-*-x86_64
+          merge-multiple: true
+          path: /tmp/digests
+
+      - name: Download aarch64 digest artifact
+        if: steps.find-runs.outputs.ready == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.find-runs.outputs.arm64_run }}
+          pattern: image-digest-testing-bluefin-lts-nvidia-*-aarch64
+          merge-multiple: true
+          path: /tmp/digests
+
+      - name: Merge digests
+        if: steps.find-runs.outputs.ready == 'true'
+        id: merge
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! ls /tmp/digests/*.txt >/dev/null 2>&1; then
+            echo "::error::No digest artifacts found for amd64 run ${{ steps.find-runs.outputs.amd64_run }} or arm64 run ${{ steps.find-runs.outputs.arm64_run }}"
+            exit 1
+          fi
+
+          # Each line is: image_name|oci_platform|digest (written by
+          # reusable-build.yml's "Write digest to artifact" step).
+          digests="$(cat /tmp/digests/*.txt | jq -Rs '
+            split("\n")
+            | map(select(length > 0))
+            | map(split("|"))
+            | map(select(length == 3))
+            | reduce .[] as $row ({}; .[$row[0]][$row[1]] = $row[2])
+          ')"
+          echo "Merged digests: ${digests}"
+
+          archs="$(jq -r '.["bluefin-lts-nvidia"] // {} | keys | sort | join(",")' <<<"${digests}")"
+          if [[ "${archs}" != "amd64,arm64" ]]; then
+            echo "::error::Expected amd64 and arm64 digests for bluefin-lts-nvidia, got: ${archs:-none}"
+            exit 1
+          fi
+
+          image_digests="$(jq -c '.["bluefin-lts-nvidia"]' <<<"${digests}")"
+          echo "image_digests=${image_digests}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare runner
+        if: steps.find-runs.outputs.ready == 'true'
+        uses: projectbluefin/actions/bootc-build/setup-runner@v1
+        with:
+          storage-backend: remove-software
+          update-podman: 'true'
+
+      - name: Login to GHCR for manifest signing
+        if: steps.find-runs.outputs.ready == 'true'
+        env:
+          GH_ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${HOME}/.docker"
+          echo "${GH_TOKEN}" | podman login ghcr.io \
+            --authfile "${HOME}/.docker/config.json" \
+            --username "${GH_ACTOR}" \
+            --password-stdin
+          echo "${GH_TOKEN}" | skopeo login ghcr.io \
+            --username "${GH_ACTOR}" \
+            --password-stdin
+
+      - name: Create and publish testing manifest
+        if: steps.find-runs.outputs.ready == 'true'
+        id: manifest
+        uses: projectbluefin/actions/bootc-build/create-manifest@v1
+        with:
+          image-name: bluefin-lts-nvidia
+          digests-json: ${{ steps.merge.outputs.image_digests }}
+          tags: testing
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify testing manifest
+        if: steps.find-runs.outputs.ready == 'true'
+        env:
+          IMAGE: ghcr.io/projectbluefin/bluefin-lts-nvidia
+          DIGEST: ${{ steps.manifest.outputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          raw_manifest="$(skopeo inspect --raw "docker://${IMAGE}@${DIGEST}")"
+          echo "${raw_manifest}" | jq -e '
+            (.mediaType == "application/vnd.oci.image.index.v1+json"
+              or .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json")
+            and ([.manifests[]?.platform.architecture] | sort) == ["amd64", "arm64"]
+          ' >/dev/null
+          echo "Verified ${IMAGE}@${DIGEST} is a signed-pending amd64/arm64 image index."
+
+      - name: Sign testing manifest
+        if: steps.find-runs.outputs.ready == 'true'
+        uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
+        with:
+          image: ghcr.io/projectbluefin/bluefin-lts-nvidia
+          digest: ${{ steps.manifest.outputs.digest }}
+          generate-sbom: 'false'
+          push-attestation: 'true'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
