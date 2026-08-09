@@ -51,27 +51,6 @@ KERNEL_SUFFIX=""
 QUALIFIED_KERNEL="$(rpm -qa | grep -P 'kernel-(|'"$KERNEL_SUFFIX"'-)(\d+\.\d+\.\d+)' | sed -E 's/kernel-(|'"$KERNEL_SUFFIX"'-)//' | tail -n 1)"
 /usr/bin/dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --reproducible --tmpdir /boot --zstd -v --add ostree -f "/lib/modules/$QUALIFIED_KERNEL/initramfs.img"
 
-# Populate bootupd's update payload so `bootc install to-disk` and
-# bootloader-update.service can find the EFI files at runtime.
-# The Containerfile mounts a tmpfs on /boot during the build, which hides the
-# base image's /boot/efi payload; reinstalling the EFI bootloader packages
-# materializes their files again so `bootupctl backend generate-update-metadata`
-# can copy them into /usr/lib/bootupd/updates (which lives in /usr and is
-# preserved). Without this, bootupctl fails at boot with
-# "opening EFI dir: No such file or directory".
-# See https://github.com/projectbluefin/bluefin-lts/issues/492
-case "$(uname -m)" in
-    x86_64)  EFI_PKGS=(grub2-efi-x64 shim-x64) ;;
-    aarch64) EFI_PKGS=(grub2-efi-aa64 shim-aa64) ;;
-    *)       EFI_PKGS=() ;;
-esac
-if [[ ${#EFI_PKGS[@]} -gt 0 ]]; then
-    dnf -y install "${EFI_PKGS[@]}"
-    dnf -y reinstall "${EFI_PKGS[@]}"
-    rm -rf /usr/lib/bootupd/updates
-    bootupctl backend generate-update-metadata
-fi
-
 # Footgun, See: https://github.com/ublue-os/main/issues/598
 rm -f /usr/bin/chsh /usr/bin/lchsh
 

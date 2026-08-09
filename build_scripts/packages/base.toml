@@ -58,11 +58,6 @@ packages = [
 packages = [
     "NetworkManager-openconnect-gnome",
     "NetworkManager-openvpn-gnome",
-    # bootupd must be present in the image or `bootc install to-disk` fails
-    # with "bootupd is required for ostree-based installs". Install it
-    # explicitly instead of relying on the centos-bootc base image shipping
-    # it. See https://github.com/projectbluefin/bluefin-lts/issues/492
-    "bootupd",
     "btrfs-progs",
     "buildah",
     "containerd",
