@@ -94,4 +94,3 @@ jobs:
             -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
             -f suites="smoke"
           echo "Dispatched post-testing-e2e against testing ($testing_head)."
-
