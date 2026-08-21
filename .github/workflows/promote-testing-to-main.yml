@@ -10,11 +10,13 @@ name: Promote testing to main
 #
 # Triggers:
 #   - push to testing (immediate re-evaluation after every merge)
+#   - completion of Post-Testing E2E / Post-Testing E2E (nvidia) on testing
+#     (re-evaluation once a backfilled run lands)
 #   - daily 04:00 UTC — matches bluefin cadence
 
 on:
   workflow_run:
-    workflows: ["Post-Testing E2E"]
+    workflows: ["Post-Testing E2E", "Post-Testing E2E (nvidia)"]
     types: [completed]
     branches: [testing]
   schedule:
@@ -91,18 +93,22 @@ jobs:
     secrets: inherit
 
   # The release gate in reusable-promote-squash.yml requires a successful
-  # Post-Testing E2E run recorded on the testing branch head SHA, but that
-  # run is only dispatched by build-regular.yml after a successful testing
-  # image build — pushes to testing that skip the build (docs/CI changes) or
-  # a failed dispatch condition leave the head SHA without a run, and the
-  # gate then fails on every evaluation until the next image build. Backfill
-  # the missing run here after each gate evaluation (even a failed one); its
-  # completion re-triggers this workflow via workflow_run, and the gate then
-  # finds it and promotes.
+  # Post-Testing E2E run recorded on the testing branch head SHA, and the
+  # NVIDIA gate above requires the same for post-testing-e2e-nvidia.yml,
+  # but those runs are only dispatched by build-regular.yml /
+  # build-nvidia-manifest.yml after a successful image build — pushes to
+  # testing that skip the build (docs/CI changes) or a failed dispatch
+  # condition leave the head SHA without a run. When a run is missing,
+  # wait-nvidia-e2e times out and promote is *skipped* (not failed), so
+  # this backfill must not depend on either job's conclusion — otherwise
+  # the timeout path would skip it too and no evaluation could ever
+  # self-heal. Run it after every non-workflow_run evaluation; each backfilled
+  # run's completion re-triggers this workflow via workflow_run, and the
+  # gates then find them and promote.
   dispatch-missing-e2e:
     name: Backfill e2e for testing head
-    needs: [promote]
-    if: always() && needs.promote.result != 'skipped' && github.event_name != 'workflow_run'
+    needs: [wait-nvidia-e2e]
+    if: always() && github.event_name != 'workflow_run'
     runs-on: ubuntu-latest
     permissions:
       contents: read
