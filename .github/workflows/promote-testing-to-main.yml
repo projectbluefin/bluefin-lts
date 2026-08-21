@@ -10,11 +10,13 @@ name: Promote testing to main
 #
 # Triggers:
 #   - push to testing (immediate re-evaluation after every merge)
+#   - completion of Post-Testing E2E / Post-Testing E2E (nvidia) on testing
+#     (re-evaluation once a backfilled run lands)
 #   - daily 04:00 UTC — matches bluefin cadence
 
 on:
   workflow_run:
-    workflows: ["Post-Testing E2E"]
+    workflows: ["Post-Testing E2E", "Post-Testing E2E (nvidia)"]
     types: [completed]
     branches: [testing]
   schedule:
@@ -34,8 +36,46 @@ permissions:
   statuses: write
 
 jobs:
-  promote:
+  wait-nvidia-e2e:
+    name: Wait for NVIDIA E2E
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Wait for NVIDIA Post-Testing E2E to complete
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          testing_head="$(gh api "repos/$REPO/branches/testing" --jq '.commit.sha')"
+          echo "Testing HEAD: ${testing_head}"
+
+          # Poll for a successful NVIDIA E2E run on this SHA.
+          for i in $(seq 1 30); do
+            nvidia_run="$(gh run list --repo "$REPO" --workflow post-testing-e2e-nvidia.yml \
+              --branch testing --status success \
+              --json headSha \
+              --jq "[.[] | select(.headSha == \"${testing_head}\")] | length")"
+            if [[ "${nvidia_run}" -gt 0 ]]; then
+              echo "NVIDIA E2E passed for ${testing_head}."
+              exit 0
+            fi
+            echo "NVIDIA E2E not yet complete for ${testing_head} (attempt ${i}/30) — waiting 30s..."
+            sleep 30
+          done
+
+          echo "::error::NVIDIA E2E did not complete successfully for ${testing_head} within timeout"
+          exit 1
+
+  promote:
+    needs: [wait-nvidia-e2e]
+    if: always() && needs.wait-nvidia-e2e.result == 'success' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
@@ -53,18 +93,22 @@ jobs:
     secrets: inherit
 
   # The release gate in reusable-promote-squash.yml requires a successful
-  # Post-Testing E2E run recorded on the testing branch head SHA, but that
-  # run is only dispatched by build-regular.yml after a successful testing
-  # image build — pushes to testing that skip the build (docs/CI changes) or
-  # a failed dispatch condition leave the head SHA without a run, and the
-  # gate then fails on every evaluation until the next image build. Backfill
-  # the missing run here after each gate evaluation (even a failed one); its
-  # completion re-triggers this workflow via workflow_run, and the gate then
-  # finds it and promotes.
+  # Post-Testing E2E run recorded on the testing branch head SHA, and the
+  # NVIDIA gate above requires the same for post-testing-e2e-nvidia.yml,
+  # but those runs are only dispatched by build-regular.yml /
+  # build-nvidia-manifest.yml after a successful image build — pushes to
+  # testing that skip the build (docs/CI changes) or a failed dispatch
+  # condition leave the head SHA without a run. When a run is missing,
+  # wait-nvidia-e2e times out and promote is *skipped* (not failed), so
+  # this backfill must not depend on either job's conclusion — otherwise
+  # the timeout path would skip it too and no evaluation could ever
+  # self-heal. Run it after every non-workflow_run evaluation; each backfilled
+  # run's completion re-triggers this workflow via workflow_run, and the
+  # gates then find them and promote.
   dispatch-missing-e2e:
     name: Backfill e2e for testing head
-    needs: [promote]
-    if: always() && needs.promote.result != 'skipped' && github.event_name != 'workflow_run'
+    needs: [wait-nvidia-e2e]
+    if: always() && github.event_name != 'workflow_run'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -79,21 +123,35 @@ jobs:
 
           testing_head="$(gh api "repos/$REPO/branches/testing" --jq '.commit.sha')"
 
-          # Skip if a completed successful e2e run already exists for this head.
+          # Dispatch non-NVIDIA E2E if no successful run exists for this head.
           existing="$(gh run list --repo "$REPO" --workflow post-testing-e2e.yml \
             --branch testing --status success \
             --json headSha --jq "[.[] | select(.headSha == \"$testing_head\")] | length")"
-          if [[ "$existing" != "0" ]]; then
+          if [[ "$existing" == "0" ]]; then
+            gh workflow run post-testing-e2e.yml \
+              --repo "$REPO" \
+              --ref testing \
+              -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
+              -f suites="smoke"
+            echo "Dispatched post-testing-e2e against testing ($testing_head)."
+          else
             echo "Successful e2e run already recorded for $testing_head; skipping dispatch."
-            exit 0
           fi
 
-          gh workflow run post-testing-e2e.yml \
-            --repo "$REPO" \
-            --ref testing \
-            -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
-            -f suites="smoke"
-          echo "Dispatched post-testing-e2e against testing ($testing_head)."
+          # Dispatch NVIDIA E2E if no successful run exists for this head.
+          nvidia_existing="$(gh run list --repo "$REPO" --workflow post-testing-e2e-nvidia.yml \
+            --branch testing --status success \
+            --json headSha --jq "[.[] | select(.headSha == \"$testing_head\")] | length")"
+          if [[ "$nvidia_existing" == "0" ]]; then
+            gh workflow run post-testing-e2e-nvidia.yml \
+              --repo "$REPO" \
+              --ref testing \
+              -f image="ghcr.io/projectbluefin/bluefin-lts-nvidia:testing" \
+              -f suites="smoke"
+            echo "Dispatched post-testing-e2e-nvidia against testing ($testing_head)."
+          else
+            echo "Successful NVIDIA e2e run already recorded for $testing_head; skipping dispatch."
+          fi
 
   mirror-validate-to-merge-group:
     name: Mirror validate status to merge-group SHA

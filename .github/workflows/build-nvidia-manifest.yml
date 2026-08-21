@@ -188,3 +188,17 @@ jobs:
           generate-sbom: 'false'
           push-attestation: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dispatch post-testing E2E for NVIDIA
+        if: steps.find-runs.outputs.ready == 'true'
+        env:
+          TESTING_DIGEST: ${{ steps.manifest.outputs.digest }}
+        run: |
+          set -euo pipefail
+          gh workflow run post-testing-e2e-nvidia.yml \
+            --repo "${{ github.repository }}" \
+            --ref "${{ github.event.workflow_run.head_branch }}" \
+            -f image="ghcr.io/projectbluefin/bluefin-lts-nvidia:testing" \
+            -f expected-digest="${TESTING_DIGEST}" \
+            -f suites="smoke"
+          echo "Dispatched post-testing-e2e-nvidia for bluefin-lts-nvidia:testing (${TESTING_DIGEST})"
