@@ -115,6 +115,11 @@ The `bluefin-lts-nvidia` variant ships full CDI configuration so `podman run --d
 
 ### NVIDIA CDI wiring
 
+**`system_files_overrides/nvidia/usr/lib/bootc/kargs.d/00-nvidia.toml`**
+```
+kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1"]
+```
+
 **`build_scripts/overrides/nvidia/20-nvidia.sh`**
 ```bash
 # Configure nvidia-container-toolkit for rootless use.
@@ -122,6 +127,12 @@ The `bluefin-lts-nvidia` variant ships full CDI configuration so `podman run --d
 # Required for bootc — cgroup device delegation is not available in unprivileged containers.
 nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place
 ```
+
+**`system_files_overrides/nvidia/usr/share/glib-2.0/schemas/zz1-bluefin-nvidia-modifications.gschema.override`**
+
+The NVIDIA kernel arguments and Mutter `kms-modifiers` setting are declarative
+files in the NVIDIA overlay. Keep them out of the driver-install script so each
+setting is installed exactly once.
 
 **`system_files_overrides/nvidia/usr/lib/systemd/system-preset/80-nvidia-container-toolkit.preset`**
 ```

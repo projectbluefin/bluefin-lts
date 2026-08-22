@@ -91,10 +91,6 @@ blacklist nouveau
 options nouveau modeset=0
 EOF
 
-tee /usr/lib/bootc/kargs.d/00-nvidia.toml <<'EOF'
-kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1"]
-EOF
-
 ## nvidia post-install steps
 # disable repos provided by ublue-os-nvidia-addons
 dnf config-manager --set-disabled nvidia-container-toolkit
