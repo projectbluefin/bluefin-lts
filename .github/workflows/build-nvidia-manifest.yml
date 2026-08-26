@@ -20,6 +20,11 @@ name: Build Bluefin Nvidia Manifest
 # NOTE: workflow_run only fires for workflow files present on the
 # repository's default branch (main). This workflow will not trigger until
 # it has been promoted from testing to main at least once.
+#
+# The github.event.workflow_run.head_branch field does NOT reliably report
+# the triggering workflow's branch (it often resolves to "main" even when
+# the triggering build ran on "testing"), so we verify the branch inside
+# the find-runs step by checking the triggering runs via the API.
 
 on:
   workflow_run:
@@ -42,9 +47,7 @@ concurrency:
 jobs:
   assemble-manifest:
     name: Assemble bluefin-lts-nvidia multi-arch manifest
-    if: |
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'testing'
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
@@ -59,20 +62,36 @@ jobs:
         run: |
           set -euo pipefail
 
-          find_run() {
+          # Find the latest successful run for a workflow at the given SHA
+          # and verify it ran on the testing branch.
+          find_testing_run() {
             local workflow_file="$1"
-            gh api "repos/${{ github.repository }}/actions/workflows/${workflow_file}/runs" \
+            local run_id
+            run_id="$(gh api "repos/${{ github.repository }}/actions/workflows/${workflow_file}/runs" \
               -X GET -f head_sha="${HEAD_SHA}" -f status=success \
-              --jq '.workflow_runs[0].id // empty'
+              --jq '.workflow_runs[0].id // empty')"
+            if [[ -z "${run_id}" ]]; then
+              echo ""
+              return
+            fi
+            local branch
+            branch="$(gh api "repos/${{ github.repository }}/actions/runs/${run_id}" \
+              --jq '.head_branch // empty')"
+            if [[ "${branch}" != "testing" ]]; then
+              echo "::warning::${workflow_file} run ${run_id} for ${HEAD_SHA} ran on branch '${branch}', not 'testing' — ignoring."
+              echo ""
+              return
+            fi
+            echo "${run_id}"
           }
 
-          amd64_run="$(find_run build-nvidia.yml)"
-          arm64_run="$(find_run build-nvidia-aarch64.yml)"
+          amd64_run="$(find_testing_run build-nvidia.yml)"
+          arm64_run="$(find_testing_run build-nvidia-aarch64.yml)"
           echo "amd64_run=${amd64_run}" >> "$GITHUB_OUTPUT"
           echo "arm64_run=${arm64_run}" >> "$GITHUB_OUTPUT"
 
           if [[ -z "${amd64_run}" || -z "${arm64_run}" ]]; then
-            echo "Sibling architecture build for ${HEAD_SHA} is not complete yet (amd64=${amd64_run:-none}, arm64=${arm64_run:-none}) — skipping. The sibling's own completion will retry this."
+            echo "Sibling architecture build for ${HEAD_SHA} is not complete yet or ran on wrong branch (amd64=${amd64_run:-none}, arm64=${arm64_run:-none}) — skipping. The sibling's own completion will retry this."
             echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             echo "Found amd64 run ${amd64_run} and arm64 run ${arm64_run} for ${HEAD_SHA}."
