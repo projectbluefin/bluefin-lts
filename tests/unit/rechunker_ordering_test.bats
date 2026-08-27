@@ -18,5 +18,5 @@ DROP_IN="${BATS_TEST_DIRNAME}/../../system_files/usr/lib/systemd/system/rechunke
 }
 
 @test "rechunker ordering: does not add local-fs.target" {
-    ! grep -Eq '(^|[[:space:]])local-fs\.target([[:space:]]|$)' "${DROP_IN}"
+    ! grep -v '^#' "${DROP_IN}" | grep -Eq '(^|[[:space:]])local-fs\.target([[:space:]]|$)'
 }
