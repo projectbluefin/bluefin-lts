@@ -119,6 +119,25 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     brew_image_sha=$(yq -r '.images[] | select(.name == "brew") | .digest' image-versions.yaml)
     brew_image_ref="${brew_image}@${brew_image_sha}"
 
+    # Verify the shared layer before allowing it into the LTS build.
+    if ! command -v cosign >/dev/null 2>&1; then
+        echo "ERROR: cosign is required to verify the common image." >&2
+        exit 1
+    fi
+    for attempt in $(seq 1 5); do
+        if cosign verify \
+            --certificate-identity-regexp="https://github.com/projectbluefin/common/.github/workflows/" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+            "${common_image_ref}" >/dev/null; then
+            break
+        fi
+        if [[ "${attempt}" -eq 5 ]]; then
+            echo "ERROR: common image signature verification failed after 5 attempts." >&2
+            exit 1
+        fi
+        sleep 10
+    done
+
     BUILD_ARGS=()
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE_REF=${common_image_ref}")
     BUILD_ARGS+=("--build-arg" "BREW_IMAGE_REF=${brew_image_ref}")
