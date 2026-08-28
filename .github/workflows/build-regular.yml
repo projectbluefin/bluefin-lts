@@ -100,7 +100,6 @@ jobs:
         with:
           storage-backend: remove-software
           update-podman: 'true'
-          install-tools: '["cosign"]'
 
       - name: Login to GHCR for manifest signing
         env:

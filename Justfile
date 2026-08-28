@@ -120,12 +120,17 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     brew_image_ref="${brew_image}@${brew_image_sha}"
 
     # Verify the shared layer before allowing it into the LTS build.
-    if ! command -v cosign >/dev/null 2>&1; then
-        echo "ERROR: cosign is required to verify the common image." >&2
-        exit 1
+    cosign_bin="$(command -v cosign || true)"
+    if [[ -z "${cosign_bin}" ]]; then
+        cosign_bin="$(mktemp)"
+        trap 'rm -f "${cosign_bin}"' EXIT
+        curl -fsSL \
+            "https://github.com/sigstore/cosign/releases/download/v3.1.1/cosign-linux-amd64" \
+            -o "${cosign_bin}"
+        chmod 0755 "${cosign_bin}"
     fi
     for attempt in $(seq 1 5); do
-        if cosign verify \
+        if "${cosign_bin}" verify \
             --certificate-identity-regexp="https://github.com/projectbluefin/common/.github/workflows/" \
             --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
             "${common_image_ref}" >/dev/null; then
