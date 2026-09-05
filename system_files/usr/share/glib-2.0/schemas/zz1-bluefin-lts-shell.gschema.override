@@ -2,4 +2,4 @@
 enabled-extensions = ['appindicatorsupport@rgcjonas.gmail.com', 'blur-my-shell@aunetx', 'custom-command-list@storageb.github.com', 'dash-to-dock@micxgx.gmail.com', 'gradia-integration@alexandervanhee.github.io', 'gsconnect@andyholmes.github.io']
 
 [org.gnome.mutter]
-experimental-features = ['scale-monitor-framebuffer']
+experimental-features = ['scale-monitor-framebuffer', 'xwayland-native-scaling']
