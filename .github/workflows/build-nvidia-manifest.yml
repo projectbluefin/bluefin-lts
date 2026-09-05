@@ -62,7 +62,7 @@ jobs:
           find_run() {
             local workflow_file="$1"
             gh api "repos/${{ github.repository }}/actions/workflows/${workflow_file}/runs" \
-              -X GET -f head_sha="${HEAD_SHA}" -f status=success \
+              -f head_sha="${HEAD_SHA}" -f status=success \
               --jq '.workflow_runs[0].id // empty'
           }
 
