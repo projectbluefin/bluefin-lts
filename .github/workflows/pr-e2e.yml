@@ -23,8 +23,6 @@ env:
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
   IMAGE_NAME: bluefin-lts
 
-permissions: {}
-
 jobs:
   compose:
     name: Compose PR test image
