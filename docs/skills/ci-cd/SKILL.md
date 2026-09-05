@@ -5,6 +5,7 @@ description: >-
   Use when a workflow does not trigger, an artifact is not published, or CI logic changes.
 metadata:
   context7-sources:
+    - /websites/github_en_actions
     - /podman-container-tools/skopeo
 ---
 
@@ -46,10 +47,10 @@ metadata:
 | NVIDIA manifest assembly | `.github/workflows/build-nvidia-manifest.yml` |
 | Promotion | `.github/workflows/promote-testing-to-main.yml` |
 | Stable publication | `.github/workflows/execute-release.yml` |
-| End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml` |
+| End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml`, `post-testing-e2e.yml` |
 | Syntax and repository checks | `.github/workflows/pr-testsuite.yml`, `unit-tests.yml` |
 | Lab PR Check Run | `.github/workflows/lab-check.yml` |
-| Dependency updates | `.github/renovate.json5`, Renovate workflows |
+| Dependency updates | `renovate.json`, Renovate workflows |
 
 The exact workflow files in the repository are authoritative. Update this table
 when a workflow is renamed or removed.

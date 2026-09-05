@@ -7,13 +7,15 @@ on:
       - main
   merge_group:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   validate:
-    name: Lint & syntax
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

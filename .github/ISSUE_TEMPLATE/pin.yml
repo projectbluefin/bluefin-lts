@@ -4,7 +4,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for taking the time to fill out this bug report! (She bites sometimes). We can pin packages to older, known working versions if there's an issue with an update in Fedora.
+        We can pin packages to older, known working versions when a CentOS Stream update regresses the image.
   - type: textarea
     id: package
     attributes:
@@ -15,11 +15,11 @@ body:
     validations:
       required: true
   - type: textarea
-    id: bodhi
+    id: package-source
     attributes:
-      label: Bodhi Link (Optional)
-      description: Add the bodhi link to the working version, this is very useful in order to pin a package quickly
-      placeholder: Bodhi link
-      value: "Pin to this version please: https://bodhi.fedoraproject.org/updates/FEDORA-2024-45d587348e"
+      label: Package NVR or repository (Optional)
+      description: Provide the known-good package NVR and its CentOS Stream or EPEL source
+      placeholder: package-1.2.3-4.el10 from centos-stream-baseos
+      value: "Pin package-1.2.3-4.el10 from centos-stream-baseos"
     validations:
       required: false
