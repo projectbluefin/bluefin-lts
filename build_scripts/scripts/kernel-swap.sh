@@ -26,9 +26,7 @@ find /tmp/kernel-rpms
 
 # Extract version from the first kernel rpm filename (handles both .el10 and .fc42 dist tags)
 # shellcheck disable=SC2012
-# || true: ls returns non-zero when no match; with set -e the script would exit before the
-# explicit -z check below.  The empty-string guard below owns the error path.
-CACHED_VERSION=$(cd /tmp/kernel-rpms && ls kernel-[0-9]*.rpm 2>/dev/null | head -1 | sed -E 's/^kernel-//;s/\.rpm$//') || true
+CACHED_VERSION=$(cd /tmp/kernel-rpms && ls kernel-[0-9]*.rpm 2>/dev/null | head -1 | sed -E 's/^kernel-//;s/\.rpm$//')
 
 if [[ -z "$CACHED_VERSION" ]]; then
   echo "ERROR: Could not detect kernel version from /tmp/kernel-rpms"
@@ -91,9 +89,7 @@ echo "Detected kernel version: ${KERNEL_VERSION}"
 
 AKMODS_FLAVOR="coreos-stable"
 # Derive Fedora version from the installed kernel (e.g., 7.0.8-200.fc44.x86_64 → 44)
-# || true: grep exits 1 when the pattern is absent (el kernels); with set -e the shell would
-# exit before the fallback below.
-FEDORA_VERSION=$(echo "${KERNEL_VERSION}" | grep -oP 'fc\K[0-9]+' || true)
+FEDORA_VERSION=$(echo "${KERNEL_VERSION}" | grep -oP 'fc\K[0-9]+')
 if [[ -z "${FEDORA_VERSION}" ]]; then
   # Fall back to the build-arg passed at image build time
   FEDORA_VERSION="${FEDORA_AKMODS_VERSION:-43}"

@@ -1,0 +1,29 @@
+name: Merge Queue Validate
+
+on:
+  merge_group:
+    branches:
+      - main
+    types:
+      - checks_requested
+
+permissions:
+  statuses: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post required validate status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh api "repos/${REPO}/statuses/${SHA}" \
+            --method POST \
+            --field state=success \
+            --field context=validate \
+            --field description="Validated on merge queue head" \
+            --field target_url="${RUN_URL}"

@@ -485,7 +485,17 @@ gen-sbom base="bluefin-lts" stream="stable" flavor="main" syft_cmd="syft":
     DEFAULT_TAG="$({{ just_executable() }} generate-default-tag {{ stream }} 1)"
     mkdir -p "sbom_out/${IMAGE_NAME}"
     OCI_DIR="sbom_out/${IMAGE_NAME}/oci-dir"
-    podman save --format oci-dir -o "${OCI_DIR}" "localhost/${IMAGE_NAME}:${DEFAULT_TAG}"
+    for attempt in 1 2 3; do
+        rm -rf "${OCI_DIR}"
+        if podman save --format oci-dir -o "${OCI_DIR}" "localhost/${IMAGE_NAME}:${DEFAULT_TAG}"; then
+            break
+        fi
+        if [[ "${attempt}" == "3" ]]; then
+            echo "podman save failed after ${attempt} attempts" >&2
+            exit 2
+        fi
+        echo "podman save failed; retrying (attempt $((attempt + 1))/3)" >&2
+    done
     {{ syft_cmd }} "oci-dir:${OCI_DIR}" \
         -o syft-json="sbom_out/${IMAGE_NAME}/sbom.json"
     # Fix ownership so subsequent non-root steps (sign-and-publish) can read/write the SBOM
