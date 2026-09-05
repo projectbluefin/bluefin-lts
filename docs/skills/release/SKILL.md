@@ -40,7 +40,7 @@ testing → main → :stable
 
 1. `promote-testing-to-main.yml` fires when Post-Testing E2E succeeds on `testing`, **daily at 04:00 UTC**, and on manual dispatch.
    It calls `reusable-promote-squash.yml@v1` with explicit `source_branch: testing` and `target_branch: main`, and enables `use_merge_queue: true`.
-   Promotion requires a successful Post-Testing E2E run for the `testing` head; the caller backfills a missing run. When trees differ it rebuilds the squash branch and upserts the `auto/promote-testing-to-main` PR.
+   When trees differ it rebuilds the squash branch and upserts the `auto/promote-testing-to-main` PR.
 2. The PR enters the merge queue (ruleset 17070416 on `main` requires squash + merge queue).
    Required check: `validate`. No approvals needed.
 3. On merge, `execute-release.yml` fires on `push: main`, detects the commit message
@@ -191,6 +191,7 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 
 - `use_merge_queue: false` — main requires a merge queue (ruleset 17070416); always use `true`
 - `source_branch: main` or `target_branch: lts` — model changed; use `testing` → `main`
+- adding `run_e2e: true` — Bluefin-compatible promotion does not require a pre-merge E2E gate
 - describing the schedule as weekly — cadence is daily at 04:00 UTC (`0 4 * * *`)
 - **Claiming completion without live verification:** Never claim a build-fixing task is "fully complete" without noting that the fix is still pending live verification by the active CI pipeline (which takes 45–90 mins). Always clearly differentiate between local code-level/syntax validation and live OCI container build execution.
 
@@ -199,6 +200,5 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 - [ ] `promote-testing-to-main.yml` schedules daily at `0 4 * * *`
 - [ ] `use_merge_queue: true`
 - [ ] The promotion caller explicitly sets `source_branch: testing` and `target_branch: main`
-- [ ] A successful Post-Testing E2E run exists for the `testing` head before promotion
 - [ ] `execute-release.yml` fires on `push: main`, detects `"^chore: promote testing to main"`, publishes `:stable`
 - [ ] Manifest jobs publish `:testing` only after per-architecture builds publish immutable aliases
