@@ -145,7 +145,7 @@ jobs:
         with:
           image: ghcr.io/projectbluefin/bluefin-lts
           digest: ${{ steps.manifest.outputs.digest }}
-          generate-sbom: 'false'
+          generate-sbom: 'true'
           push-attestation: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
