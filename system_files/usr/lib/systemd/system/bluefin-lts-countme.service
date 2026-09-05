@@ -6,8 +6,9 @@ ConditionPathExists=/run/ostree-booted
 
 [Service]
 Type=oneshot
-# dnf5 correctly expands ${releasever_minor:+-z} (empty on CentOS → epel-10)
-# and reads NAME from /usr/lib/os-release, reporting as "Bluefin LTS".
-# Must run as root: dnf5 countme bails out when getuid() != 0.
+# Plain dnf (dnf4 CLI) is used: dnf5 is not packaged in CentOS Stream 10 or
+# EPEL 10. Unlike rpm-ostree-countme's embedded libdnf4, the dnf CLI resolves
+# the EPEL metalink correctly and reports User-Agent "Bluefin LTS 10" from
+# os-release, so the weekly countme ping lands.
 # Ref: coreos/rpm-ostree#5464 (rpm-ostree-countme broken on CentOS)
-ExecStart=/usr/bin/dnf5 makecache
+ExecStart=/usr/bin/dnf makecache

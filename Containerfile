@@ -10,7 +10,7 @@ FROM ghcr.io/ublue-os/akmods-zfs:${AKMODS_VERSION} AS akmods_zfs
 FROM ghcr.io/ublue-os/akmods-nvidia-open:${AKMODS_VERSION} AS akmods_nvidia_open
 FROM ${COMMON_IMAGE_REF} AS common
 FROM ${BREW_IMAGE_REF} AS brew
-FROM scratch AS context
+FROM scratch AS ctx
 
 COPY system_files /files
 COPY --from=brew /system_files /files
@@ -40,7 +40,7 @@ RUN --mount=type=tmpfs,dst=/opt \
   --mount=type=bind,from=akmods_zfs,src=/rpms,dst=/tmp/akmods-zfs-rpms \
   --mount=type=bind,from=akmods_zfs,src=/kernel-rpms,dst=/tmp/kernel-rpms \
   --mount=type=bind,from=akmods_nvidia_open,src=/rpms,dst=/tmp/akmods-nvidia-open-rpms \
-  --mount=type=bind,from=context,source=/,target=/run/context \
+  --mount=type=bind,from=ctx,source=/,target=/run/context \
   /run/context/build_scripts/build.sh
 
 # Makes `/opt` writeable by default

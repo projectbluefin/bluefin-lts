@@ -24,9 +24,11 @@ systemctl enable uupd.timer
 systemctl enable ublue-system-setup.service
 systemctl --global enable ublue-user-setup.service
 systemctl mask bootc-fetch-apply-updates.timer bootc-fetch-apply-updates.service
-# rpm-ostree-countme uses old libdnf4 that cannot expand ${releasever_minor:+-z}
-# in EPEL 10's metalink URL (HTTP 404 on CentOS). Replace with a dnf5-based
-# equivalent that handles variable expansion correctly. Ref: coreos/rpm-ostree#5464
+# rpm-ostree-countme uses embedded libdnf4 that cannot expand
+# ${releasever_minor:+-z} in EPEL 10's metalink URL (HTTP 404 on CentOS).
+# Replace with a dnf-based equivalent; the dnf CLI resolves the metalink
+# correctly (dnf5 is unavailable in CentOS Stream 10 and EPEL 10).
+# Ref: coreos/rpm-ostree#5464
 systemctl mask rpm-ostree-countme.service rpm-ostree-countme.timer
 systemctl enable bluefin-lts-countme.timer
 systemctl disable sshd.service
