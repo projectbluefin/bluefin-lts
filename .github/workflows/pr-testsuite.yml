@@ -13,7 +13,6 @@ concurrency:
 
 jobs:
   validate:
-    name: Lint & syntax
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
