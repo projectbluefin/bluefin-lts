@@ -33,7 +33,7 @@ sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-nvidia:stable --enforce-con
 
 ## Migrating from ublue-os/bluefin-lts
 
-Users on the previous `ghcr.io/ublue-os/bluefin*:lts` images will be migrated automatically via a systemd service shipped in the weekly build. No action required — your machine will switch on its next reboot after pulling the update.
+Users on the previous `ghcr.io/ublue-os/bluefin*:lts` images will be migrated automatically via a systemd service. No action required — your machine will switch on its next reboot after pulling the update.
 
 | Old image (ublue-os) | New image (projectbluefin) |
 |---|---|

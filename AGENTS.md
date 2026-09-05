@@ -72,6 +72,12 @@ immutable digest and signature.
 - Do not add session logs, dated status, issue histories, or duplicate policy.
 - Use standard Markdown and repository-relative links.
 
+## Shared factory contract
+
+Follow the canonical factory workflow in
+[`projectbluefin/common`](https://github.com/projectbluefin/common/tree/main/docs).
+Local ownership and safety boundaries in this file take precedence when they differ.
+
 ## Completion evidence
 
 Before handoff, report:
@@ -83,5 +89,9 @@ Before handoff, report:
 
 ## Commit convention
 
-Use Conventional Commits and include the repository-required AI attribution
-trailer.
+Use Conventional Commits and include the factory AI attribution trailers:
+
+```text
+Assisted-by: <model>
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+```
