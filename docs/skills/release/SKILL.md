@@ -4,6 +4,7 @@ description: >-
   Verify and promote published artifacts safely. Use when checking digests, signatures, stable releases, rollback, or emergency promotion.
 metadata:
   context7-sources:
+    - /websites/github_en_actions
     - /podman-container-tools/skopeo
 ---
 
@@ -37,11 +38,11 @@ testing → main → :stable
 
 ## Production release flow
 
-1. `promote-testing-to-main.yml` fires on push to `testing`, **daily at 04:00 UTC**, and on manual dispatch.
+1. `promote-testing-to-main.yml` fires when Post-Testing E2E succeeds on `testing`, **daily at 04:00 UTC**, and on manual dispatch.
    It calls `reusable-promote-squash.yml@v1` with explicit `source_branch: testing` and `target_branch: main`, and enables `use_merge_queue: true`.
    When trees differ it rebuilds the squash branch and upserts the `auto/promote-testing-to-main` PR.
 2. The PR enters the merge queue (ruleset 17070416 on `main` requires squash + merge queue).
-   Required check: `Lint & syntax`. No approvals needed.
+   Required check: `validate`. No approvals needed.
 3. On merge, `execute-release.yml` fires on `push: main`, detects the commit message
    `"^chore: promote testing to main"`, skopeo-copies `:testing → :stable` for both image variants,
    and creates a GitHub release with changelog via `reusable-release.yml@v1`.
@@ -59,13 +60,13 @@ gh pr merge <pr-number> --repo projectbluefin/bluefin-lts --squash --admin
 
 ## Branch protection
 
-`main` requires a PR with merge queue entry. Gate check: `Lint & syntax`. 0 approvals required.
+`main` requires a PR with merge queue entry. Gate check: `validate`. 0 approvals required.
 `.github/workflows/` is CODEOWNERS-protected — PRs touching workflow files require `--admin` bypass.
 
 ## Daily cadence
 
 - Fully automated: **daily 04:00 UTC** — cron fires, promote workflow updates the PR, merge queue processes it, execute-release publishes `:stable`
-- No human approval required — `Lint & syntax` is the only gate
+- No human approval required — `validate` is the only gate
 - `workflow_dispatch` is the supported manual release path
 
 ## Image verification — always check digests
@@ -84,13 +85,11 @@ A fix is published when:
 1. The `:stable` digest differs from the last known digest
 2. The `org.opencontainers.image.created` date is after the fix merged
 3. Both variants (bluefin-lts and bluefin-lts-nvidia) are updated
-4. `skopeo inspect --raw` shows a complete amd64/arm64 index when ARM artifacts are available;
-   an NVIDIA amd64-only fallback is accepted only when its standalone ARM workflow has failed
-   and the promoted artifact is verified as amd64.
+4. `skopeo inspect --raw` shows a complete amd64/arm64 index.
 
 ## Build cascade — rapid commits cancel in-progress builds
 
-Each push to `testing` triggers new builds which cancel in-progress builds via concurrency groups. Builds take 60-90 min. Stop committing to `testing` while builds are in progress.
+Each push to `testing` triggers new builds which cancel in-progress builds via concurrency groups. Builds take 45-90 min. Stop committing to `testing` while builds are in progress.
 
 ```bash
 SHA=<commit-sha>
@@ -192,7 +191,7 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 
 - `use_merge_queue: false` — main requires a merge queue (ruleset 17070416); always use `true`
 - `source_branch: main` or `target_branch: lts` — model changed; use `testing` → `main`
-- adding `run_e2e: true` — no post-merge-e2e gate; builds publish `:testing` directly
+- adding `run_e2e: true` — Bluefin-compatible promotion does not require a pre-merge E2E gate
 - describing the schedule as weekly — cadence is daily at 04:00 UTC (`0 4 * * *`)
 - **Claiming completion without live verification:** Never claim a build-fixing task is "fully complete" without noting that the fix is still pending live verification by the active CI pipeline (which takes 45–90 mins). Always clearly differentiate between local code-level/syntax validation and live OCI container build execution.
 
@@ -202,4 +201,4 @@ NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256s
 - [ ] `use_merge_queue: true`
 - [ ] The promotion caller explicitly sets `source_branch: testing` and `target_branch: main`
 - [ ] `execute-release.yml` fires on `push: main`, detects `"^chore: promote testing to main"`, publishes `:stable`
-- [ ] Build workflows push `:testing` on push to `testing` branch
+- [ ] Manifest jobs publish `:testing` only after per-architecture builds publish immutable aliases

@@ -31,7 +31,7 @@ description: >-
 ## Fast validation
 
 ```bash
-just check      # validate Justfile syntax and build script checks (<30s)
+just check      # validate Justfile syntax (<30s)
 just lint       # shellcheck over build_scripts/**/*.sh
 just unit-tests # bats tests for build_scripts/
 ```
