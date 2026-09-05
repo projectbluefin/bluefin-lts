@@ -1,0 +1,78 @@
+name: Post-Testing E2E (nvidia)
+
+# Runs e2e smoke tests after the NVIDIA testing image manifest is assembled
+# so promote-testing-to-main can gate on an existing verified run for both
+# bluefin-lts and bluefin-lts-nvidia.
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Full image reference to test
+        required: false
+        default: ghcr.io/projectbluefin/bluefin-lts-nvidia:testing
+        type: string
+      suites:
+        description: Comma-separated list of test suites to run
+        required: false
+        default: smoke
+        type: string
+      expected-digest:
+        description: Expected immutable digest for the testing image
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  verify-manifest:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+    steps:
+      - name: Resolve image reference
+        id: resolve
+        env:
+          IMAGE_REF: ${{ inputs.image || 'ghcr.io/projectbluefin/bluefin-lts-nvidia:testing' }}
+        run: echo "image=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify testing image is reachable and multi-arch
+        env:
+          IMAGE_REF: ${{ steps.resolve.outputs.image }}
+          EXPECTED_DIGEST: ${{ inputs['expected-digest'] }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Checking image manifest for ${IMAGE_REF}"
+          actual_digest="$(skopeo inspect --format '{{.Digest}}' "docker://${IMAGE_REF}")"
+          if [[ -n "${EXPECTED_DIGEST}" && "${actual_digest}" != "${EXPECTED_DIGEST}" ]]; then
+            echo "::error::${IMAGE_REF} resolved to ${actual_digest}, expected ${EXPECTED_DIGEST}"
+            exit 1
+          fi
+          raw_manifest="$(skopeo inspect --raw "docker://${IMAGE_REF}")"
+          echo "${raw_manifest}" | jq -e '
+            (.mediaType == "application/vnd.oci.image.index.v1+json"
+              or .mediaType == "application/vnd.docker.distribution.manifest.list.v2+json")
+            and ([.manifests[]?.platform.architecture] | sort) == ["amd64", "arm64"]
+          ' >/dev/null
+          echo "Verified ${IMAGE_REF} -> ${actual_digest} is an amd64/arm64 image index."
+
+  testsuite:
+    needs: [verify-manifest]
+    if: always() && needs.verify-manifest.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/run-testsuite.yml
+    with:
+      image: ${{ needs.verify-manifest.outputs.image }}
+      suites: ${{ inputs.suites || 'smoke' }}
+    secrets: inherit
