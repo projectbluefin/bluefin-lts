@@ -100,7 +100,16 @@ EOF
 dnf config-manager --set-disabled nvidia-container-toolkit
 
 systemctl enable ublue-nvctk-cdi.service
-semodule --verbose --install /usr/share/selinux/packages/nvidia-container.pp
+for attempt in 1 2 3; do
+    if semodule --verbose --install /usr/share/selinux/packages/nvidia-container.pp; then
+        break
+    fi
+    if [ "$attempt" -eq 3 ]; then
+        exit 1
+    fi
+    rm -rf /etc/selinux/targeted/tmp /etc/selinux/targeted/previous
+    sleep 1
+done
 
 # Universal Blue specific Initramfs fixes
 # nvidia-modeset.conf may not exist on all architectures (e.g. arm64/SBSA)
