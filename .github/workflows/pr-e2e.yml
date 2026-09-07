@@ -85,7 +85,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           extra-args: |
-            --compression-format=zstd
+            --compression-format=zstd:chunked
 
   e2e:
     name: E2E — PR compose smoke
