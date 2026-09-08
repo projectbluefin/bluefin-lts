@@ -25,6 +25,11 @@ dnf_line() {
     grep -n -- "$1" "${DNF_LOG}" | head -1 | cut -d: -f1
 }
 
+# Line number of the first command invocation in CMD_LOG matching a pattern.
+cmd_line() {
+    grep -n -- "$1" "${CMD_LOG}" | head -1 | cut -d: -f1
+}
+
 setup() {
     TEST_ROOT="${BATS_TEST_TMPDIR}/sandbox"
     STUB_BIN="${TEST_ROOT}/stub-bin"
@@ -49,6 +54,7 @@ setup() {
     cat > "${STUB_BIN}/dnf" <<EOF
 #!/usr/bin/env bash
 echo "dnf \$*" >> "${DNF_LOG}"
+echo "dnf \$*" >> "${CMD_LOG}"
 if [[ "\$1" == "config-manager" && "\${STUB_ADD_REPO_CREATES}" == "1" ]]; then
     url=""
     prev=""
@@ -117,6 +123,7 @@ teardown() {
     cat > "${STUB_BIN}/dnf" <<EOF
 #!/usr/bin/env bash
 echo "dnf \$*" >> "${DNF_LOG}"
+echo "dnf \$*" >> "${CMD_LOG}"
 exit 7
 EOF
     chmod +x "${STUB_BIN}/dnf"
@@ -357,7 +364,7 @@ EOF
     patch_and_run
     [ "$status" -eq 0 ]
     grep -q -- "rpm --erase --nodeps centos-logos" "${CMD_LOG}"
-    [ "$(grep -n "gnome50-el10-compat" "${DNF_LOG}" | head -1 | cut -d: -f1)" -ge 1 ]
+    [ "$(cmd_line "group install")" -lt "$(cmd_line "rpm --erase --nodeps centos-logos")" ]
 }
 
 @test "image-base: installs generic-logos then erases it without touching the rpmdb" {

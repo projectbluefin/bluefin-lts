@@ -134,7 +134,7 @@ EOF
     [ "$status" -eq 0 ]
     local line
     line="$(grep -- "--enablerepo docker-ce-stable" "${DNF_LOG}")"
-    for pkg in docker-ce docker-ce-cli docker-model-plugin containerd.io \
+    for pkg in docker-ce docker-ce-cli containerd.io \
         docker-buildx-plugin docker-compose-plugin; do
         [[ " ${line} " == *" ${pkg} "* ]]
     done
