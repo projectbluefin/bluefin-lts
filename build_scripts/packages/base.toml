@@ -39,6 +39,7 @@ packages = [
     "ptyxis",
     "sane-backends-drivers-scanners",
     "speech-dispatcher",
+    "speech-dispatcher-utils",
     "xdg-desktop-portal-gnome",
     "xdg-user-dirs-gtk",
     "yelp-tools",
