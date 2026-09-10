@@ -1,15 +1,16 @@
 name: Promote testing to main
 
 # Opens and maintains a squash promotion PR from testing → main.
-# Auto-merges via enablePullRequestAutoMerge (--auto) — no human approval required.
-# main branch protection requires 0 reviews; gate checks are the only gate.
+# Maintains the promotion PR and enqueues it in the merge queue; branch
+# protection still enforces required reviews and checks before it can merge.
+# main branch protection requires at least 2 approvals plus the validate check.
 #
 # Factory-standard branch model: source_branch=testing, target_branch=main.
 # Compares testing vs main trees and opens auto/promote-testing-to-main → main
 # when they differ. On merge, execute-release.yml fires and publishes :stable.
 #
 # Triggers:
-#   - push to testing (immediate re-evaluation after every merge)
+#   - successful Post-Testing E2E completion on testing (re-evaluation after each build)
 #   - daily 04:00 UTC — matches bluefin cadence
 
 on:
