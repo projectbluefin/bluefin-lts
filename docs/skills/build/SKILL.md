@@ -45,8 +45,6 @@ Run before every commit.
 | Regular LTS | `just build bluefin-lts lts 0 0` | 45–90 min |
 | NVIDIA | `just build bluefin-lts-nvidia lts 0 1` | 45–90 min |
 
-`gnome_version` defaults to `50`; override only when testing a future GNOME version.
-
 LTS uses the Fedora CoreOS 44 akmods stream by default. Override it explicitly when validating another compatible stream:
 
 ```bash
