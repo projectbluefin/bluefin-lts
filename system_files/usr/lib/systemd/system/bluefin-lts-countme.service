@@ -3,12 +3,15 @@ Description=Weekly Bluefin LTS Count Me reporting
 Documentation=https://github.com/projectbluefin/bluefin-lts
 # Only run on bootc/ostree systems
 ConditionPathExists=/run/ostree-booted
+ConditionPathExists=!/etc/projectbluefin/countme/disabled
 
 [Service]
 Type=oneshot
+StateDirectory=bluefin-lts-countme
 # Plain dnf (dnf4 CLI) is used: dnf5 is not packaged in CentOS Stream 10 or
 # EPEL 10. Unlike rpm-ostree-countme's embedded libdnf4, the dnf CLI resolves
 # the EPEL metalink correctly and reports User-Agent "Bluefin LTS 10" from
 # os-release, so the weekly countme ping lands.
 # Ref: coreos/rpm-ostree#5464 (rpm-ostree-countme broken on CentOS)
 ExecStart=/usr/bin/dnf makecache
+ExecStart=/usr/libexec/bluefin-lts-countme
