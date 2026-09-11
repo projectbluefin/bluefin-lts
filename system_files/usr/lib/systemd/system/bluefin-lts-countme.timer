@@ -2,6 +2,7 @@
 Description=Weekly Bluefin LTS Count Me timer
 Documentation=https://github.com/projectbluefin/bluefin-lts
 ConditionPathExists=/run/ostree-booted
+ConditionPathExists=!/etc/projectbluefin/countme/disabled
 
 [Timer]
 # Matches Fedora's rpm-ostree-countme.timer exactly.

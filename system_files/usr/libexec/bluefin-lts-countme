@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# /usr/libexec/bluefin-lts-countme
+# First-party countme reporting client for Bluefin LTS.
+# Reports weekly countme ping to countme.projectbluefin.io.
+# Ref: projectbluefin/documentation ADR 0006, projectbluefin/bluefin-lts#591
+set -euo pipefail
+
+DISABLED_FILE="${DISABLED_FILE:-/etc/projectbluefin/countme/disabled}"
+LEGACY_DISABLED_FILE="${LEGACY_DISABLED_FILE:-/etc/dakota-countme/disabled}"
+IMAGE_INFO="${IMAGE_INFO:-/usr/share/ublue-os/image-info.json}"
+OS_RELEASE="${OS_RELEASE:-/usr/lib/os-release}"
+STATE_DIR="${STATE_DIR:-${STATE_DIRECTORY:-/var/lib/bluefin-lts-countme}}"
+COUNTME_ENDPOINT="${COUNTME_ENDPOINT:-https://countme.projectbluefin.io/metalink}"
+REPO="${REPO:-bluefin-lts}"
+WEEK=604800
+
+# 1. Opt-out check: honor /etc/projectbluefin/countme/disabled (and legacy marker)
+if [ -e "$DISABLED_FILE" ] || [ -e "$LEGACY_DISABLED_FILE" ]; then
+    exit 0
+fi
+
+# 2. Dependency checks: fail open / skip silently if tools are missing
+if ! command -v curl >/dev/null; then
+    echo "bluefin-lts-countme: curl is unavailable; skipping telemetry" >&2
+    exit 0
+fi
+
+if ! command -v jq >/dev/null; then
+    echo "bluefin-lts-countme: jq is unavailable; skipping telemetry" >&2
+    exit 0
+fi
+
+NOW=$(date +%s)
+
+# 3. Ensure state directory exists
+if [ ! -d "$STATE_DIR" ]; then
+    mkdir -p "$STATE_DIR"
+fi
+
+EPOCH_FILE="${STATE_DIR}/epoch"
+if [ ! -f "$EPOCH_FILE" ] && [ -f "/var/lib/bluefin-countme/epoch" ]; then
+    EPOCH_FILE="/var/lib/bluefin-countme/epoch"
+fi
+LASTRUN_FILE="${STATE_DIR}/lastrun"
+
+# 4. Throttling: only run once per 7-day window
+if [ -f "$LASTRUN_FILE" ]; then
+    LASTRUN=$(cat "$LASTRUN_FILE" 2>/dev/null || echo "")
+    if [[ "$LASTRUN" =~ ^[0-9]+$ ]] && (( NOW >= LASTRUN && NOW - LASTRUN < WEEK )); then
+        exit 0
+    fi
+fi
+
+# 5. Initialize epoch file on first run
+if [ ! -f "$EPOCH_FILE" ]; then
+    echo "$NOW" > "$EPOCH_FILE"
+fi
+
+EPOCH=$(cat "$EPOCH_FILE" 2>/dev/null || echo "$NOW")
+if ! [[ "$EPOCH" =~ ^[0-9]+$ ]]; then
+    echo "$NOW" > "$EPOCH_FILE"
+    EPOCH="$NOW"
+fi
+
+# 6. Compute Fedora/Bluefin cohort installation age bucket (1-4)
+# Source: ADR 0006 / mirrors-countme:
+#   Bucket 1: week 1 (days 0-6)
+#   Bucket 2: weeks 2-4 (days 7-27)
+#   Bucket 3: weeks 5-24 (days 28-167)
+#   Bucket 4: >24 weeks (days 168+)
+if (( NOW < EPOCH )); then
+    WEEKS=1
+else
+    WEEKS=$(( (NOW - EPOCH) / WEEK + 1 ))
+fi
+
+if (( WEEKS == 1 )); then
+    BUCKET=1
+elif (( WEEKS >= 2 && WEEKS <= 4 )); then
+    BUCKET=2
+elif (( WEEKS >= 5 && WEEKS <= 24 )); then
+    BUCKET=3
+else
+    BUCKET=4
+fi
+
+# 7. Extract metadata from image-info.json and os-release
+IMAGE_TAG="${IMAGE_TAG:-}"
+IMAGE_FLAVOR="${IMAGE_FLAVOR:-}"
+
+if [ -f "$IMAGE_INFO" ]; then
+    if [ -z "$IMAGE_TAG" ]; then
+        IMAGE_TAG=$(jq -r '."image-tag" // empty' "$IMAGE_INFO" 2>/dev/null || true)
+    fi
+    if [ -z "$IMAGE_FLAVOR" ]; then
+        IMAGE_FLAVOR=$(jq -r '."image-flavor" // empty' "$IMAGE_INFO" 2>/dev/null || true)
+    fi
+fi
+
+IMAGE_TAG="${IMAGE_TAG:-unknown}"
+IMAGE_FLAVOR="${IMAGE_FLAVOR:-main}"
+ARCH="${ARCH:-$(uname -m)}"
+
+OS_VERSION="unknown"
+if [ -f "$OS_RELEASE" ]; then
+    OS_VERSION=$(grep '^VERSION_ID=' "$OS_RELEASE" 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "unknown")
+elif [ -f /etc/os-release ]; then
+    OS_VERSION=$(grep '^VERSION_ID=' /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "unknown")
+fi
+
+# 8. Formulate request and send ping
+USER_AGENT="bluefin-lts-countme (${REPO} ${OS_VERSION}; ${IMAGE_FLAVOR}; Linux.${ARCH})"
+URL="${COUNTME_ENDPOINT}?repo=${REPO}&tag=${IMAGE_TAG}&flavor=${IMAGE_FLAVOR}&arch=${ARCH}&countme=${BUCKET}"
+
+if curl -sf --retry 3 --max-time 10 -H "User-Agent: ${USER_AGENT}" "$URL" >/dev/null; then
+    echo "$NOW" > "$LASTRUN_FILE"
+fi
