@@ -108,7 +108,7 @@ _ensure-yq:
     fi
 
 # Build the image using the specified parameters
-build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin="" $gnome_version="50" $fedora_akmods_version="43": _ensure-yq
+build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin="" $fedora_akmods_version="43": _ensure-yq
     #!/usr/bin/env bash
 
     # Get Version
@@ -127,7 +127,6 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR=${repo_organization}")
     BUILD_ARGS+=("--build-arg" "ENABLE_DX=${dx}")
     BUILD_ARGS+=("--build-arg" "ENABLE_NVIDIA=${nvidia}")
-    BUILD_ARGS+=("--build-arg" "GNOME_VERSION=${gnome_version}")
     # Select the pinned CoreOS akmods stream for mounted ZFS/NVIDIA images.
     ARCH=$(uname -m)
     coreos_fedora_ver="${coreos_stable_version}"
