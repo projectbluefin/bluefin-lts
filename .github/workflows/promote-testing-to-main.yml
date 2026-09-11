@@ -8,6 +8,16 @@ name: Promote testing to main
 # Compares testing vs main trees and opens auto/promote-testing-to-main → main
 # when they differ. On merge, execute-release.yml fires and publishes :stable.
 #
+# Release cadence: the actual merge/release only happens on Thursdays (UTC),
+# as part of the factory-wide 3x/week promotion schedule (bluefin: Tuesday,
+# bluefin-lts: Thursday, dakota: Sunday). LTS sits two days after Bluefin's
+# Tuesday stable, giving a soak window for Fedora/CentOS-base regressions
+# that surface in Bluefin's stable before they reach LTS. The daily heartbeat
+# below keeps the promotion PR fresh and gate checks re-running all week;
+# check-release-window gates the merge itself to Thursday.
+# workflow_dispatch bypasses the release-window gate as the documented
+# hotfix escape hatch.
+#
 # Triggers:
 #   - push to testing (immediate re-evaluation after every merge)
 #   - completion of Post-Testing E2E / Post-Testing E2E (nvidia) on testing
@@ -15,6 +25,8 @@ name: Promote testing to main
 #   - daily 04:00 UTC — matches bluefin cadence
 
 on:
+  push:
+    branches: [testing]
   workflow_run:
     workflows: ["Post-Testing E2E", "Post-Testing E2E (nvidia)"]
     types: [completed]
@@ -73,9 +85,39 @@ jobs:
           echo "::error::NVIDIA E2E did not complete successfully for ${testing_head} within timeout"
           exit 1
 
+  check-release-window:
+    name: Check Thursday release window
+    runs-on: ubuntu-latest
+    outputs:
+      is-release-window: ${{ steps.window.outputs.is-release-window }}
+    steps:
+      - name: Determine if today is the Thursday stable release window (UTC)
+        id: window
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # workflow_dispatch is the documented hotfix escape hatch: always
+          # allow the merge, regardless of day.
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "is-release-window=true" >> "$GITHUB_OUTPUT"
+            echo "workflow_dispatch: bypassing release-window gate (hotfix escape hatch)."
+            exit 0
+          fi
+
+          # bluefin-lts stable releases on Thursdays (UTC), day 4 of ISO 8601 week.
+          day_of_week="$(date -u +%u)"
+          if [[ "$day_of_week" == "4" ]]; then
+            echo "is-release-window=true" >> "$GITHUB_OUTPUT"
+            echo "Today is Thursday (UTC); release window is open."
+          else
+            echo "is-release-window=false" >> "$GITHUB_OUTPUT"
+            echo "Today is not Thursday (UTC, ISO day ${day_of_week}); release window is closed."
+          fi
+
   promote:
-    needs: [wait-nvidia-e2e]
-    if: always() && needs.wait-nvidia-e2e.result == 'success' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    needs: [wait-nvidia-e2e, check-release-window]
+    if: always() && needs.wait-nvidia-e2e.result == 'success' && needs.check-release-window.outputs.is-release-window == 'true' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
