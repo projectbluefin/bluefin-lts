@@ -115,6 +115,17 @@ The `bluefin-lts-nvidia` variant ships full CDI configuration so `podman run --d
 
 ### NVIDIA CDI wiring
 
+**Shared NVIDIA files evaluated for LTS**
+
+| Shared file | LTS decision | Reason |
+|---|---|---|
+| `ublue-nvidia-flatpak-runtime-sync.service` | Included | CentOS Stream LTS ships Flatpak and systemd; the service is gated on the NVIDIA module and bootc runtime. |
+| `ublue-nvidia-flatpak-runtime-sync` | Included | Uses the standard Flatpak CLI and NVIDIA module version file; no Fedora-specific paths or package-manager assumptions. |
+
+The service and helper are copied into the LTS NVIDIA overlay and the service is
+explicitly enabled by `20-nvidia.sh`. Other shared NVIDIA files are not present
+in the current common layer and are not copied speculatively.
+
 **`build_scripts/overrides/nvidia/20-nvidia.sh`**
 ```bash
 # Configure nvidia-container-toolkit for rootless use.
