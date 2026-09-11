@@ -88,16 +88,55 @@ jobs:
       - name: Resolve source digests
         id: resolve
         shell: bash
+        env:
+          # The per-arch NVIDIA builds finish independently and the
+          # multi-arch :testing index is only assembled once both land
+          # (build-nvidia-manifest.yml). If promotion is evaluated while
+          # that assembly is still catching up (or hasn't started yet for
+          # a just-landed commit), the tag can briefly still point at an
+          # older single-arch manifest. Poll for the tag to resolve to a
+          # multi-arch index instead of failing on the first read, so a
+          # slow-but-in-progress assembly doesn't repeatedly reject
+          # promotion (see issue #421, #544).
+          MAX_ATTEMPTS: '10'
+          RETRY_DELAY_SECONDS: '30'
         run: |
           set -euo pipefail
           digests='{}'
+
+          is_multiarch() {
+            local raw="$1"
+            local media_type
+            media_type=$(jq -r '.mediaType // empty' <<<"$raw")
+            if [[ "$media_type" != "application/vnd.oci.image.index.v1+json" &&
+              "$media_type" != "application/vnd.docker.distribution.manifest.list.v2+json" ]]; then
+              return 1
+            fi
+            jq -e '([.manifests[]?.platform.architecture] | sort) == ["amd64", "arm64"]' <<<"$raw" >/dev/null
+          }
 
           while IFS= read -r variant; do
             [ -n "$variant" ] || continue
             image=$(jq -r '.image' <<<"$variant")
             source_tag=$(jq -r '.source_tag' <<<"$variant")
             ref="${REGISTRY}/${image}:${source_tag}"
-            digest=$(skopeo inspect --format '{{.Digest}}' "docker://${ref}")
+
+            digest=""
+            for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+              digest=$(skopeo inspect --format '{{.Digest}}' "docker://${ref}")
+              raw_manifest=$(skopeo inspect --raw "docker://${ref}")
+              if is_multiarch "$raw_manifest"; then
+                break
+              fi
+              media_type=$(jq -r '.mediaType // "unknown"' <<<"$raw_manifest")
+              if [[ "$attempt" -eq "$MAX_ATTEMPTS" ]]; then
+                echo "::error::${source_tag} for ${image} is still a single-architecture manifest (mediaType=${media_type}) after ${MAX_ATTEMPTS} attempts. The amd64/arm64 multi-arch index was not published in time (see issue #421, #544)."
+                exit 1
+              fi
+              echo "::warning::${source_tag} for ${image} resolved to ${digest} (mediaType=${media_type}), not yet a multi-arch index. Waiting ${RETRY_DELAY_SECONDS}s for the assembly to catch up (attempt ${attempt}/${MAX_ATTEMPTS})..."
+              sleep "$RETRY_DELAY_SECONDS"
+            done
+
             digests=$(jq -c --arg image "$image" --arg digest "$digest" '. + {($image): $digest}' <<<"$digests")
             echo "Resolved ${image}:${source_tag} -> ${digest}"
           done < <(jq -c '.[]' <<<"$VARIANTS_JSON")
