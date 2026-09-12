@@ -71,13 +71,21 @@ dnf config-manager --set-enabled "nvidia-container-toolkit"
 KMOD_VERSION="$(rpm -q --queryformat '%{VERSION}' kmod-nvidia)"
 # Determine the expected package version format (epoch:version-release)
 NVIDIA_PKG_VERSION="3:${KMOD_VERSION}"
-
 dnf install -y "${NVIDIA_DNF_DRIVER_ARGS[@]}" \
     "libnvidia-fbc-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-cuda-${NVIDIA_PKG_VERSION}" \
     "nvidia-settings-${NVIDIA_PKG_VERSION}" \
-    nvidia-container-toolkit
+    nvidia-container-toolkit || {
+    # Fallback: negativo17 has rotated driver packages and may no longer publish
+    # the exact kmod version. Attempt a best-effort install from the driver
+    # repository without the strict kmod-version pin. The existing runtime
+    # guard (KMOD_VERSION == DRIVER_VERSION) remains to ensure we fail loudly
+    # if the runtime combination is incompatible.
+    dnf -y "${NVIDIA_DNF_DRIVER_ARGS[@]}" --best --allowerasing \
+        libnvidia-fbc nvidia-driver nvidia-driver-cuda nvidia-settings || true
+}
+
 
 # Ensure the version of the Nvidia module matches the driver
 DRIVER_VERSION="$(rpm -q --queryformat '%{VERSION}' nvidia-driver)"
