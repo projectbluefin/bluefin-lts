@@ -42,6 +42,20 @@ copy_systemfiles_for() {
 	printf "::endgroup::\n"
 }
 
+# Single source of truth for the variant override path grammar.
+# The two override trees are keyed on the same (arch, variant) axis but use
+# different path grammars: system_files_overrides is flat and hyphen-separated
+# (<arch>-<variant>) while build_scripts/overrides is nested and slash-separated
+# (<arch>/<variant>). Keep that mapping here so call sites never restate it.
+apply_variant() {
+	VARIANT_NAME=$1
+	shift
+	copy_systemfiles_for "$VARIANT_NAME"
+	run_buildscripts_for "$VARIANT_NAME"
+	copy_systemfiles_for "$(arch)-$VARIANT_NAME"
+	run_buildscripts_for "$(arch)/$VARIANT_NAME"
+}
+
 # Satisfy dracut-install when installing the /root symlink pointing to var/roothome
 mkdir -p /var/roothome
 
@@ -56,17 +70,11 @@ copy_systemfiles_for "$(arch)"
 run_buildscripts_for "$(arch)"
 
 if [ "$ENABLE_DX" == "1" ]; then
-	copy_systemfiles_for dx
-	run_buildscripts_for dx
-	copy_systemfiles_for "$(arch)-dx"
-	run_buildscripts_for "$(arch)/dx"
+	apply_variant dx
 fi
 
 if [ "$ENABLE_NVIDIA" == "1" ]; then
-	copy_systemfiles_for nvidia
-	run_buildscripts_for nvidia
-	copy_systemfiles_for "$(arch)-nvidia"
-	run_buildscripts_for "$(arch)/nvidia"
+	apply_variant nvidia
 fi
 
 printf "::group:: ===Image Cleanup===\n"
