@@ -145,18 +145,8 @@ _run_countme() {
     [[ "$output" =~ "curl is unavailable; skipping telemetry" ]]
 }
 
-@test "countme: script safely skips when jq is unavailable" {
-    NO_JQ_BIN="${TEST_ROOT}/no-jq-bin"
-    mkdir -p "${NO_JQ_BIN}"
-    for tool in /bin/* /usr/bin/*; do
-        b="$(basename "$tool")"
-        if [ "$b" != "jq" ] && [ -x "$tool" ] && [ ! -d "$tool" ]; then
-            ln -sf "$tool" "${NO_JQ_BIN}/$b"
-        fi
-    done
-    run env PATH="${NO_JQ_BIN}" /bin/bash "${COUNTME_SCRIPT}"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ "jq is unavailable; skipping telemetry" ]]
+@test "countme: image-tag and image-flavor extraction does not depend on jq" {
+    ! grep -q '\bjq\b' "${COUNTME_SCRIPT}"
 }
 
 @test "countme: script computes bucket 1 on fresh install (< 7 days)" {

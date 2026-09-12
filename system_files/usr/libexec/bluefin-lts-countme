@@ -25,11 +25,6 @@ if ! command -v curl >/dev/null; then
     exit 0
 fi
 
-if ! command -v jq >/dev/null; then
-    echo "bluefin-lts-countme: jq is unavailable; skipping telemetry" >&2
-    exit 0
-fi
-
 NOW=$(date +%s)
 
 # 3. Ensure state directory exists
@@ -38,9 +33,6 @@ if [ ! -d "$STATE_DIR" ]; then
 fi
 
 EPOCH_FILE="${STATE_DIR}/epoch"
-if [ ! -f "$EPOCH_FILE" ] && [ -f "/var/lib/bluefin-countme/epoch" ]; then
-    EPOCH_FILE="/var/lib/bluefin-countme/epoch"
-fi
 LASTRUN_FILE="${STATE_DIR}/lastrun"
 
 # 4. Throttling: only run once per 7-day window
@@ -90,10 +82,10 @@ IMAGE_FLAVOR="${IMAGE_FLAVOR:-}"
 
 if [ -f "$IMAGE_INFO" ]; then
     if [ -z "$IMAGE_TAG" ]; then
-        IMAGE_TAG=$(jq -r '."image-tag" // empty' "$IMAGE_INFO" 2>/dev/null || true)
+        IMAGE_TAG=$(grep -o '"image-tag"[[:space:]]*:[[:space:]]*"[^"]*"' "$IMAGE_INFO" 2>/dev/null | sed -E 's/.*:[[:space:]]*"([^"]*)"/\1/' || true)
     fi
     if [ -z "$IMAGE_FLAVOR" ]; then
-        IMAGE_FLAVOR=$(jq -r '."image-flavor" // empty' "$IMAGE_INFO" 2>/dev/null || true)
+        IMAGE_FLAVOR=$(grep -o '"image-flavor"[[:space:]]*:[[:space:]]*"[^"]*"' "$IMAGE_INFO" 2>/dev/null | sed -E 's/.*:[[:space:]]*"([^"]*)"/\1/' || true)
     fi
 fi
 

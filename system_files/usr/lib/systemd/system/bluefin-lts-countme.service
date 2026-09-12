@@ -3,6 +3,9 @@ Description=Weekly Bluefin LTS Count Me reporting
 Documentation=https://github.com/projectbluefin/bluefin-lts
 # Only run on bootc/ostree systems
 ConditionPathExists=/run/ostree-booted
+# Opt-out marker. Also disables the ExecStart=dnf makecache below, which
+# doubles as the EPEL mirror countme ping -- creating this marker turns
+# off both, not just first-party reporting.
 ConditionPathExists=!/etc/projectbluefin/countme/disabled
 
 [Service]
