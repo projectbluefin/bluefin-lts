@@ -3,6 +3,18 @@ name: Update package cadence intervals
 # Runs immediately after Execute Release pushes the new :stable image to GHCR.
 # workflow_run ensures we measure the version that users just received, not
 # whatever happened to be in the registry when a cron fired.
+#
+# This workflow inlines the pkg-cadence computation that the shared
+# projectbluefin/actions reusable used to do, then opens a PR instead of
+# pushing to main. See #503: the reusable commits to this repo and runs
+# `git push origin HEAD:main` with a mergeraptor GitHub App token that lacks
+# contents:write here, and main sits behind a merge-queue ruleset, so every
+# run died at push time. The repo's own GITHUB_TOKEN flows through the merge
+# queue via a PR, which is the ruleset-compatible path.
+#
+# ponytail: this duplicates the reusable's churn logic. Revert to
+# `uses: projectbluefin/actions/.github/workflows/reusable-pkg-cadence.yml@v1`
+# once that workflow opens a PR instead of pushing to main.
 
 on:
   workflow_run:
@@ -15,7 +27,9 @@ on:
         type: boolean
         default: false
 
-permissions: {}
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   cadence:
@@ -26,11 +40,140 @@ jobs:
         github.event.workflow_run.conclusion == 'success' &&
         startsWith(github.event.workflow_run.head_commit.message, 'chore: promote testing to main')
       )
-    uses: projectbluefin/actions/.github/workflows/reusable-pkg-cadence.yml@v1
-    with:
-      image: ghcr.io/projectbluefin/bluefin-lts:stable
-      repo: projectbluefin/bluefin-lts
-      force_reclassify: ${{ inputs.force_reclassify || false }}
-    secrets:
-      app_id: ${{ secrets.MERGERAPTOR_APP_ID }}
-      private_key: ${{ secrets.MERGERAPTOR_PRIVATE_KEY }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Query installed RPMs from stable image
+        run: |
+          podman pull "ghcr.io/${{ github.repository }}:stable"
+          podman run --rm "ghcr.io/${{ github.repository }}:stable" \
+            rpm -qa --queryformat '%{NAME}\t%{VERSION}-%{RELEASE}\n' \
+            | sort > /tmp/current-pkgs.tsv
+          echo "Packages found: $(wc -l < /tmp/current-pkgs.tsv)"
+
+      - name: Update churn counts and derive intervals
+        env:
+          INTERVALS_FILE: "files/pkg-intervals.tsv"
+          FORCE_RECLASSIFY: ${{ inputs.force_reclassify }}
+        run: |
+          python3 - <<'EOF'
+          import json, re, os
+          from datetime import datetime, timedelta
+          from pathlib import Path
+
+          CONSUMER       = Path(".")
+          INTERVALS_PATH = Path(os.environ["INTERVALS_FILE"])
+          VERSIONS_FILE  = CONSUMER / "files/pkg-versions.json"
+          CHURN_FILE     = CONSUMER / "files/pkg-churn.json"
+          INTERVALS_FILE = CONSUMER / INTERVALS_PATH
+          CURRENT_FILE   = Path("/tmp/current-pkgs.tsv")
+          WINDOW_DAYS    = 90
+          TODAY          = datetime.utcnow().strftime('%Y-%m-%d')
+          FORCE          = os.environ.get('FORCE_RECLASSIFY', 'false').lower() == 'true'
+
+          current = {}
+          for line in CURRENT_FILE.read_text().splitlines():
+              if '\t' not in line: continue
+              name, ver = line.split('\t', 1)
+              current[name] = ver
+
+          prev_versions = json.loads(VERSIONS_FILE.read_text()) if VERSIONS_FILE.exists() else {}
+          churn = json.loads(CHURN_FILE.read_text()) if CHURN_FILE.exists() else {}
+
+          changed_pkgs = [
+              name for name, ver in current.items()
+              if prev_versions.get(name, {}).get('version', '') != ver
+          ]
+          print(f"Changed since last snapshot: {len(changed_pkgs)} packages")
+
+          cutoff = (datetime.utcnow() - timedelta(days=WINDOW_DAYS)).strftime('%Y-%m-%d')
+          for name in list(churn.keys()):
+              if name not in current:
+                  del churn[name]; continue
+              if churn[name].get('window_start', TODAY) < cutoff:
+                  churn[name]['changes'] = 0
+                  churn[name]['window_start'] = TODAY
+
+          for name in changed_pkgs:
+              churn.setdefault(name, {'changes': 0, 'window_start': TODAY, 'interval': 'monthly'})
+              churn[name]['changes'] = churn[name].get('changes', 0) + 1
+
+          for name in current:
+              churn.setdefault(name, {'changes': 0, 'window_start': TODAY, 'interval': 'monthly'})
+
+          # Bootstrap heuristics (used until 4+ weeks of data exist)
+          WEEKLY_PAT    = re.compile(r'^(tailscale|bootc|distrobox|fastfetch|starship|uupd|ublue-update|topgrade)$')
+          QUARTERLY_PAT = re.compile(r'^(alsa-firmware|alsa-tools-firmware|linux-firmware.*|iwl.*firmware.*|atheros-firmware|brcmfmac-firmware|mt7xxx-firmware|nxnwireless-firmware|tiwilink-firmware|cirrus-audio-firmware|intel-audio-firmware)$')
+          YEARLY_PAT    = re.compile(r'.*-fonts.*|.*fonts-.*|^google-noto-.*|^liberation-.*|^abattis-cantarell.*|^gnu-free-fonts.*|^dejavu-.*|^urw-base35-.*|^jetbrains-mono-fonts.*|^cascadia-code-fonts.*')
+
+          def bootstrap_interval(name):
+              if WEEKLY_PAT.match(name):    return 'weekly'
+              if YEARLY_PAT.match(name):    return 'yearly'
+              if QUARTERLY_PAT.match(name): return 'quarterly'
+              return 'monthly'
+
+          def derive_interval(changes):
+              # Calibrated for weekly stable builds, 90-day window (~13 builds)
+              if changes >= 8: return 'weekly'
+              if changes >= 2: return 'monthly'
+              if changes == 1: return 'quarterly'
+              return 'yearly'
+
+          interval_changes = 0
+          for name, entry in churn.items():
+              changes = entry.get('changes', 0)
+              window_start = entry.get('window_start', TODAY)
+              weeks_of_data = (datetime.utcnow() - datetime.strptime(window_start, '%Y-%m-%d')).days // 7
+              if weeks_of_data >= 4 or FORCE:
+                  new_interval = derive_interval(changes)
+              else:
+                  new_interval = entry.get('interval') or bootstrap_interval(name)
+              if new_interval != entry.get('interval'):
+                  print(f"  {name}: {entry.get('interval')} → {new_interval} ({changes} changes in {weeks_of_data}w)")
+                  interval_changes += 1
+              entry['interval'] = new_interval
+
+          print(f"Interval reclassifications: {interval_changes}")
+
+          new_versions = {n: {"version": v, "last_seen": TODAY} for n, v in sorted(current.items())}
+          INTERVALS_FILE.parent.mkdir(parents=True, exist_ok=True)
+          VERSIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
+          VERSIONS_FILE.write_text(json.dumps(new_versions, indent=2) + '\n')
+          CHURN_FILE.write_text(json.dumps(dict(sorted(churn.items())), indent=2) + '\n')
+
+          lines = ['# name\tinterval\t# maintained by pkg-cadence workflow — do not edit by hand']
+          for name in sorted(current):
+              lines.append(f'{name}\t{churn.get(name, {}).get("interval", "monthly")}')
+          INTERVALS_FILE.write_text('\n'.join(lines) + '\n')
+          print(f"Written {len(current)} entries to {INTERVALS_FILE}")
+          EOF
+
+      - name: Check for interval changes
+        id: changes
+        run: |
+          # pkg-churn.json changes every run; only open a PR when
+          # pkg-intervals.tsv changes — that's what the build actually reads.
+          if git diff --quiet "files/pkg-intervals.tsv"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No interval changes"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat "files/pkg-intervals.tsv"
+          fi
+
+      - name: Create pull request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
+        with:
+          branch: "cadence/update-intervals"
+          commit-message: "chore(cadence): update pkg interval classifications"
+          title: "chore(cadence): update pkg interval classifications"
+          body: |
+            Automated update of package cadence intervals from the latest `:stable` build.
+
+            Opens a PR instead of pushing to main so it flows through the merge-queue
+            ruleset (see #503).
+          labels: |
+            ci/cadence
