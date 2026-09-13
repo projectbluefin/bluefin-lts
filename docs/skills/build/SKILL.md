@@ -87,6 +87,15 @@ versions and can abort initramfs generation. `kernel-swap.sh` temporarily omits
 that incompatible module for Fedora kernels and removes the build-only config
 in cleanup.
 
+## Fedora CoreOS kernel and modprobe path
+
+Fedora 44+ merged `/usr/sbin` into `/usr/bin`, changing `CONFIG_MODPROBE_PATH` in
+Fedora kernels from `/usr/sbin/modprobe` to `/usr/bin/modprobe`. CentOS Stream 10 keeps `/usr/sbin`
+separate and only ships `/usr/sbin/modprobe -> ../bin/kmod`. `kernel-swap.sh` dynamically
+links `/usr/bin/kmod` to the kernel's configured modprobe path if missing before dracut runs,
+ensuring kernel module autoloading (`request_module()`) functions both in the OS and inside the initramfs
+(e.g., loading `dm-crypt` during LUKS unlock).
+
 ## Dracut cross-device failure (`EXDEV`)
 
 `/boot` and `/var/tmp` are on separate mounts during `RUN` layers. If `dnf install` triggers dracut and it stages in `/var/tmp`, `rename(2)` to `/boot` fails with `Invalid cross-device link`.

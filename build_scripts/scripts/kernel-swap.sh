@@ -69,6 +69,19 @@ dnf -y install --setopt=tsflags=noscripts "${RPM_NAMES[@]}"
 # Run depmod explicitly before dracut — dracut aborts with "modules.dep is missing" without it.
 depmod -a "${CACHED_VERSION}"
 
+# Fedora kernels newer than 7.0.12 are built with CONFIG_MODPROBE_PATH="/usr/bin/modprobe"
+# (Fedora merged /usr/sbin into /usr/bin). CentOS Stream 10 kmod only ships
+# /usr/sbin/modprobe, so every kernel-initiated request_module() silently fails:
+# dm-crypt never autoloads and LUKS systems hang at the initrd passphrase prompt (#628);
+# on-demand filesystem, netfilter and crypto modules are affected the same way.
+# Create the path the kernel expects before dracut runs so it lands in the initramfs too.
+KERNEL_MODPROBE_PATH="$(sed -n 's/^CONFIG_MODPROBE_PATH="\(.*\)"$/\1/p' "/usr/lib/modules/${CACHED_VERSION}/config" 2>/dev/null || true)"
+if [[ -n "${KERNEL_MODPROBE_PATH}" && ! -e "${KERNEL_MODPROBE_PATH}" ]]; then
+  echo "Kernel expects modprobe at ${KERNEL_MODPROBE_PATH}; linking it to /usr/bin/kmod"
+  mkdir -p "$(dirname "${KERNEL_MODPROBE_PATH}")"
+  ln -s /usr/bin/kmod "${KERNEL_MODPROBE_PATH}"
+fi
+
 # Generate initramfs explicitly — mirrors the approach used in 20-nvidia.sh.
 # Direct -f output avoids the cross-device rename that kernel-install uses internally.
 # microcode_ctl only recognizes RHEL kernel versions. The mounted CoreOS
