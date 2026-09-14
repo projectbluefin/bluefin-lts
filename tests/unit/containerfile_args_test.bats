@@ -1,54 +1,131 @@
 #!/usr/bin/env bats
 
-# Guard for the Containerfile build-arg contract (bluefin-lts#559):
-#   1. every ARG declaration has at least one consumer, and
-#   2. no ARG is declared with two different default values.
-# Dead declarations like the removed BASE_IMAGE_SHA and the post-FROM
-# MAJOR_VERSION="lts" fail here instead of accumulating again.
+# Unit tests for the Containerfile build-arg contract.
+#
+# Every ARG in the Containerfile is an interface: it is either consumed by the
+# Containerfile itself (interpolated into a FROM/COPY/RUN) or handed to the
+# build payload under build_scripts/ and system_files/. An ARG that reaches
+# neither is dead, and a dead ARG carrying a literal digest or version reads to
+# a maintainer as if it were load-bearing. These tests fail when a declaration
+# stops reaching a consumer, or when one name is given conflicting defaults.
+#
+# Run with: bats tests/unit/containerfile_args_test.bats
 
 SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 CONTAINERFILE="${REPO_ROOT}/Containerfile"
 
+# Names declared by `ARG <name>` in the Containerfile, deduplicated.
 arg_names() {
-    grep -oP '^ARG\s+\K[A-Za-z_][A-Za-z0-9_]*' "${CONTAINERFILE}" | sort -u
+    grep -E '^ARG[[:space:]]+[A-Za-z_][A-Za-z0-9_]*' "${CONTAINERFILE}" |
+        sed -E 's/^ARG[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/' |
+        sort -u
 }
 
-@test "containerfile: every ARG has a consumer" {
-    local arg
-    while IFS= read -r arg; do
-        # Consumer = interpolated anywhere in the Containerfile outside the
-        # ARG's own declaration line(s) (FROM, ENV, RUN substitution)...
-        if grep -vE "^ARG[[:space:]]+${arg}(=|[[:space:]]|$)" "${CONTAINERFILE}" \
-            | grep -qE "\\\$\{?${arg}\b"; then
-            continue
-        fi
-        # ...or read by a build script / shipped file. Word-boundary match so
-        # MAJOR_VERSION does not match MAJOR_VERSION_NUMBER.
-        if grep -rwq "${arg}" \
-            "${REPO_ROOT}/build_scripts" \
-            "${REPO_ROOT}/system_files" \
-            "${REPO_ROOT}/system_files_overrides" \
-            "${REPO_ROOT}/scripts" 2>/dev/null; then
-            continue
-        fi
-        echo "ARG ${arg} has no consumer: not interpolated in Containerfile and not read by any build script"
+# Every `${NAME...}` / `$NAME` expansion in the Containerfile that is NOT the
+# self-reference inside that name's own default (`ARG X="${X:-...}"`).
+containerfile_expansions() {
+    grep -vE '^ARG[[:space:]]' "${CONTAINERFILE}" |
+        grep -oE '\$\{?[A-Za-z_][A-Za-z0-9_]*' |
+        sed -E 's/^\$\{?//' |
+        sort -u
+}
+
+# Names referenced anywhere in the build payload the RUN step executes.
+payload_references() {
+    grep -rhoE '\b[A-Z_][A-Z0-9_]*\b' \
+        "${REPO_ROOT}/build_scripts" "${REPO_ROOT}/system_files" 2>/dev/null |
+        sort -u
+}
+
+setup() {
+    [ -f "${CONTAINERFILE}" ] || {
+        echo "Containerfile not found at ${CONTAINERFILE}" >&2
         return 1
-    done < <(arg_names)
+    }
 }
 
-@test "containerfile: no ARG is declared with conflicting defaults" {
-    # Extract "NAME default" pairs from declarations of the form
-    #   ARG NAME="${NAME:-default}"
-    # and fail if any NAME maps to more than one distinct default.
-    local dupes
-    dupes=$(grep -oP '^ARG\s+\K[A-Za-z_][A-Za-z0-9_]*="\$\{[A-Za-z_][A-Za-z0-9_]*:-[^}]+\}"' "${CONTAINERFILE}" \
-        | sed -E 's/^([A-Za-z_][A-Za-z0-9_]*)="\$\{[A-Za-z_][A-Za-z0-9_]*:-([^}]*)\}"$/\1 \2/' \
-        | sort -u \
-        | awk '{print $1}' \
-        | uniq -d)
-    if [[ -n "${dupes}" ]]; then
-        echo "ARG(s) declared with conflicting defaults: ${dupes}"
+
+@test "Containerfile declares at least one ARG (guard is not vacuous)" {
+    run bash -c "$(declare -f arg_names); CONTAINERFILE='${CONTAINERFILE}'; arg_names | wc -l"
+    [ "$status" -eq 0 ]
+    [ "$output" -gt 0 ]
+}
+
+@test "every ARG in the Containerfile reaches a consumer" {
+    local expansions payload dead=""
+    expansions="$(containerfile_expansions)"
+    payload="$(payload_references)"
+
+    for name in $(arg_names); do
+        if grep -qxF "${name}" <<<"${expansions}"; then
+            continue
+        fi
+        if grep -qxF "${name}" <<<"${payload}"; then
+            continue
+        fi
+        dead+=" ${name}"
+    done
+
+    if [ -n "${dead}" ]; then
+        echo "Dead Containerfile ARG(s):${dead}" >&2
+        echo "Each is neither interpolated in the Containerfile nor referenced" >&2
+        echo "under build_scripts/ or system_files/. Remove it, or wire it up." >&2
+        return 1
+    fi
+}
+
+
+@test "BASE_IMAGE_SHA is not reintroduced without a consumer" {
+    # It existed as a frozen sha256 literal that nothing read, which made the
+    # CentOS base look digest-pinned when it is resolved by mutable tag.
+    if grep -qw 'BASE_IMAGE_SHA' "${CONTAINERFILE}"; then
+        run grep -rqw 'BASE_IMAGE_SHA' "${REPO_ROOT}/build_scripts" "${REPO_ROOT}/Justfile"
+        [ "$status" -eq 0 ]
+    fi
+}
+
+@test "MAJOR_VERSION is never declared with conflicting defaults" {
+    local defaults
+    defaults="$(grep -E '^ARG[[:space:]]+MAJOR_VERSION' "${CONTAINERFILE}" |
+        sed -E 's/^ARG[[:space:]]+MAJOR_VERSION=?//' | sort -u)"
+
+    [ -n "${defaults}" ]
+    [ "$(wc -l <<<"${defaults}")" -eq 1 ]
+}
+
+@test "MAJOR_VERSION is in scope for the base FROM that interpolates it" {
+    # A global ARG only reaches a FROM if it is declared before that FROM.
+    local from_line decl_line
+    from_line="$(grep -nE '^FROM .*\$\{?MAJOR_VERSION' "${CONTAINERFILE}" |
+        head -1 | cut -d: -f1)"
+    [ -n "${from_line}" ]
+
+    decl_line="$(grep -nE '^ARG[[:space:]]+MAJOR_VERSION' "${CONTAINERFILE}" |
+        head -1 | cut -d: -f1)"
+    [ -n "${decl_line}" ]
+    [ "${decl_line}" -lt "${from_line}" ]
+}
+
+@test "the base image tag comes from MAJOR_VERSION, not a hardcoded tag" {
+    run grep -cE '^FROM quay\.io/centos-bootc/centos-bootc:\$\{?MAJOR_VERSION' \
+        "${CONTAINERFILE}"
+    [ "$status" -eq 0 ]
+    [ "$output" -eq 1 ]
+}
+
+@test "ARGs the Justfile passes are declared in the Containerfile" {
+    local declared missing=""
+    declared="$(arg_names)"
+
+    while read -r name; do
+        [ -n "${name}" ] || continue
+        grep -qxF "${name}" <<<"${declared}" || missing+=" ${name}"
+    done < <(grep -oE '\-\-build-arg" "[A-Z_][A-Z0-9_]*=' "${REPO_ROOT}/Justfile" |
+        sed -E 's/.*"([A-Z_][A-Z0-9_]*)=/\1/' | sort -u)
+
+    if [ -n "${missing}" ]; then
+        echo "Justfile passes --build-arg for undeclared name(s):${missing}" >&2
         return 1
     fi
 }
