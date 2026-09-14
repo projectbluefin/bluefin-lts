@@ -16,3 +16,7 @@ images:
 downloads:
   # renovate: datasource=github-releases depName=ublue-os/uupd
   uupd: "v1.4.0"
+  # renovate: datasource=github-releases depName=Rayzeq/quick-settings-audio-panel
+  quick_settings_audio_panel: "v103"
+  # renovate: datasource=github-releases depName=vicinaehq/vicinae
+  vicinae: "v0.28.1"

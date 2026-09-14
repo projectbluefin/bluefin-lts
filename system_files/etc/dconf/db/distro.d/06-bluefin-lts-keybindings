@@ -1,0 +1,23 @@
+# GNOME keybindings (Bluefin LTS).
+# Free up Super+Space for the Vicinae launcher (Dakota port #1515) by moving
+# GNOME's input-source toggles off Super+Space. switch-input-source is moved to
+# <Shift><Super>space, but that is also GNOME's stock default for
+# switch-input-source-backward, so backward is moved to
+# <Shift><Control><Super>space to avoid both actions sharing one chord.
+#
+# Note: custom-keybindings is a whole-array key. The first time a user adds their
+# own shortcut in Settings, the user-level array replaces this distro one and the
+# <Super>space Vicinae binding disappears for that user. That is the inherent cost
+# of taking Super+Space away from input-source switching for everyone, including
+# multilingual users who rely on it to cycle languages.
+[org/gnome/desktop/wm/keybindings]
+switch-input-source=['<Shift><Super>space']
+switch-input-source-backward=['<Shift><Control><Super>space']
+
+[org/gnome/settings-daemon/plugins/media-keys]
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae/']
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae]
+binding='<Super>space'
+command='vicinae toggle'
+name='Vicinae Launcher'
