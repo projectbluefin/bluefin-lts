@@ -12,8 +12,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # NOTE: no display name — the check-run context must stay exactly "validate"
+  # (job id) because the main branch ruleset requires that context.
   validate:
-    name: Lint & syntax
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
