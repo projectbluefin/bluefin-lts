@@ -13,6 +13,8 @@ on:
       - testing
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   unit-tests:
     name: Run bats unit tests
