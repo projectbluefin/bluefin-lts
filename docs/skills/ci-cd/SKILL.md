@@ -148,5 +148,4 @@ commit, artifact tag, and digest. For signing or release changes, also follow
 
 ## Sources
 
-- Context7: `/websites/github_en_actions` — `repository_dispatch` payloads and
-  the requirement that the workflow exist on the default branch.
+- Context7: `/websites/github_en_actions` — GitHub Actions workflow syntax and permissions.
