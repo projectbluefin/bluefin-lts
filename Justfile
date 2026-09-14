@@ -510,3 +510,32 @@ secureboot base="bluefin-lts" tag="stable" flavor="main":
 [group('Just')]
 unit-tests:
     bats tests/unit/
+
+# Run unit tests with kcov coverage reporting
+[group('Just')]
+coverage:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! command -v kcov &>/dev/null; then
+        echo "Error: kcov is required for coverage collection." >&2
+        echo "Install kcov or run 'just unit-tests' for standard test execution." >&2
+        exit 1
+    fi
+    export KCOV_REPO_ROOT="{{ justfile_directory() }}"
+    export KCOV_RAW_DIR="{{ justfile_directory() }}/coverage/kcov-raw"
+    export PATH="{{ justfile_directory() }}/tests/coverage/bin:${PATH}"
+    mkdir -p "${KCOV_RAW_DIR}"
+    coverage_status=0
+    kcov \
+        --bash-method=DEBUG \
+        --bash-parse-files-in-dir="${KCOV_REPO_ROOT}/build_scripts,${KCOV_REPO_ROOT}/system_files" \
+        --include-path="${KCOV_REPO_ROOT}/build_scripts,${KCOV_REPO_ROOT}/system_files" \
+        --exclude-path="${KCOV_REPO_ROOT}/tests,${KCOV_REPO_ROOT}/.github" \
+        "${KCOV_RAW_DIR}/top" \
+        bash -c 'bats tests/unit/' || coverage_status=$?
+    python3 tests/coverage/merge_kcov.py \
+        --raw-dir "${KCOV_RAW_DIR}" \
+        --output-dir coverage/kcov \
+        --repo-root "${KCOV_REPO_ROOT}"
+    rm -rf "${KCOV_RAW_DIR}"
+    exit ${coverage_status}
