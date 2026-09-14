@@ -99,8 +99,21 @@ EOF
 # disable repos provided by ublue-os-nvidia-addons
 dnf config-manager --set-disabled nvidia-container-toolkit
 
-systemctl enable ublue-nvctk-cdi.service
-semodule --verbose --install /usr/share/selinux/packages/nvidia-container.pp
+# ublue-nvctk-cdi.service is deliberately NOT enabled here. It was the old
+# Universal Blue mechanism for generating /var/run/cdi/nvidia.yaml, and
+# ublue-os-nvidia-addons stopped shipping it as of 0.15 — `systemctl enable`
+# then aborts the build under `set -e`. Its job is already done, upstream and
+# unconditionally, by nvidia-cdi-refresh.{path,service} (see the CDI section
+# below and system_files_overrides/nvidia/.../80-nvidia-container-toolkit.preset).
+
+# The SELinux policy comes from the same package, so do not assume it is present
+# either — warn rather than fail the whole image if it goes the same way.
+NVIDIA_CONTAINER_POLICY=/usr/share/selinux/packages/nvidia-container.pp
+if [[ -f "${NVIDIA_CONTAINER_POLICY}" ]]; then
+    semodule --verbose --install "${NVIDIA_CONTAINER_POLICY}"
+else
+    echo "Warning: ${NVIDIA_CONTAINER_POLICY} not found; skipping SELinux policy install" >&2
+fi
 
 # Universal Blue specific Initramfs fixes
 # nvidia-modeset.conf may not exist on all architectures (e.g. arm64/SBSA)

@@ -6,15 +6,13 @@ images:
   - name: common
     image: ghcr.io/projectbluefin/common
     tag: latest
-    digest: sha256:44c7c59c910e00a26b0209f8be0915d8c67af095b108ed5a9d4842c32ed63dae
+    digest: sha256:79f91c2ed7cc9384f0eeb817ad7c6b5535b48a24a60dd222b28251cf1c7a9e02
   - name: brew
     image: ghcr.io/ublue-os/brew
     tag: latest
-    digest: sha256:bed056871da6edd8c6ee455a274283ae83bf269461dcad758a7729aaad018401
+    digest: sha256:d52b3f578f01623636aff534291b0bd8ff0a0244ef225bf51aecb5fa05a137af
 
 # Pinned binary downloads (managed by Renovate)
 downloads:
   # renovate: datasource=github-releases depName=ublue-os/uupd
   uupd: "v1.4.0"
-  # renovate: datasource=github-releases depName=Rayzeq/quick-settings-audio-panel
-  quick_settings_audio_panel: "v103"

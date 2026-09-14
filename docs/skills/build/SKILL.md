@@ -31,7 +31,7 @@ description: >-
 ## Fast validation
 
 ```bash
-just check      # validate Justfile syntax (<30s)
+just check      # validate Justfile syntax and build script checks (<30s)
 just lint       # shellcheck over build_scripts/**/*.sh
 just unit-tests # bats tests for build_scripts/
 ```
@@ -50,7 +50,7 @@ Run before every commit.
 LTS uses the Fedora CoreOS 44 akmods stream by default. Override it explicitly when validating another compatible stream:
 
 ```bash
-COREOS_STABLE_VERSION=44 COREOS_STABLE_KERNEL=7.0.12-201.fc44 \
+COREOS_STABLE_VERSION=44 COREOS_STABLE_KERNEL=7.1.8-200.fc44 \
   just build bluefin-lts-nvidia lts 0 1
 ```
 
