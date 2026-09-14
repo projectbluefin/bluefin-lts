@@ -1,0 +1,23 @@
+# LTS shadows the common unit to remove the local-fs.target ordering cycle.
+# The service must still run before systemd-sysusers.service to repair legacy
+# rechunked gshadow state before sysusers reads it.
+[Unit]
+Description=Fix groups for Legacy rechunker
+ConditionPathExists=/run/ostree-booted
+DefaultDependencies=no
+After=bootc-sysusers-shadow-sync.service
+Before=systemd-sysusers.service local-fs-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=bash -c 'touch /etc/gshadow && chmod 600 /etc/gshadow'
+ExecStart=bash -c 'rm /etc/gshadow'
+ExecStart=systemd-sysusers
+ExecStart=rechunker-group-fix
+# This unit now runs before local filesystems; allow the early tmpfiles pass to
+# fail on paths that need /var. The stock systemd-tmpfiles-setup.service covers
+# the full pass after local-fs.target.
+ExecStart=-systemd-tmpfiles --create --remove --boot --exclude-prefix=/dev
+
+[Install]
+WantedBy=default.target multi-user.target

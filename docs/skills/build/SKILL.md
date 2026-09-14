@@ -112,6 +112,13 @@ Known required enables:
 |---|---|
 | `rechunker-group-fix.service` | Prevents boot failure on legacy-rechunked group state |
 
+LTS shadows the common `rechunker-group-fix.service` from architecture-specific
+`system_files_overrides/*/usr/lib/systemd/system/` paths. The shadow removes
+`local-fs.target` ordering, runs `Before=local-fs-pre.target` and
+`Before=systemd-sysusers.service`, and prefixes the early tmpfiles pass with
+`-` because `/var` is not mounted yet. Keep the x86_64 and aarch64 shadows
+byte-identical unless the architecture boot contracts diverge.
+
 ## Debugging checklist
 
 | Symptom | Check |
