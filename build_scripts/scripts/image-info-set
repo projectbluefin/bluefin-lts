@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 
-FLAVOR="${FLAVOR:-${1:-}}"
-if [[ -z "${FLAVOR}" ]]; then
-  echo "image-info-set: no flavor supplied (set FLAVOR or pass it as \$1)" >&2
-  exit 1
-fi
+FLAVOR="${FLAVOR:-$1}"
 
 set -xeuo pipefail
 

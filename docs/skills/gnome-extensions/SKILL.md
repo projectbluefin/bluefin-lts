@@ -50,28 +50,6 @@ rm -f /usr/share/gnome-shell/extensions/${UUID}/${UUID}.shell-extension.zip
 glib-compile-schemas --strict /usr/share/gnome-shell/extensions/${UUID}/schemas
 ```
 
-### Pinned GitHub release zip (e.g. quick-settings-audio-panel)
-
-Some extensions publish a prebuilt `.shell-extension.zip` release asset instead of
-requiring a submodule + build step. For these, skip the submodule entirely: pin
-the release tag in `image-versions.yaml` under `downloads` (Renovate-tracked,
-`datasource=github-releases`), then `curl` + `unzip` the asset directly in
-`21-build-gnome-extensions.sh`:
-
-```bash
-UUID="my-extension@author.github.io"
-VERSION=$(grep '^\s*my_extension:' /run/context/image-versions.yaml | sed 's/.*"\(.*\)".*/\1/')
-DEST="/usr/share/gnome-shell/extensions/${UUID}"
-mkdir -p "${DEST}"
-curl -fsSL "https://github.com/<owner>/<repo>/releases/download/${VERSION}/${UUID}.shell-extension.zip" \
-  -o /tmp/ext.shell-extension.zip
-unzip -o /tmp/ext.shell-extension.zip -d "${DEST}"
-rm -f /tmp/ext.shell-extension.zip
-glib-compile-schemas --strict "${DEST}/schemas"
-install -Dm644 "${DEST}/schemas/<schema-id>.gschema.xml" \
-  "/usr/share/glib-2.0/schemas/<schema-id>.gschema.xml"
-```
-
 ### Meson-based (gsconnect — special case)
 ```bash
 meson setup --prefix=/usr \

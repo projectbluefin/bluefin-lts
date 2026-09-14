@@ -5,7 +5,6 @@ description: >-
   Use when a workflow does not trigger, an artifact is not published, or CI logic changes.
 metadata:
   context7-sources:
-    - /websites/github_en_actions
     - /podman-container-tools/skopeo
 ---
 
@@ -47,10 +46,9 @@ metadata:
 | NVIDIA manifest assembly | `.github/workflows/build-nvidia-manifest.yml` |
 | Promotion | `.github/workflows/promote-testing-to-main.yml` |
 | Stable publication | `.github/workflows/execute-release.yml` |
-| End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml`, `post-testing-e2e.yml` |
+| End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml` |
 | Syntax and repository checks | `.github/workflows/pr-testsuite.yml`, `unit-tests.yml` |
-| Lab PR Check Run | `.github/workflows/lab-check.yml` |
-| Dependency updates | `renovate.json`, Renovate workflows |
+| Dependency updates | `.github/renovate.json5`, Renovate workflows |
 
 The exact workflow files in the repository are authoritative. Update this table
 when a workflow is renamed or removed.
@@ -118,12 +116,6 @@ Check in order:
 Use the GitHub workflow run, job summary, and logs as evidence. Do not infer
 success from a green caller job if the reusable job or publication step failed.
 
-Every open Bluefin LTS PR is discovered by the lab's five-minute PR poller. The
-lab runs smoke QA against `bluefin-lts:testing` and sends bounded
-`repository_dispatch` lifecycle events to `lab-check.yml`, which must exist on
-the default branch. That workflow uses a short-lived MergeRaptor installation
-token to update one `testing-lab / bluefin-lts` Check Run for the exact PR head
-SHA. Do not duplicate the result in a PR comment or commit status.
 
 ## Common Rationalizations
 
@@ -140,7 +132,6 @@ SHA. Do not duplicate the result in a PR comment or commit status.
 - A release or signing failure hidden with `continue-on-error`.
 - Copying a workflow from another image variant without checking path and input
   differences.
-- Posting a lab result as a PR comment instead of updating the MergeRaptor Check Run.
 - Calling `create-manifest@v1` without first preparing the runner.
 
 ## Verification
@@ -157,5 +148,4 @@ commit, artifact tag, and digest. For signing or release changes, also follow
 
 ## Sources
 
-- Context7: `/websites/github_en_actions` — `repository_dispatch` payloads and
-  the requirement that the workflow exist on the default branch.
+- Context7: `/websites/github_en_actions` — GitHub Actions workflow syntax and permissions.
