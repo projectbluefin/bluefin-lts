@@ -43,5 +43,4 @@ For state-changing commands in container coverage, shadow them with test stubs b
 
 - Choose the smallest test layer that exercises the changed behavior.
 - Record the image reference, source revision, command or workflow, and result.
-- Run a VM test when boot, systemd, hardware, or `bootc switch` behavior is involved.
-- Report skipped checks and why; do not treat container success as proof of boot success.
+- For boot, systemd, hardware, or `bootc switch` behavior, add or run dedicated GitHub Actions coverage; do not treat container success as proof of boot behavior.
