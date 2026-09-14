@@ -48,21 +48,6 @@ glib-compile-schemas --strict /usr/share/gnome-shell/extensions/custom-command-l
 # Search Light
 glib-compile-schemas --strict /usr/share/gnome-shell/extensions/search-light@icedman.github.com/schemas
 
-# Quick Settings Audio Panel
-# Ships as a prebuilt .shell-extension.zip release asset (no source build required).
-# Version is pinned in image-versions.yaml and tracked by Renovate.
-QSAP_UUID="quick-settings-audio-panel@rayzeq.github.io"
-QSAP_VERSION=$(grep '^\s*quick_settings_audio_panel:' /run/context/image-versions.yaml | sed 's/.*"\(.*\)".*/\1/')
-QSAP_DIR="/usr/share/gnome-shell/extensions/${QSAP_UUID}"
-mkdir -p "${QSAP_DIR}"
-curl -fsSL "https://github.com/Rayzeq/quick-settings-audio-panel/releases/download/${QSAP_VERSION}/${QSAP_UUID}.shell-extension.zip" \
-    -o /tmp/qsap.shell-extension.zip
-unzip -o /tmp/qsap.shell-extension.zip -d "${QSAP_DIR}"
-rm -f /tmp/qsap.shell-extension.zip
-glib-compile-schemas --strict "${QSAP_DIR}/schemas"
-install -Dm644 "${QSAP_DIR}/schemas/org.gnome.shell.extensions.quick-settings-audio-panel.gschema.xml" \
-    "/usr/share/glib-2.0/schemas/org.gnome.shell.extensions.quick-settings-audio-panel.gschema.xml"
-
 rm /usr/share/glib-2.0/schemas/gschemas.compiled
 glib-compile-schemas /usr/share/glib-2.0/schemas
 
