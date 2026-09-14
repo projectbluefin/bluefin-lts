@@ -138,12 +138,6 @@ jobs:
             echo "Successful e2e run already recorded for $testing_head; skipping dispatch."
           fi
 
-          gh workflow run post-testing-e2e.yml \
-            --repo "$REPO" \
-            --ref testing \
-            -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
-            -f suites="smoke"
-          echo "Dispatched post-testing-e2e against testing ($testing_head)."
 
   mirror-validate-to-merge-group:
     name: Mirror validate status to merge-group SHA

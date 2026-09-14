@@ -40,5 +40,16 @@ isolated in explicit build arguments and override directories.
 - Signing and promotion gates must not be bypassed to make a build green.
 - Release verification must use immutable digests, not tags alone.
 
+## Telemetry
+
+- `bluefin-lts-countme.timer` runs `/usr/libexec/bluefin-lts-countme` weekly to
+  report an installation-age cohort bucket to
+  `countme.projectbluefin.io`, on by default (ADR 0006,
+  projectbluefin/bluefin-lts#591).
+- To opt out, create `/etc/projectbluefin/countme/disabled` (any content, even
+  empty). This also disables the unit's other `ExecStart`
+  (`dnf makecache`, the EPEL mirror's countme ping), since both run under the
+  same `ConditionPathExists=!/etc/projectbluefin/countme/disabled` gate.
+
 For implementation procedures, load the relevant skill from
 [`docs/skills/INDEX.md`](skills/INDEX.md).

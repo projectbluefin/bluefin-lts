@@ -17,6 +17,7 @@ bluefin-lts is built on **CentOS Stream 10**, not Fedora. Stock builds use the F
 | COPR CLI (`dnf copr enable`) | direct `.repo` URL only |
 | `dnf5 copr` subcommand | not available |
 | Fedora-versioned akmods tags | `ghcr.io/ublue-os/akmods-*:coreos-stable-<fedora_version>` |
+| `/usr/bin/modprobe` (Fedora merged `/usr/sbin` into `/usr/bin`) | `/usr/sbin/modprobe` only; `kernel-swap.sh` links the path from the kernel's `CONFIG_MODPROBE_PATH` |
 
 ## What to use instead
 
@@ -51,6 +52,7 @@ dnf config-manager --add-repo \
 - Using `dnf5 copr enable`.
 - Assuming `centos-stream-10` is the correct chroot.
 - Using Fedora-version akmods tags directly.
+- Bumping the CoreOS kernel without checking `CONFIG_MODPROBE_PATH` in the new kernel's `config`. If the path does not exist in CentOS userspace, kernel-initiated module autoload (`request_module()`) fails silently — `dm-crypt` never loads and LUKS boots hang. `kernel-swap.sh` handles this; keep that logic when refactoring.
 
 ## When to Use
 
