@@ -1,7 +1,7 @@
 name: Promote testing to main
 
 # Opens and maintains a squash promotion PR from testing → main.
-# Auto-merges via enablePullRequestAutoMerge (--auto) — no human approval required.
+# Enqueues the promotion PR in the main merge queue.
 # main branch protection requires 0 reviews; gate checks are the only gate.
 #
 # Factory-standard branch model: source_branch=testing, target_branch=main.
@@ -9,7 +9,7 @@ name: Promote testing to main
 # when they differ. On merge, execute-release.yml fires and publishes :stable.
 #
 # Triggers:
-#   - push to testing (immediate re-evaluation after every merge)
+#   - successful Post-Testing E2E run on testing
 #   - daily 04:00 UTC — matches bluefin cadence
 
 on:
@@ -44,115 +44,9 @@ jobs:
         ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
       source_branch: testing
       target_branch: main
-      run_e2e: true
-      e2e_image: ghcr.io/projectbluefin/bluefin-lts:testing
+      run_e2e: false
       # main uses a merge queue ruleset (17070416): gh pr merge --auto is blocked.
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead, which
       # places the PR in the queue and lets it squash-merge once checks pass.
       use_merge_queue: true
     secrets: inherit
-
-  # The release gate in reusable-promote-squash.yml requires a successful
-  # Post-Testing E2E run recorded on the testing branch head SHA, but that
-  # run is only dispatched by build-regular.yml after a successful testing
-  # image build — pushes to testing that skip the build (docs/CI changes) or
-  # a failed dispatch condition leave the head SHA without a run, and the
-  # gate then fails on every evaluation until the next image build. Backfill
-  # the missing run here after each gate evaluation (even a failed one); its
-  # completion re-triggers this workflow via workflow_run, and the gate then
-  # finds it and promotes.
-  dispatch-missing-e2e:
-    name: Backfill e2e for testing head
-    needs: [promote]
-    if: always() && needs.promote.result != 'skipped' && github.event_name != 'workflow_run'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write
-    steps:
-      - name: Dispatch Post-Testing E2E on testing head
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-
-          testing_head="$(gh api "repos/$REPO/branches/testing" --jq '.commit.sha')"
-
-          # Skip if a completed successful e2e run already exists for this head.
-          existing="$(gh run list --repo "$REPO" --workflow post-testing-e2e.yml \
-            --branch testing --status success \
-            --json headSha --jq "[.[] | select(.headSha == \"$testing_head\")] | length")"
-          if [[ "$existing" != "0" ]]; then
-            echo "Successful e2e run already recorded for $testing_head; skipping dispatch."
-            exit 0
-          fi
-
-          gh workflow run post-testing-e2e.yml \
-            --repo "$REPO" \
-            --ref testing \
-            -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
-            -f suites="smoke"
-          echo "Dispatched post-testing-e2e against testing ($testing_head)."
-
-  mirror-validate-to-merge-group:
-    name: Mirror validate status to merge-group SHA
-    needs: [promote]
-    if: needs.promote.result == 'success'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-      statuses: write
-    steps:
-      - name: Post validate=success on merge queue head
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          PROMOTION_BRANCH: auto/promote-testing-to-main
-        run: |
-          set -euo pipefail
-
-          owner="${REPO%/*}"
-          name="${REPO#*/}"
-
-          pr_number="$(gh pr list --repo "$REPO" --state open --head "$PROMOTION_BRANCH" --json number --jq '.[0].number // empty')"
-          if [[ -z "$pr_number" ]]; then
-            echo "No open promotion PR on $PROMOTION_BRANCH; nothing to mirror."
-            exit 0
-          fi
-
-          graphql_query="query(\$owner: String!, \$name: String!, \$number: Int!) { repository(owner: \$owner, name: \$name) { pullRequest(number: \$number) { mergeQueueEntry { headCommit { oid } } } } }"
-          merge_group_sha=""
-
-          for _ in {1..24}; do
-            merge_group_sha="$(gh api graphql \
-              -f query="$graphql_query" \
-              -f owner="$owner" \
-              -f name="$name" \
-              -F number="$pr_number" \
-              --jq '.data.repository.pullRequest.mergeQueueEntry.headCommit.oid // ""')"
-            [[ -n "$merge_group_sha" ]] && break
-            sleep 5
-          done
-
-          if [[ -z "$merge_group_sha" ]]; then
-            echo "PR #$pr_number is not in merge queue; skipping merge-group validate mirror."
-            exit 0
-          fi
-
-          existing="$(gh api "repos/$REPO/commits/$merge_group_sha/status" \
-            --jq '[.statuses[] | select(.context == "validate") | first | .state // ""]')"
-          if [[ "$existing" == "success" ]]; then
-            echo "validate already success on merge-group SHA $merge_group_sha"
-            exit 0
-          fi
-
-          gh api "repos/$REPO/statuses/$merge_group_sha" \
-            --method POST \
-            --field state=success \
-            --field context=validate \
-            --field description='Validated by promotion workflow (merge-group head)' \
-            --field target_url="$RUN_URL" >/dev/null
-          echo "Posted validate=success on merge-group SHA $merge_group_sha"
