@@ -1,0 +1,45 @@
+name: PR Validation
+
+on:
+  pull_request:
+    # Also trigger on `main` so check-base-branch can reject mis-targeted PRs;
+    # with a testing-only trigger a main-targeted PR silently gets zero checks.
+    branches:
+      - testing
+      - main
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check-base-branch:
+    name: Check PR base branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Only meaningful on pull requests; the merge queue is driven by PRs to testing.
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Require testing as base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          # Promotion to 'main' is a tree squash (see promote-testing-to-main.yml),
+          # so anything merged directly to 'main' is silently reverted by the next
+          # promotion. Reject it here with a signal instead. Promotion PRs, which
+          # legitimately target 'main', are the only exception.
+          # The auto/promote-testing-to-main escape hatch below is belt-and-suspenders:
+          # promotion PRs are opened with GITHUB_TOKEN, so they never trigger workflows
+          # and this branch is effectively dead code. Keep it anyway — it documents why
+          # the `main` exception exists and stops a future reader from "simplifying" it away.
+          if [[ "$BASE_REF" == "main" && "$HEAD_REF" != "testing" && "$HEAD_REF" != "auto/promote-testing-to-main" ]]; then
+            echo "::error::PRs must target 'testing', not 'main'."
+            echo "::error::The testing->main promotion is handled automatically by promote-testing-to-main.yml."
+            echo "::error::Re-open this PR with base 'testing'."
+            exit 1
+          fi

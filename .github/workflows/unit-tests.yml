@@ -2,8 +2,12 @@ name: Unit Tests
 
 on:
   pull_request:
+    # Base branch is enforced by pr-validation.yml's check-base-branch job,
+    # which must trigger on main to reject mis-targeted PRs. These jobs run
+    # only for PRs targeting testing, so a main-targeted PR shows that single
+    # failing guard instead of green jobs that look like they passed.
     branches:
-      - main
+      - testing
     paths:
       - build_scripts/**
       - tests/**
