@@ -1,6 +1,5 @@
 ARG MAJOR_VERSION="${MAJOR_VERSION:-c10s}"
 # Trigger a fresh testing rebuild after the post-testing workflow dispatch condition fix.
-ARG BASE_IMAGE_SHA="${BASE_IMAGE_SHA:-sha256-feea845d2e245b5e125181764cfbc26b6dacfb3124f9c8d6a2aaa4a3f91082ed}"
 ARG AKMODS_VERSION="${AKMODS_VERSION:-coreos-stable-43}"
 ARG COMMON_IMAGE_REF
 ARG BREW_IMAGE_REF
@@ -21,6 +20,10 @@ COPY build_scripts /build_scripts
 COPY image-versions.yaml /image-versions.yaml
 
 ARG MAJOR_VERSION="${MAJOR_VERSION:-c10s}"
+# The CentOS base intentionally floats on the mutable :stream10 tag. It is NOT
+# digest-locked: image-versions.yaml has no consumer for it (see #559 phase 2).
+# tests/unit/containerfile_args_test.bats fails the build if any future ARG is
+# declared with no consumer or given a conflicting default.
 FROM quay.io/centos-bootc/centos-bootc:$MAJOR_VERSION
 
 ARG ENABLE_DX="${ENABLE_DX:-0}"
@@ -29,7 +32,6 @@ ARG FEDORA_AKMODS_VERSION="${FEDORA_AKMODS_VERSION:-43}"
 ARG GNOME_VERSION="${GNOME_VERSION:-50}"
 ARG IMAGE_NAME="${IMAGE_NAME:-bluefin}"
 ARG IMAGE_VENDOR="${IMAGE_VENDOR:-ublue-os}"
-ARG MAJOR_VERSION="${MAJOR_VERSION:-lts}"
 ARG SHA_HEAD_SHORT="${SHA_HEAD_SHORT:-deadbeef}"
 ENV FEDORA_AKMODS_VERSION="${FEDORA_AKMODS_VERSION}"
 
