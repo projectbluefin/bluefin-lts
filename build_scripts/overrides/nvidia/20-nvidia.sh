@@ -100,6 +100,7 @@ EOF
 dnf config-manager --set-disabled nvidia-container-toolkit
 
 systemctl enable ublue-nvctk-cdi.service
+systemctl enable ublue-nvidia-flatpak-runtime-sync.service
 semodule --verbose --install /usr/share/selinux/packages/nvidia-container.pp
 
 # Universal Blue specific Initramfs fixes
