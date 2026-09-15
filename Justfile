@@ -119,6 +119,13 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     brew_image_sha=$(yq -r '.images[] | select(.name == "brew") | .digest' image-versions.yaml)
     brew_image_ref="${brew_image}@${brew_image_sha}"
 
+    # Verify the shared common layer before allowing it into the LTS build.
+    if [[ "${SKIP_BASE_VERIFY:-}" == "1" && "${CI:-}" != "true" ]]; then
+        echo "WARNING: Skipping base image verification (SKIP_BASE_VERIFY=1, local dev only)"
+    else
+        {{ just_executable() }} verify-container "common:latest@${common_image_sha}" ghcr.io/projectbluefin "{{ justfile_directory() }}/keys/projectbluefin-common.pub"
+    fi
+
     BUILD_ARGS=()
     BUILD_ARGS+=("--build-arg" "COMMON_IMAGE_REF=${common_image_ref}")
     BUILD_ARGS+=("--build-arg" "BREW_IMAGE_REF=${brew_image_ref}")
@@ -505,6 +512,109 @@ gen-sbom base="bluefin-lts" stream="stable" flavor="main" syft_cmd="syft":
 [group('Utility')]
 secureboot base="bluefin-lts" tag="stable" flavor="main":
     echo "Secureboot check: LTS is CentOS bootc-based (TPM2/Verity). UKI check not applicable."
+
+# Verify Container with Cosign
+[group('Utility')]
+verify-container container="" registry="ghcr.io/ublue-os" key="":
+    #!/usr/bin/bash
+    set -eou pipefail
+
+    # cosign v3+ is required to verify Sigstore Bundle v0.3 signatures (produced by cosign >=v3.0).
+    # The CI runner may ship an older pre-installed cosign; install the pinned release when needed.
+    COSIGN_VERSION="v3.1.1"
+    COSIGN_MAJOR=0
+    if command -v cosign >/dev/null 2>&1; then
+        COSIGN_MAJOR=$(cosign version 2>/dev/null | awk '/GitVersion:/{gsub(/[^0-9.]/, "", $2); split($2, a, "."); print a[1]+0}')
+    fi
+
+    COSIGN_BIN="cosign"
+    if [[ "${COSIGN_MAJOR}" -lt 3 ]]; then
+        ARCH="$(uname -m)"
+        case "${ARCH}" in
+            x86_64)
+                COSIGN_ARCH="amd64"
+                COSIGN_SHA256="ae1ecd212663f3693ad9edf8b1a183900c9a52d3155ba6e354237f9a0f6463fc"
+                ;;
+            aarch64|arm64)
+                COSIGN_ARCH="arm64"
+                COSIGN_SHA256="2ec865872e331c32fd12b08dae15332d3f92c0aa029219589684a4903ca85d11"
+                ;;
+            *)
+                echo "ERROR: Unsupported architecture for cosign verification: ${ARCH}" >&2
+                exit 1
+                ;;
+        esac
+
+        COSIGN_INSTALL_PATH=$(mktemp)
+        trap 'rm -f "${COSIGN_INSTALL_PATH}"' EXIT
+        echo "Installing cosign ${COSIGN_VERSION} for ${ARCH} (installed major=${COSIGN_MAJOR} is pre-v3)..."
+        curl -fsSL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-${COSIGN_ARCH}" \
+            -o "${COSIGN_INSTALL_PATH}"
+
+        # Verify integrity of downloaded cosign binary
+        echo "${COSIGN_SHA256}  ${COSIGN_INSTALL_PATH}" | sha256sum -c -
+
+        chmod 0755 "${COSIGN_INSTALL_PATH}"
+
+        # Install to /usr/local/bin if permitted, otherwise run directly from temp path
+        SUDOIF=""
+        if [[ "${UID:-$(id -u)}" -ne 0 ]] && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+            SUDOIF="sudo"
+        fi
+
+        if [[ "${UID:-$(id -u)}" -eq 0 ]] || [[ -n "${SUDOIF}" ]]; then
+            ${SUDOIF} install -m 0755 "${COSIGN_INSTALL_PATH}" /usr/local/bin/cosign 2>/dev/null || true
+        fi
+
+        if command -v cosign >/dev/null 2>&1; then
+            COSIGN_BIN="cosign"
+        else
+            COSIGN_BIN="${COSIGN_INSTALL_PATH}"
+        fi
+        echo "cosign ready: $("${COSIGN_BIN}" version 2>/dev/null | awk '/GitVersion:/{print $2}')"
+    fi
+
+    # Verify Container using cosign (retry up to 5 times for transient registry errors)
+    MAX_RETRIES=5
+    RETRY_DELAY=10
+    key="{{ key }}"
+
+    # Keyless verification for images signed via Sigstore OIDC (e.g. projectbluefin/common)
+    if [[ "${key}" == "keyless" || "${key}" == *"projectbluefin-common"* ]]; then
+        CERT_IDENTITY_REGEXP="https://github.com/projectbluefin/(common|actions)/.github/workflows/"
+        CERT_OIDC_ISSUER="https://token.actions.githubusercontent.com"
+        for attempt in $(seq 1 ${MAX_RETRIES}); do
+            if "${COSIGN_BIN}" verify \
+                --certificate-identity-regexp="${CERT_IDENTITY_REGEXP}" \
+                --certificate-oidc-issuer="${CERT_OIDC_ISSUER}" \
+                "{{ registry }}"/"{{ container }}" >/dev/null; then
+                break
+            fi
+            if [[ "${attempt}" -eq "${MAX_RETRIES}" ]]; then
+                echo "ERROR: Keyless verification failed for {{ registry }}/{{ container }} after ${MAX_RETRIES} attempts." >&2
+                exit 1
+            fi
+            echo "NOTICE: Verification attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${RETRY_DELAY}s..." >&2
+            sleep "${RETRY_DELAY}"
+        done
+    else
+        # Key-based verification
+        # Keys are vendored in keys/ — update via PR with justification
+        if [[ -z "${key:-}" ]]; then
+            key="{{ justfile_directory() }}/keys/ublue-os-brew.pub"
+        fi
+        for attempt in $(seq 1 ${MAX_RETRIES}); do
+            if "${COSIGN_BIN}" verify --key "${key}" "{{ registry }}"/"{{ container }}" >/dev/null; then
+                break
+            fi
+            if [[ "${attempt}" -eq "${MAX_RETRIES}" ]]; then
+                echo "ERROR: Verification failed for {{ registry }}/{{ container }} after ${MAX_RETRIES} attempts. Please ensure your public key is correct." >&2
+                exit 1
+            fi
+            echo "NOTICE: Verification attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${RETRY_DELAY}s..." >&2
+            sleep "${RETRY_DELAY}"
+        done
+    fi
 
 # Run unit tests for build scripts
 [group('Just')]
