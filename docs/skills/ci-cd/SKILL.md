@@ -117,7 +117,6 @@ Check in order:
 Use the GitHub workflow run, job summary, and logs as evidence. Do not infer
 success from a green caller job if the reusable job or publication step failed.
 
-
 ## Common Rationalizations
 
 - “The caller is green, so publication succeeded.” Inspect the reusable job and artifact.
