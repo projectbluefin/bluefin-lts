@@ -58,6 +58,7 @@ packages = [
 packages = [
     "NetworkManager-openconnect-gnome",
     "NetworkManager-openvpn-gnome",
+    "bootupd",
     "btrfs-progs",
     "buildah",
     "containerd",
