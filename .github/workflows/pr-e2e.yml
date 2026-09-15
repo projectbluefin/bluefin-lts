@@ -18,6 +18,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+# Top-level deny-all; jobs declare their own permissions explicitly.
+permissions: {}
+
 env:
   BASE_IMAGE: ghcr.io/projectbluefin/bluefin-lts:testing
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
