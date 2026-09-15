@@ -99,7 +99,9 @@ EOF
 # disable repos provided by ublue-os-nvidia-addons
 dnf config-manager --set-disabled nvidia-container-toolkit
 
-systemctl enable ublue-nvctk-cdi.service
+# CDI auto-generation: ublue-nvctk-cdi.service was retired in ublue-os-nvidia-addons 0.15
+# in favor of upstream nvidia-cdi-refresh.{path,service}, already enabled via
+# system_files_overrides/nvidia/usr/lib/systemd/system-preset/80-nvidia-container-toolkit.preset
 semodule --verbose --install /usr/share/selinux/packages/nvidia-container.pp
 
 # Universal Blue specific Initramfs fixes

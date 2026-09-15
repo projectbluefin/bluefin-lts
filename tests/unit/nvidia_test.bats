@@ -322,10 +322,10 @@ teardown() {
     grep -q -- "dracut .*--add ostree" "${CMD_LOG}"
 }
 
-@test "nvidia: enables ublue-nvctk-cdi.service and installs the SELinux module" {
+@test "nvidia: does not enable the retired ublue-nvctk-cdi.service and installs the SELinux module" {
     patch_and_run
     [ "$status" -eq 0 ]
-    grep -q "systemctl enable ublue-nvctk-cdi.service" "${CMD_LOG}"
+    ! grep -q "ublue-nvctk-cdi" "${CMD_LOG}"
     grep -q "semodule .*nvidia-container.pp" "${CMD_LOG}"
 }
 
