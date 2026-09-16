@@ -15,7 +15,7 @@ setup() {
 }
 
 # Fix #1: /tmp/vicinae must be created before it is used as a tar extraction target.
-test vicinae_directory_created_before_tar_extraction() {
+@test "vicinae_directory_created_before_tar_extraction" {
     mkdir_line=$(grep -n 'mkdir -p /tmp/vicinae' "${BUILD}" | head -1 | cut -d: -f1)
     tar_line=$(grep -n 'tar -xzf /tmp/vicinae.tar.gz -C /tmp/vicinae' "${BUILD}" | head -1 | cut -d: -f1)
     [ -n "${mkdir_line}" ] || { echo "FAIL: no 'mkdir -p /tmp/vicinae' in ${BUILD}"; return 1; }
@@ -25,7 +25,7 @@ test vicinae_directory_created_before_tar_extraction() {
 
 # Fix #2: the Vicinae block must be guarded behind an aarch64 check, since upstream
 # ships no aarch64/arm64 build and curl -fsSL would 404 and abort the build.
-test vicinae_block_is_arch_guarded() {
+@test "vicinae_block_is_arch_guarded" {
     guard_line=$(grep -n 'if \[ "\$ARCH" != "aarch64" \]' "${BUILD}" | head -1 | cut -d: -f1)
     tar_line=$(grep -n 'tar -xzf /tmp/vicinae.tar.gz -C /tmp/vicinae' "${BUILD}" | head -1 | cut -d: -f1)
     [ -n "${guard_line}" ] || { echo "FAIL: no aarch64 guard 'if [ \"\$ARCH\" != \"aarch64\" ]'"; return 1; }
@@ -41,7 +41,7 @@ test vicinae_block_is_arch_guarded() {
 
 # Regression: the aarch64 guard must not wrap Quick Settings Audio Panel, which
 # ships for both architectures.
-test qsap_is_not_arch_guarded() {
+@test "qsap_is_not_arch_guarded" {
     qsap_zip=$(grep -n 'quick-settings-audio-panel.*shell-extension.zip' "${BUILD}" | head -1 | cut -d: -f1)
     guard_line=$(grep -n 'if \[ "\$ARCH" != "aarch64" \]' "${BUILD}" | head -1 | cut -d: -f1)
     [ -n "${qsap_zip}" ] || { echo "FAIL: QSAP download line missing"; return 1; }
