@@ -60,6 +60,11 @@ concerns that vendor content.
 
 ## Branch and release safety
 
+All pull requests target `testing`. `testing` is the integration branch: each
+push to it builds and publishes the pre-release `:testing` stream. `main` is
+production source and advances only via `testing → main` promotion; never open
+a PR against `main` and never push to `main` directly.
+
 Follow the branch and promotion behavior defined by the current workflows. Do
 not infer release behavior from tags alone. Verify published artifacts by
 immutable digest and signature.
