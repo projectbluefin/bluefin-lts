@@ -1,0 +1,23 @@
+# Vicinae launcher keybinding (Bluefin LTS, x86_64 only).
+#
+# Vicinae ships an x86_64 tarball only, so the launcher is installed solely on
+# x86_64 (see the arch guard in build_scripts/21-build-gnome-extensions.sh).
+# This keyfile therefore lives under system_files_overrides/x86_64/ and is never
+# copied onto aarch64, where 'vicinae toggle' would not resolve.
+#
+# <Super>space is already free: projectbluefin/common's
+# zz0-bluefin-modifications.gschema.override already sets
+# switch-input-source=['<Shift><Super>space'] and switch-input-source-backward=[''],
+# so no org/gnome/desktop/wm/keybindings change is needed here.
+#
+# custom-keybindings is a whole-array key and this distro-db value outranks the
+# gschema default from common's zz0 override, so the six entries common ships
+# (defined in common's 02-bluefin-keybindings) must be repeated here or they
+# silently stop working. Keep this list in sync with common.
+[org/gnome/settings-daemon/plugins/media-keys]
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom5/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom6/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae/']
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae]
+binding='<Super>space'
+command='vicinae toggle'
+name='Vicinae Launcher'
