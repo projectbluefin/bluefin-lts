@@ -1,2 +1,5 @@
 [org.gnome.shell]
-enabled-extensions = ['appindicatorsupport@rgcjonas.gmail.com', 'blur-my-shell@aunetx', 'custom-command-list@storageb.github.com', 'dash-to-dock@micxgx.gmail.com', 'gradia-integration@alexandervanhee.github.io', 'gsconnect@andyholmes.github.io', 'quick-settings-audio-panel@rayzeq.github.io']
+enabled-extensions = ['appindicatorsupport@rgcjonas.gmail.com', 'blur-my-shell@aunetx', 'BudsLink-Companion@maniacx.github.com', 'custom-command-list@storageb.github.com', 'dash-to-dock@micxgx.gmail.com', 'gradia-integration@alexandervanhee.github.io', 'gsconnect@andyholmes.github.io', 'quick-settings-audio-panel@rayzeq.github.io']
+
+[org.gnome.shell.extensions.BudsLink-Companion]
+level-indicator-color=0

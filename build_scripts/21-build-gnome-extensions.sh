@@ -63,6 +63,49 @@ glib-compile-schemas --strict "${QSAP_DIR}/schemas"
 install -Dm644 "${QSAP_DIR}/schemas/org.gnome.shell.extensions.quick-settings-audio-panel.gschema.xml" \
     "/usr/share/glib-2.0/schemas/org.gnome.shell.extensions.quick-settings-audio-panel.gschema.xml"
 
+# BudsLink Companion
+# GNOME panel extension companion for the BudsLink flatpak app (Dakota port #1512).
+# Vendored as a submodule pinned to the maniacx/BudsLink-Companion Gnome-Extension branch;
+# the extension files already live in-place under the extensions dir, so this only
+# compiles its schema and publishes it to the global schema path.
+BL_UUID="BudsLink-Companion@maniacx.github.com"
+BL_DIR="/usr/share/gnome-shell/extensions/${BL_UUID}"
+glib-compile-schemas --strict "${BL_DIR}/schemas"
+install -Dm644 "${BL_DIR}/schemas/org.gnome.shell.extensions.BudsLink-Companion.gschema.xml" \
+    "/usr/share/glib-2.0/schemas/org.gnome.shell.extensions.BudsLink-Companion.gschema.xml"
+
+# Vicinae Launcher
+# Minimalist app launcher (Dakota port #1515). Pinned GitHub release tarball, tracked by Renovate.
+# Upstream publishes an x86_64 tarball only (the aarch64 release asset is an AppImage), so
+# guard the block to keep curl -fsSL from 404-ing and aborting the aarch64 build.
+ARCH=$(arch)
+if [ "$ARCH" != "aarch64" ]; then
+    mkdir -p /tmp/vicinae
+    VICINAE_VERSION=$(grep '^\s*vicinae:' /run/context/image-versions.yaml | sed 's/.*"\(.*\)".*/\1/')
+    curl -fsSL "https://github.com/vicinaehq/vicinae/releases/download/${VICINAE_VERSION}/vicinae-linux-x86_64-${VICINAE_VERSION}.tar.gz" \
+        -o /tmp/vicinae.tar.gz
+    tar -xzf /tmp/vicinae.tar.gz -C /tmp/vicinae
+    install -Dm755 /tmp/vicinae/bin/vicinae /usr/bin/vicinae
+    for f in /tmp/vicinae/libexec/vicinae/*; do
+        install -Dm755 "$f" "/usr/libexec/vicinae/$(basename "$f")"
+    done
+    install -Dm644 /tmp/vicinae/share/applications/vicinae.desktop "/usr/share/applications/vicinae.desktop"
+    install -Dm644 /tmp/vicinae/share/applications/vicinae-url-handler.desktop "/usr/share/applications/vicinae-url-handler.desktop"
+    install -Dm644 /tmp/vicinae/share/icons/hicolor/512x512/apps/vicinae.png "/usr/share/icons/hicolor/512x512/apps/vicinae.png"
+    install -Dm644 /tmp/vicinae/lib/systemd/user/vicinae.service "/usr/lib/systemd/user/vicinae.service"
+    install -Dm644 /tmp/vicinae/lib/modules-load.d/vicinae.conf "/usr/lib/modules-load.d/vicinae.conf"
+    # Vicinae ships 31 TOML themes (+ icons) under share/vicinae/themes; install the whole
+    # tree so the launcher has themes to enumerate instead of shipping themeless.
+    mkdir -p /usr/share/vicinae/themes
+    cp -a /tmp/vicinae/share/vicinae/themes/. /usr/share/vicinae/themes/
+    # Starts the ~33 MB vicinae-server (Restart=always) in every graphical session, whether
+    # or not the user launches Vicinae. Intentional: it provides the paste-over-clipboard
+    # service the launcher documents; move the symlink to opt in if that is unwanted.
+    mkdir -p "/usr/lib/systemd/user/graphical-session.target.wants"
+    ln -sfn ../vicinae.service "/usr/lib/systemd/user/graphical-session.target.wants/vicinae.service"
+    rm -rf /tmp/vicinae
+fi
+
 rm /usr/share/glib-2.0/schemas/gschemas.compiled
 glib-compile-schemas /usr/share/glib-2.0/schemas
 
