@@ -4,13 +4,16 @@ on:
   pull_request:
     branches:
       - main
+      - testing
     paths:
       - build_scripts/**
       - tests/**
+      - .github/workflows/unit-tests.yml
   push:
     branches:
       - main
       - testing
+  merge_group:
   workflow_dispatch:
 
 jobs:
