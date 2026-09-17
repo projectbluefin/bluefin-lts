@@ -115,6 +115,12 @@ The `bluefin-lts-nvidia` variant ships full CDI configuration so `podman run --d
 
 ### NVIDIA CDI wiring
 
+**`system_files_overrides/nvidia/usr/lib/bootc/kargs.d/00-nvidia.toml`**
+```toml
+kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1"]
+```
+The NVIDIA bootc kernel arguments are shipped declaratively from the NVIDIA overlay, which is copied into the image before the NVIDIA build scripts run. They were previously `tee`-d inline from `20-nvidia.sh`; keeping them in the overlay means each argument is installed exactly once and matches the shared `projectbluefin/common` layout.
+
 **`build_scripts/overrides/nvidia/20-nvidia.sh`**
 ```bash
 # Configure nvidia-container-toolkit for rootless use.
