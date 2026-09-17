@@ -76,8 +76,8 @@ install -Dm644 "${BL_DIR}/schemas/org.gnome.shell.extensions.BudsLink-Companion.
 
 # Vicinae Launcher
 # Minimalist app launcher (Dakota port #1515). Pinned GitHub release tarball, tracked by Renovate.
-# Vicinae ships x86_64-only (upstream publishes no aarch64/arm64 build); guard the whole block
-# like 99-flatpaks.sh does so the aarch64 build is not aborted by curl -fsSL on a 404.
+# Upstream publishes an x86_64 tarball only (the aarch64 release asset is an AppImage), so
+# guard the block to keep curl -fsSL from 404-ing and aborting the aarch64 build.
 ARCH=$(arch)
 if [ "$ARCH" != "aarch64" ]; then
     mkdir -p /tmp/vicinae
@@ -94,7 +94,7 @@ if [ "$ARCH" != "aarch64" ]; then
     install -Dm644 /tmp/vicinae/share/icons/hicolor/512x512/apps/vicinae.png "/usr/share/icons/hicolor/512x512/apps/vicinae.png"
     install -Dm644 /tmp/vicinae/lib/systemd/user/vicinae.service "/usr/lib/systemd/user/vicinae.service"
     install -Dm644 /tmp/vicinae/lib/modules-load.d/vicinae.conf "/usr/lib/modules-load.d/vicinae.conf"
-    # Vicinae ships 49 TOML themes (+ icons) under share/vicinae/themes; install the whole
+    # Vicinae ships 31 TOML themes (+ icons) under share/vicinae/themes; install the whole
     # tree so the launcher has themes to enumerate instead of shipping themeless.
     mkdir -p /usr/share/vicinae/themes
     cp -a /tmp/vicinae/share/vicinae/themes/. /usr/share/vicinae/themes/
