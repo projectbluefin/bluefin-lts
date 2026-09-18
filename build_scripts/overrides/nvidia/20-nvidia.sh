@@ -77,7 +77,16 @@ dnf install -y "${NVIDIA_DNF_DRIVER_ARGS[@]}" \
     "nvidia-driver-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-cuda-${NVIDIA_PKG_VERSION}" \
     "nvidia-settings-${NVIDIA_PKG_VERSION}" \
-    nvidia-container-toolkit
+    nvidia-container-toolkit || {
+    # negativo17 rotates its driver packages and can drop the exact kmod
+    # version the akmods image baked (issue #620: kmod-nvidia 610.43.03 was
+    # removed while a newer driver was published). Fall back to the driver the
+    # repo currently publishes so a transient akmods/driver drift does not
+    # hard-fail the whole nvidia build. The runtime equality guard below still
+    # fails loudly if the installed driver cannot pair with the shipped kmod.
+    dnf -y "${NVIDIA_DNF_DRIVER_ARGS[@]}" --best --allowerasing \
+        libnvidia-fbc nvidia-driver nvidia-driver-cuda nvidia-settings || true
+}
 
 # Ensure the version of the Nvidia module matches the driver
 DRIVER_VERSION="$(rpm -q --queryformat '%{VERSION}' nvidia-driver)"
