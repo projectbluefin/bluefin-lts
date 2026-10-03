@@ -1,0 +1,36 @@
+name: Skill Docs Check
+
+on:
+  pull_request:
+    branches:
+      - testing
+      - main
+    paths:
+      - docs/skills/**
+      - scripts/check-skill-docs.py
+      - .github/workflows/skill-docs.yml
+  push:
+    branches:
+      - main
+      - testing
+    paths:
+      - docs/skills/**
+      - scripts/check-skill-docs.py
+      - .github/workflows/skill-docs.yml
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check-skill-docs:
+    name: Validate skill docs contract
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Run skill docs check
+        run: python3 scripts/check-skill-docs.py
