@@ -45,8 +45,25 @@ exit 0
 EOF
     chmod +x "${STUB_BIN}/kernel-swap"
 
+    # matchpathcon needs a loaded policy; report the label the script asserts
+    # unless a test overrides it.
+    export STUB_MATCHPATHCON_CONTEXT="system_u:object_r:ssh_home_t:s0"
+    cat > "${STUB_BIN}/matchpathcon" <<EOF
+#!/usr/bin/env bash
+echo "matchpathcon \$*" >> "${DNF_LOG}"
+echo "\${STUB_MATCHPATHCON_CONTEXT}"
+exit 0
+EOF
+    chmod +x "${STUB_BIN}/matchpathcon"
+
     export PATH="${STUB_BIN}:${PATH}"
     export DNF_LOG TEST_ROOT STUB_BIN
+
+    # The RPM-original file the COPR policy install leaves behind.
+    SUBS_DIST="${TEST_ROOT}/etc/selinux/targeted/contexts/files/file_contexts.subs_dist"
+    mkdir -p "$(dirname "${SUBS_DIST}")"
+    printf '/home/home-inst      /home\n/var/home            /home\n/var/roothome        /root\n' > "${SUBS_DIST}"
+    export SUBS_DIST
 
     # dnf config-manager is stubbed, so it never creates the repo file. Stage it
     # so the "repo is found before exclude=libjxl* is appended" path runs.
@@ -54,13 +71,14 @@ EOF
         > "${TEST_ROOT}/etc/yum.repos.d/jreilly1821-c10s-gnome-50.repo"
 
     PATCHED_SCRIPT="${TEST_ROOT}/10-packages-image-base-patched.sh"
-    # The script only touches four absolute path groups; target each exactly so
+    # The script only touches five absolute path groups; target each exactly so
     # the /tmp- and /etc-hosted stub paths are not re-prefixed.
     sed \
         -e "s|python3 /run/context/build_scripts/scripts/read-packages|python3 ${READ_PACKAGES}|g" \
         -e "s|/run/context/build_scripts/packages/base.toml|${PKGS_TOML}|g" \
         -e "s|/run/context/build_scripts/scripts/kernel-swap.sh|${STUB_BIN}/kernel-swap|g" \
         -e "s|/etc/yum.repos.d/|${TEST_ROOT}/etc/yum.repos.d/|g" \
+        -e "s|/etc/selinux/|${TEST_ROOT}/etc/selinux/|g" \
         "${BASE_SCRIPT}" > "${PATCHED_SCRIPT}"
     chmod +x "${PATCHED_SCRIPT}"
     export PATCHED_SCRIPT
@@ -120,6 +138,34 @@ teardown() {
     upgrade_line=$(grep -n "dnf -y upgrade glib2 fontconfig" "${DNF_LOG}" | head -1 | cut -d: -f1)
     group_line=$(grep -n "dnf group install" "${DNF_LOG}" | head -1 | cut -d: -f1)
     [ "$upgrade_line" -lt "$group_line" ]
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# SELinux file_contexts.subs_dist — the COPR policy RPM undoes rpm-ostree's edit
+# ──────────────────────────────────────────────────────────────────────────────
+
+@test "image-base: restores the /home -> /var/home alias after the policy install" {
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+    grep -q '^/home /var/home$' "${SUBS_DIST}"
+    ! grep -q '^/var/home' "${SUBS_DIST}"
+    install_line=$(grep -n "dnf -y install selinux-policy selinux-policy-targeted" "${DNF_LOG}" | head -1 | cut -d: -f1)
+    check_line=$(grep -n "matchpathcon -n /var/home/user/.ssh" "${DNF_LOG}" | head -1 | cut -d: -f1)
+    [ "$install_line" -lt "$check_line" ]
+}
+
+@test "image-base: leaves an already-fixed file_contexts.subs_dist unchanged" {
+    printf '/home/home-inst      /home\n# /var/home            /home\n/var/roothome        /root\n/home /var/home\n' > "${SUBS_DIST}"
+    cp "${SUBS_DIST}" "${SUBS_DIST}.orig"
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -eq 0 ]
+    cmp "${SUBS_DIST}" "${SUBS_DIST}.orig"
+}
+
+@test "image-base: fails when /var/home/*/.ssh does not label as ssh_home_t" {
+    export STUB_MATCHPATHCON_CONTEXT="system_u:object_r:default_t:s0"
+    run bash "${PATCHED_SCRIPT}"
+    [ "$status" -ne 0 ]
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
