@@ -86,7 +86,7 @@ jobs:
     name: Publish multi-architecture manifest
     needs: [build]
     if: always() && github.event_name != 'pull_request'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       manifest_digest: ${{ steps.manifest.outputs.digest }}
     permissions:
