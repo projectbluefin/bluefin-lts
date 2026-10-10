@@ -48,6 +48,9 @@ Spidermonkey Javascript engine from Mozilla and the GObject introspection
 framework.
 
 %package devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(gjs-1.0) = %{version}
+
 Summary: Development package for %{name}
 Requires: %{name}%{?_isa} = %{version}-%{release}
 

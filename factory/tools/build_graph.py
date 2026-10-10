@@ -257,6 +257,9 @@ def plan(root: Path | None = None, rows_dir: Path | None = None,
         if not satisfied:
             raise ValueError("stack selection requires CentOS provider witnesses")
         targets = json.loads((root / "config" / "gnome-stack.json").read_text())["targets"]
+        unknown = set(targets) - set(names)
+        if unknown:
+            raise ValueError("unknown GNOME targets: " + ", ".join(sorted(unknown)))
         building = set(targets)
         pending = list(targets)
         while pending:

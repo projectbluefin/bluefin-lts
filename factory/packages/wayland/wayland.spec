@@ -43,6 +43,9 @@ applications, X servers (rootless or fullscreen) or other display servers.
 %dnl ------------------------------------------------------------------------
 
 %package        devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(wayland-server) = %{version}
+
 Summary:        Development files for %{name}
 Requires:       libwayland-client%{?_isa} = %{version}-%{release}
 Requires:       libwayland-cursor%{?_isa} = %{version}-%{release}

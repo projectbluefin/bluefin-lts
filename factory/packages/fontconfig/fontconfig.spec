@@ -47,6 +47,9 @@ system and select them according to requirements specified by
 applications.
 
 %package	devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(fontconfig) = %{version}
+
 Summary:	Font configuration and customization library
 Requires:	%{name}%{?_isa} = %{version}-%{release}
 Requires:	freetype-devel >= %{freetype_version}

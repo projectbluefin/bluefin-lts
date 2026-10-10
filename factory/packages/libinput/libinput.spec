@@ -41,6 +41,9 @@ libinput need to provide the common set of functionality that users expect.
 
 
 %package        devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(libinput) = %{version}
+
 Summary:        Development files for %{name}
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 

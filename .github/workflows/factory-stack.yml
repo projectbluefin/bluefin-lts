@@ -33,11 +33,17 @@ jobs:
           python3 factory/tools/build_graph.py plan --rows work/graph/rows \
             --stack --output work/graph/plan.json
           test "$(python3 -c 'import json; print(len(json.load(open("work/graph/plan.json"))["waves"]))')" -le 16
+      - name: Check GNOME dependency tree before compilation
+        id: preflight
+        run: |
+          set -euo pipefail
+          python3 factory/tools/dependency_preflight.py --rows work/graph/rows \
+            --plan work/graph/plan.json --output work/graph/dependency-preflight.json
       - name: Build wave 0
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 0
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave0
           path: |
@@ -46,10 +52,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 1
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 1
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave1
           path: |
@@ -58,10 +64,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 2
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 2
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave2
           path: |
@@ -70,10 +76,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 3
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 3
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave3
           path: |
@@ -82,10 +88,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 4
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 4
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave4
           path: |
@@ -94,10 +100,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 5
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 5
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave5
           path: |
@@ -106,10 +112,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 6
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 6
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave6
           path: |
@@ -118,10 +124,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 7
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave7
           path: |
@@ -130,10 +136,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 8
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 8
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave8
           path: |
@@ -142,10 +148,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 9
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 9
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave9
           path: |
@@ -154,10 +160,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 10
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 10
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave10
           path: |
@@ -166,10 +172,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 11
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 11
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave11
           path: |
@@ -178,10 +184,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 12
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 12
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave12
           path: |
@@ -190,10 +196,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 13
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 13
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave13
           path: |
@@ -202,10 +208,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 14
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 14
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave14
           path: |
@@ -214,10 +220,10 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Build wave 15
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 15
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         with:
           name: factory-stack-wave15
           path: |
@@ -226,7 +232,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Require the complete stack and solve the GNOME 51 consumer transaction
-        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: |
           set -euo pipefail
           python3 factory/tools/build_stack.py --plan work/graph/plan.json --check

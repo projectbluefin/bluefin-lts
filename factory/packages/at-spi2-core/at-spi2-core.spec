@@ -41,6 +41,9 @@ It has been completely rewritten to use D-Bus rather than
 ORBIT / CORBA for its transport protocol.
 
 %package devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(atspi-2) = %{version}
+
 Summary: Development files and headers for at-spi2-core
 Requires: %{name}%{?_isa} = %{version}-%{release}
 

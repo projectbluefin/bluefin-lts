@@ -35,6 +35,9 @@ Building blocks for modern GNOME applications.
 
 
 %package        devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(libadwaita-1) = %{version}
+
 Summary:        Development files for %{name}
 
 Requires:       %{name}%{?_isa} = %{version}-%{release}

@@ -27,6 +27,9 @@ HarfBuzz is an implementation of the OpenType Layout engine.
 
 
 %package        devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(harfbuzz) = %{version}
+
 Summary:        Development files for %{name}
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 Requires:       %{name}-icu%{?_isa} = %{version}-%{release}

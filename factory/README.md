@@ -63,6 +63,24 @@ serializes work. The plan is checked against the workflow's static job graph,
 so a deeper plan fails loudly rather than dropping the packages that did not
 fit.
 
+Before wave zero, `factory-stack.yml` runs the dependency-tree preflight against
+those CentOS rows. Every selected BuildRequires must have an exact base RPM
+witness or a compatible provider in an earlier factory wave. Missing providers,
+incompatible declared versions, blocked prerequisites, cycles, and stale or
+incomplete plans fail before any package compiles. Version matching uses CentOS
+RPM semantics, including epochs and prereleases; the extractor runs its version
+regression tests in that same root. The evidence artifact includes
+`dependency-preflight.json` with the witness for each checked requirement.
+Run `just factory-dependencies` locally to perform the same check without
+compiling the stack (requires a container engine and repository metadata).
+
+Generated capability names from CentOS metadata cannot prove a future factory
+RPM's version. When the base is too old, declare the required versioned capability
+in the recipe's appropriate subpackage rather than guessing from its source
+version. This gate checks declared dependency coverage and ordering; compilation,
+generated BuildRequires, tests, and the final consumer transaction still verify
+API compatibility and actual RPM installability.
+
 ### Why nothing downloads during a build
 
 `config/upstream-sources.json` holds, for every recipe, the resolved upstream

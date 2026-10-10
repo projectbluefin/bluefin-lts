@@ -161,6 +161,9 @@ suites.
 This package contains version 4 of GTK.
 
 %package devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(gtk4) = %{version}
+
 Summary: Development files for GTK
 Requires: gtk4%{?_isa} = %{version}-%{release}
 

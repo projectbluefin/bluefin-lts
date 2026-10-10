@@ -60,7 +60,7 @@ test "$failed" -eq 0
 # Map generated capabilities from CentOS metadata back to source packages.
 # This bootstraps pkgconfig/soname edges before a factory repo exists.
 python3 - "$outdir" <<'PY'
-import dnf, json, re, sys
+import dnf, json, re, sys, rpm
 from dnf.subject import Subject
 from pathlib import Path
 sys.path.insert(0, "/repo/factory")
@@ -97,7 +97,10 @@ for br in rows.glob("*.br"):
             witnesses[requirement] = sorted(str(package) for package in matches)
     satisfied[br.stem] = witnesses
 (rows / "base-satisfied.json").write_text(json.dumps(satisfied, indent=2))
+from tools.dependency_preflight import rpm_matches, write_factory_witnesses
+write_factory_witnesses(rows, lambda provide, requirement: rpm_matches(provide, requirement, rpm))
 PY
+python3 -m unittest discover -s /repo/factory/tests -p test_dependency_preflight.py
 """
 
 

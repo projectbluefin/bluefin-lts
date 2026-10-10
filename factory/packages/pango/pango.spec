@@ -57,6 +57,9 @@ The integration of Pango with Cairo provides a complete solution with high
 quality text handling and graphics rendering.
 
 %package devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(pango) = %{version}
+
 Summary: Development files for pango
 Requires: pango%{?_isa} = %{version}-%{release}
 Requires: glib2-devel%{?_isa} >= %{glib2_version}

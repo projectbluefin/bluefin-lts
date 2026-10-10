@@ -36,6 +36,9 @@ settings shared by various components of a desktop.
 
 
 %package        devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(gsettings-desktop-schemas) = %{version}
+
 Summary:        Development files for %{name}
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 

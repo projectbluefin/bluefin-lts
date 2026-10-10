@@ -48,6 +48,10 @@ GLib is the low-level core library that forms the basis for projects
 such as GTK+ and GNOME.
 
 %package devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(gio-2.0) = %{version}
+Provides:       pkgconfig(glib-2.0) = %{version}
+
 Summary: A library of handy utility functions
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: glibc-devel

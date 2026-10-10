@@ -559,6 +559,17 @@ factory-plan full="false":
     [[ "{{ full }}" == "true" ]] && args+=(--full)
     python3 factory/tools/rebuild_plan.py "${args[@]}"
 
+# Check the GNOME dependency tree in the pinned CentOS root without compiling.
+[group('Factory')]
+factory-dependencies engine="podman":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python3 factory/tools/buildroot.py --engine "{{ engine }}" --output work/buildroot-resolved.json
+    image=$(python3 factory/tools/buildroot.py --digest-only)
+    python3 factory/tools/extract_buildrequires.py --engine "{{ engine }}" --image "$image" --output work/graph
+    python3 factory/tools/build_graph.py plan --rows work/graph/rows --stack --output work/graph/plan.json
+    python3 factory/tools/dependency_preflight.py --rows work/graph/rows --plan work/graph/plan.json --output work/graph/dependency-preflight.json
+
 # The resolved upstream source for every recipe, and which are still unlocked.
 [group('Factory')]
 factory-sources:

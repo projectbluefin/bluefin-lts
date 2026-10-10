@@ -52,6 +52,7 @@ pipeline.
 just factory-check      # the full fast gate; builds nothing
 just factory-sources    # resolved source per recipe, and what is unlocked
 just factory-plan       # what a build would select, and why
+just factory-dependencies # dependency-tree gate in CentOS; downloads metadata, compiles nothing
 just factory-relock     # re-render config/upstream-sources.json (needs a container engine)
 just factory-srpm <pkg> # prove one recipe produces an SRPM
 ```
@@ -122,6 +123,12 @@ Run `just factory-check` before every commit that touches `factory/**` or
 - Retry DNF once with refreshed metadata for mirror/Curl errors only. Missing
   dependencies and signature failures remain fatal.
 - Admit artifacts only from strictly earlier waves; never same-wave siblings.
+- Before compiling the stack, run `dependency_preflight.py` against freshly
+  extracted CentOS rows and the stack plan. Each selected BuildRequires needs
+  an exact base witness or a compatible earlier-wave provider. Declare versioned
+  Provides when generated capabilities have no verifiable factory version;
+  do not infer their versions from source versions. Preserve the native RPM
+  comparison tests run by the extractor and the preflight report in CI evidence.
 - Replace seed RPMs by the successful binaries' full source name, splitting
   the NEVR from the right. Failed recipes keep their old binaries and state.
 - Resolve the consumer transaction using CentOS/CRB/EPEL and the candidate,

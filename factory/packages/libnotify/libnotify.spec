@@ -38,6 +38,9 @@ notifications can be used to inform the user about an event or display some
 form of information without getting in the user's way.
 
 %package        devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(libnotify) = %{version}
+
 Summary:        Development files for %{name}
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 

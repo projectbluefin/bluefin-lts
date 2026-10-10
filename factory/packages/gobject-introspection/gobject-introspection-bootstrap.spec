@@ -28,6 +28,9 @@ GObject Introspection is a project that aims to describe the APIs of
 GObject-based libraries.
 
 %package devel
+# Expose versions to the dependency preflight before payload Provides exist.
+Provides:       pkgconfig(gobject-introspection-1.0) = %{version}
+
 Summary:        Libraries and headers for gobject-introspection
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 Requires:       libtool
