@@ -21,7 +21,7 @@ import argparse
 import ast
 import json
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -93,6 +93,10 @@ def check_locks(root: Path) -> list[str]:
                     if str(item.get("url", "")).startswith("https://")
                 }:
                     problems.append(f"{record.name}: {label} generator input must be locked earlier")
+                if isinstance(generated, dict):
+                    lockfile = PurePosixPath(generated.get("lockfile", "Cargo.lock"))
+                    if lockfile.is_absolute() or ".." in lockfile.parts or lockfile.name != "Cargo.lock":
+                        problems.append(f"{record.name}: {label} requires a relative Cargo.lock path")
             filename = source.get("filename", "")
             if not filename:
                 problems.append(f"{record.name}: {label} has no filename")

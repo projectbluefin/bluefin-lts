@@ -20,6 +20,19 @@ def archive(name, data):
 
 
 class VendorTests(unittest.TestCase):
+    def test_nested_lockfile_is_explicit_and_cannot_escape_archive(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            source = root / 'upstream.tar.gz'
+            source.write_bytes(archive('upstream/subprojects/bindings/Cargo.lock', b''))
+            with self.assertRaisesRegex(ValueError, 'one Cargo.lock'):
+                generate(source, root / 'default.tar.xz')
+            result = generate(source, root / 'nested.tar.xz', 'subprojects/bindings/Cargo.lock')
+            with tarfile.open(result) as tar:
+                self.assertEqual(tar.getnames(), ['vendor'])
+            with self.assertRaisesRegex(ValueError, 'relative Cargo.lock'):
+                generate(source, root / 'escape.tar.xz', '../Cargo.lock')
+
     def test_bundle_reproducible_and_uses_verified_cache(self):
         crate = archive('demo-1.0.0/Cargo.toml', b'[package]\nname="demo"\nversion="1.0.0"\n')
         checksum = hashlib.sha256(crate).hexdigest()

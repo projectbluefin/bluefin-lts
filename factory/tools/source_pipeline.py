@@ -147,7 +147,7 @@ def fetch_source(record: Record, root: Path, allow_missing: bool = False) -> lis
             archive = record.directory / source["generated"]["archive"]
             if archive not in staged:
                 raise ValueError(f"{record.name}: vendor input must be verified first")
-            generate(archive, path)
+            generate(archive, path, source["generated"].get("lockfile", "Cargo.lock"))
             if _digest(path.read_bytes(), algorithm) != expected:
                 path.unlink()
                 raise ValueError(f"{record.name}: generated vendor digest mismatch")

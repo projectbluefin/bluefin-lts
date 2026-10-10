@@ -92,13 +92,16 @@ def _vendored_crate_members(crate: dict, payload: bytes, prefix: str, mtime: int
         yield info, data
 
 
-def generate(archive: Path, output: Path) -> Path:
+def generate(archive: Path, output: Path, lockfile: str = "Cargo.lock") -> Path:
     from tools.source_pipeline import _fetch
+    relative = PurePosixPath(lockfile)
+    if relative.is_absolute() or ".." in relative.parts or relative.name != "Cargo.lock":
+        raise ValueError("vendor lockfile must be a relative Cargo.lock path")
     with tarfile.open(archive) as source:
         members = [m for m in source.getmembers()
-                   if m.isfile() and m.name.endswith("/Cargo.lock") and m.name.count("/") == 1]
+                   if m.isfile() and m.name.partition("/")[2] == str(relative)]
         if len(members) != 1:
-            raise ValueError("upstream archive must contain one top-level Cargo.lock")
+            raise ValueError(f"upstream archive must contain one {lockfile}")
         crates = cargo_lock_packages(source.extractfile(members[0]).read().decode())
     cache = output.parent / ".crate-cache"
     cache.mkdir(exist_ok=True)
@@ -131,6 +134,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("archive", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--lockfile", default="Cargo.lock")
     args = parser.parse_args()
-    path = generate(args.archive, args.output)
+    path = generate(args.archive, args.output, args.lockfile)
     print(hashlib.sha512(path.read_bytes()).hexdigest(), path)

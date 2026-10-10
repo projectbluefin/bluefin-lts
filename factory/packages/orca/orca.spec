@@ -16,11 +16,22 @@ Version:        51.0
 Release:        1%{?dist}
 Summary:        Assistive technology for people with visual impairments
 
-License:        LGPL-2.1-or-later AND CC-BY-SA-3.0
+SourceLicense:  LGPL-2.1-or-later AND CC-BY-SA-3.0
+# MathCAT and its checksum-pinned Rust dependencies are linked into the Python module.
+License:        %{shrink:
+    LGPL-2.1-or-later AND CC-BY-SA-3.0 AND
+    Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0 AND Zlib AND bzip2-1.0.6 AND
+    (0BSD OR CC0-1.0) AND
+    (0BSD OR MIT OR Apache-2.0) AND
+    (Unlicense OR MIT) AND
+    (Apache-2.0 WITH LLVM-exception)
+}
 URL:            https://wiki.gnome.org/Projects/Orca
 Source0:        https://download.gnome.org/sources/orca/51/orca-51.0.tar.xz
+Source1:        orca-%{version}-vendor.tar.xz
 
-BuildArch:      noarch
+BuildRequires:  gcc
+BuildRequires:  rust-toolset >= 1.93
 
 BuildRequires:  pkgconfig(atk-bridge-2.0)
 BuildRequires:  pkgconfig(atspi-2) >= 2.58.6
@@ -65,12 +76,23 @@ provider interface (AT-SPI), e.g. the GNOME desktop.
 # check for human errors
 if [ `echo "%{version}" | grep -cE "\.alpha|\.beta|\.rc"` = "1" ]; then echo "Error: Use tilde in Version field in front of alpha/beta/rc; checked '%{version}'" 1>&2; exit 1; fi
 
-%autosetup -p1 -n %{name}-%{tarball_version}
+%autosetup -p1 -n %{name}-%{tarball_version} -a1
+mkdir -p .cargo
+cat > .cargo/config.toml <<EOF
+[source.crates-io]
+replace-with = "vendored-sources"
+[source.vendored-sources]
+directory = "vendor"
+EOF
 
 
 %build
-%meson
+%meson -Dmathcat=true
 %meson_build
+pushd subprojects/mathcat-py
+%cargo_license > LICENSE.dependencies
+%cargo_vendor_manifest
+popd
 
 
 %install
@@ -81,10 +103,13 @@ if [ `echo "%{version}" | grep -cE "\.alpha|\.beta|\.rc"` = "1" ]; then echo "Er
 
 %check
 desktop-file-validate %{buildroot}%{_sysconfdir}/xdg/autostart/orca-autostart.desktop
+PYTHONPATH=%{buildroot}%{python3_sitelib} %{python3} -c "import orca.libmathcat_py"
 
 
 %files -f %{name}.lang
 %license COPYING
+%license subprojects/mathcat-py/LICENSE.dependencies
+%license subprojects/mathcat-py/cargo-vendor.txt
 %doc AUTHORS NEWS README.md
 %{_bindir}/orca
 %{python3_sitelib}/orca/
@@ -93,6 +118,7 @@ desktop-file-validate %{buildroot}%{_sysconfdir}/xdg/autostart/orca-autostart.de
 %{_datadir}/icons/hicolor/symbolic/apps/orca-symbolic.svg
 %{_datadir}/applications/orca.desktop
 %{_datadir}/glib-2.0/schemas/org.gnome.Orca.gschema.xml
+%{_datadir}/mathcat/
 %{_sysconfdir}/xdg/autostart/orca-autostart.desktop
 %{_mandir}/man1/orca.1*
 %{_userunitdir}/orca.service

@@ -149,4 +149,7 @@ Run `factory-stack.yml` on the candidate branch to build the GNOME 51 targets an
 without a fixed wave-depth limit. Inspect `factory-stack-evidence` for every
 package status and bootstrap witness; a partial RPM artifact is not a successful
 stack. Generated cargo bundles come from the upstream Cargo.lock, verify each
-crate, and carry their own SHA-512 lock. Do not run cargo downloads in rpmbuild.
+crate, and carry their own SHA-512 lock. An explicit relative `lockfile` may
+select a nested Cargo.lock from the verified archive. Orca 51 uses this for
+MathCAT and builds a native RPM with a tested Python extension; preserve its
+speech and braille support. Do not run cargo downloads in rpmbuild.

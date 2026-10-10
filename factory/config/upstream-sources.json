@@ -746,6 +746,17 @@
           "filename": "orca-51.0.tar.xz",
           "sha512": "7022c074d2d4d1461d2114f9739647af9e480c6beb521029c4b4bc13bc7b959ff22f34e0ac3cf2a8f8855e40a5683c4e0215120c11b125939e9061425223301e",
           "checksum_type": "sha512"
+        },
+        {
+          "url": "generated:cargo-vendor/orca",
+          "filename": "orca-51.0-vendor.tar.xz",
+          "sha512": "0fedab3941f92236d49dc54d8c8c866f7bd5d79f099116694ded56cfa836a121f4a10d71e3e1f0b49ad3808db17e76b35eaa45f97904dc39f29a0459c3ac7237",
+          "checksum_type": "sha512",
+          "generated": {
+            "method": "cargo-vendor",
+            "archive": "orca-51.0.tar.xz",
+            "lockfile": "subprojects/mathcat-py/Cargo.lock"
+          }
         }
       ]
     },
