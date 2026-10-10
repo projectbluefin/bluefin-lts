@@ -5,8 +5,8 @@
 %global geoclue_version 2.6.0
 %global gnome_desktop_version 44.0-7
 
-%global tarball_version 50.0
-%global major_version 50
+%global tarball_version 51.0
+%global major_version 51
 
 %if 0%{?rhel}
 %bcond_with webkitgtk

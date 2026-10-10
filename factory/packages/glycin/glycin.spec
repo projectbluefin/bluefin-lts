@@ -86,7 +86,7 @@ BuildRequires:  vala
 
 BuildRequires:  pkgconfig(gio-2.0) >= 2.60
 BuildRequires:  pkgconfig(gobject-introspection-1.0)
-BuildRequires:  pkgconfig(gtk4) >= 4.12
+BuildRequires:  pkgconfig(gtk4) >= 4.16
 BuildRequires:  pkgconfig(librsvg-2.0) >= 2.52.0
 BuildRequires:  pkgconfig(lcms2) >= 2.14
 BuildRequires:  pkgconfig(libseccomp) >= 2.5.0
@@ -161,6 +161,7 @@ This package contains a shared library interface for glycin
 which provides integration with GDK / GTK4.
 
 %package        devel
+Provides:       pkgconfig(glycin-2) = %{version}
 Summary:        Sandboxed image rendering (development files)
 Requires:       glycin-libs%{_isa} = %{version}-%{release}
 
@@ -182,8 +183,6 @@ This package contains files for developing against libglycin-gtk4.
 
 %prep
 %autosetup -n glycin-%{version} -p1 -a1
-# Disable tests directory in workspace to avoid missing serde_yaml
-sed -i '/"tests",/d' Cargo.toml
 mkdir -p .cargo
 cat >.cargo/config.toml <<EOF
 [source.crates-io]

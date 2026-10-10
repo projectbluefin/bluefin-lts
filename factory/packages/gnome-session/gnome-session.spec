@@ -1,5 +1,5 @@
-%global major_version 50
-%global tarball_version 50.0
+%global major_version 51
+%global tarball_version 51.0
 %define po_package gnome-session
 
 Name:           gnome-session

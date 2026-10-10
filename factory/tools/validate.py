@@ -83,6 +83,15 @@ def check_locks(root: Path) -> list[str]:
                 problems.append(
                     f"{record.name}: {label} has no recorded digest, so it cannot be built"
                 )
+            generated = source.get("generated")
+            if url and url.startswith("generated:"):
+                if not isinstance(generated, dict) or generated.get("method") != "cargo-vendor":
+                    problems.append(f"{record.name}: {label} has an unknown source generator")
+                elif generated.get("archive") not in {
+                    item.get("filename") for item in sources[:index]
+                    if str(item.get("url", "")).startswith("https://")
+                }:
+                    problems.append(f"{record.name}: {label} generator input must be locked earlier")
             filename = source.get("filename", "")
             if not filename:
                 problems.append(f"{record.name}: {label} has no filename")
