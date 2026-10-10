@@ -182,3 +182,8 @@ capability checks. Glycin permits nested Bubblewrap namespace setup without
 extra capabilities; keep sandbox tests enabled and stage private test libraries
 under the read-only `/usr` bind in the ephemeral container. Retarget private
 RPATHs only in the test copies; preserve packaged installation paths.
+Resolve Glycin loader test selectors by workspace package URL; identical
+registry package names are ambiguous. Keep its pre-compilation Bubblewrap and
+offline Cargo selector probes enabled, and retain complete Meson failure logs.
+The stack CI preflight must run the namespace probe with the recipe's actual
+syscall profile before wave zero, since graph coverage cannot verify host support.

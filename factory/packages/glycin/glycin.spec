@@ -69,6 +69,7 @@ Source2:        https://github.com/libjxl/libjxl/archive/refs/tags/v0.11.2.tar.g
 
 # fixup for issue that makes "cargo tree" fail to parse tests/Cargo.toml
 Patch:          0001-fix-invalid-crate-manifest-for-tests-workspace-membe.patch
+Patch:          0002-qualify-workspace-loader-package-ids.patch
 # partial revert of https://gitlab.gnome.org/GNOME/glycin/-/commit/f637a7e
 
 
@@ -80,7 +81,7 @@ BuildRequires:  cargo-rpm-macros
 
 BuildRequires:  gettext
 BuildRequires:  git-core
-BuildRequires:  meson
+BuildRequires:  meson >= 1.5.0
 BuildRequires:  vala
 
 BuildRequires:  pkgconfig(gio-2.0) >= 2.60
@@ -192,6 +193,20 @@ replace-with = "vendored-sources"
 directory = "vendor"
 EOF
 
+%if %{with check}
+# Fail before compiling if this build environment cannot run loader sandboxes.
+bwrap --unshare-all --die-with-parent --chdir / \
+    --ro-bind /usr /usr --dev /dev \
+    --ro-bind-try /etc/ld.so.cache /etc/ld.so.cache \
+    --tmpfs /tmp-home --tmpfs /tmp-run --clearenv \
+    --setenv HOME /tmp-home --setenv XDG_RUNTIME_DIR /tmp-run \
+    --symlink /usr/lib64 /lib64 --symlink /usr/lib /lib /usr/bin/true
+# Test selection must resolve to the workspace loader, never a registry copy.
+for loader in glycin-image-rs glycin-jxl glycin-svg; do
+    cargo pkgid --offline --package "path+file://$PWD/glycin-loaders/$loader"
+done
+%endif
+
 %if %{with jpegxl} && %{with bundled_jxl}
 # Extract libjxl source for private bundled build
 %setup -T -b 2 -n libjxl-0.11.2
@@ -263,6 +278,7 @@ cd %{_builddir}/glycin-%{version}
 meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
     -Dloaders=%{?with_heif:glycin-heif,}glycin-image-rs,%{?with_jpegxl:glycin-jxl,}glycin-svg \
     -Dtest_skip_install=true \
+    -Dtest_log_level=debug \
     %{nil}
 
 meson compile -C build
@@ -338,7 +354,7 @@ export PKG_CONFIG_PATH="%{_builddir}/jxl-private/lib64/pkgconfig${PKG_CONFIG_PAT
 export LD_LIBRARY_PATH="%{_builddir}/jxl-private/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 %endif
 # This recipe uses a manual Meson build directory, not the RPM macro default.
-meson test -C build --num-processes %{_smp_build_ncpus} --print-errorlogs
+meson test -C build --num-processes %{_smp_build_ncpus} --print-errorlogs --max-lines=0
 %endif
 
 

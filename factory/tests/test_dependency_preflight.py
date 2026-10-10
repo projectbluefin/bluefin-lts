@@ -4,11 +4,54 @@ import json
 import sys
 import tempfile
 import unittest
+from subprocess import CompletedProcess
+from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.build_graph import plan
 from tools.dependency_preflight import check, rpm_matches, write_factory_witnesses
+from tools.extract_buildrequires import extract_spec_rows
+
+
+class ExtractionIntegrityTests(unittest.TestCase):
+    def setUp(self):
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
+        self.root = Path(scratch.name)
+        self.packages = self.root / "packages"
+        (self.packages / "demo").mkdir(parents=True)
+        (self.packages / "demo/demo.spec").write_text("Name: demo\n")
+        self.output = self.root / "rows"
+        self.output.mkdir()
+
+    def extract(self, spec, br):
+        results = [CompletedProcess([], 0, text, "")
+                   for text in [spec, "demo\n", "demo = 51.0\n", br]]
+        with patch('tools.extract_buildrequires.subprocess.run', side_effect=results):
+            extract_spec_rows(self.packages, self.output)
+
+    def test_empty_query_cannot_erase_declared_dependencies(self):
+        with self.assertRaisesRegex(ValueError, "demo: empty rpmspec br output"):
+            self.extract("Name: demo\nBuildRequires: gcc\n", "")
+
+    def test_recipe_without_static_dependencies_may_have_empty_rows(self):
+        self.extract("Name: demo\n", "")
+        self.assertEqual((self.output / "demo.br").read_text(), "")
+
+    def test_partial_query_cannot_drop_one_of_several_dependencies(self):
+        with self.assertRaisesRegex(ValueError, "missing: pkgconfig\\(gtk4\\)"):
+            self.extract("Name: demo\nBuildRequires: gcc\nBuildRequires: pkgconfig(gtk4) >= 4.24\n", "gcc\n")
+
+    def test_disk_write_failure_is_fatal_even_when_rpm_returns_success(self):
+        write = Path.write_text
+        def fail_br(path, text, *args, **kwargs):
+            if path.suffix == '.br':
+                raise OSError(28, 'No space left on device')
+            return write(path, text, *args, **kwargs)
+        with patch.object(Path, 'write_text', fail_br):
+            with self.assertRaisesRegex(OSError, "No space left"):
+                self.extract("Name: demo\nBuildRequires: gcc\n", "gcc\n")
 
 
 class DependencyTreeTests(unittest.TestCase):
@@ -107,6 +150,12 @@ class DependencyTreeTests(unittest.TestCase):
     def test_unknown_target_is_actionable(self):
         (self.root / "config/gnome-stack.json").write_text('{"targets": ["typo"]}')
         with self.assertRaisesRegex(ValueError, "unknown GNOME targets: typo"):
+            self.candidate()
+
+    def test_empty_saved_rows_cannot_hide_a_declared_dependency(self):
+        (self.rows / "gtk4.spec").write_text("Name: gtk4\nBuildRequires: pkgconfig(glib-2.0) >= 2.90\n")
+        (self.rows / "gtk4.br").write_text("")
+        with self.assertRaisesRegex(ValueError, "gtk4: incomplete BuildRequires rows"):
             self.candidate()
 
     def test_unselected_blocked_recipe_does_not_block_the_stack(self):

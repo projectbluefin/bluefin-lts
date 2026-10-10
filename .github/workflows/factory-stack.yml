@@ -39,6 +39,16 @@ jobs:
           set -euo pipefail
           python3 factory/tools/dependency_preflight.py --rows work/graph/rows \
             --plan work/graph/plan.json --output work/graph/dependency-preflight.json
+          # Exercise Glycin's namespace setup with its actual recipe profile
+          # before spending time on any stack compilation.
+          docker run --rm --pull=never \
+            --security-opt "seccomp=$PWD/factory/packages/glycin/glycin-seccomp.json" \
+            factory-buildroot:run bash -c \
+            'set -e; dnf -y install bubblewrap; bwrap --unshare-all --die-with-parent --chdir / \
+              --ro-bind /usr /usr --dev /dev --ro-bind-try /etc/ld.so.cache /etc/ld.so.cache \
+              --tmpfs /tmp-home --tmpfs /tmp-run --clearenv \
+              --setenv HOME /tmp-home --setenv XDG_RUNTIME_DIR /tmp-run \
+              --symlink /usr/lib64 /lib64 --symlink /usr/lib /lib /usr/bin/true'
       - name: Build wave 0
         if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 0

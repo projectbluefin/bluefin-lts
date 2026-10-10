@@ -67,8 +67,10 @@ Before wave zero, `factory-stack.yml` runs the dependency-tree preflight against
 those CentOS rows. Every selected BuildRequires must have an exact base RPM
 witness or a compatible provider in an earlier factory wave. Missing providers,
 incompatible declared versions, blocked prerequisites, cycles, and stale or
-incomplete plans fail before any package compiles. Version matching uses CentOS
-RPM semantics, including epochs and prereleases; the extractor runs its version
+incomplete plans fail before any package compiles.
+RPM query output uses checked writes and must retain the parsed spec's declared
+capabilities; disk errors and truncated rows cannot silently remove dependencies.
+Version matching uses CentOS RPM semantics, including epochs and prereleases; the extractor runs its version
 regression tests in that same root. The evidence artifact includes
 `dependency-preflight.json` with the witness for each checked requirement.
 Run `just factory-dependencies` locally to perform the same check without
@@ -80,6 +82,11 @@ in the recipe's appropriate subpackage rather than guessing from its source
 version. This gate checks declared dependency coverage and ordering; compilation,
 generated BuildRequires, tests, and the final consumer transaction still verify
 API compatibility and actual RPM installability.
+Glycin also probes the actual Bubblewrap namespace setup and resolves its
+workspace Cargo package selectors before compilation, so test-environment
+failures and duplicate registry names fail early.
+The stack CI gate runs that namespace probe with the recipe's syscall profile
+before wave zero as well; a passing graph cannot prove host sandbox support.
 
 ### Why nothing downloads during a build
 

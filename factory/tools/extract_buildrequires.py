@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -24,6 +25,38 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tools.inventory import factory_root, inventory
+from tools.build_graph import checked_requirements
+
+
+def extract_spec_rows(packages: Path, output: Path) -> None:
+    """Capture RPM output in memory, then detect every filesystem write error.
+
+    RPM's stdout writes need not turn ENOSPC into a failing exit code. Direct
+    shell redirection can therefore produce an empty BR file and a green query.
+    Python's checked writes fail the extraction instead of dropping graph edges.
+    """
+    queries = {"spec": ["--parse"], "names": ["-q", "--qf", "%{NAME}\n"],
+               "provides": ["-q", "--provides"], "br": ["-q", "--buildrequires"]}
+    for spec in sorted(packages.glob("*/*.spec")):
+        parsed = ""
+        errors = []
+        for suffix, query in queries.items():
+            result = subprocess.run(
+                ["rpmspec", "--define", f"_sourcedir {spec.parent}",
+                 "--define", "dist .el10", *query, str(spec)],
+                capture_output=True, text=True, check=False)
+            if result.returncode:
+                raise ValueError(f"{spec.parent.name}: rpmspec {suffix} failed: {result.stderr}")
+            required = suffix != "br" or re.search(r"^BuildRequires[0-9]*:", parsed, re.MULTILINE)
+            if required and not result.stdout.strip():
+                raise ValueError(f"{spec.parent.name}: empty rpmspec {suffix} output")
+            if suffix == "br":
+                checked_requirements(spec.parent.name, parsed, result.stdout)
+            (output / f"{spec.parent.name}.{suffix}").write_text(result.stdout)
+            errors.append(result.stderr)
+            if suffix == "spec":
+                parsed = result.stdout
+        (output / f"{spec.parent.name}.err").write_text("".join(errors))
 
 SCRIPT = r"""#!/bin/bash
 # Runs inside the build root. Args: <outdir>
@@ -33,30 +66,13 @@ mkdir -p "$outdir"
 dnf -y install rpm-build dnf-plugins-core redhat-rpm-config
 dnf config-manager --set-enabled crb
 dnf -y install epel-release
-failed=0
-for spec in /packages/*/*.spec; do
-  name=$(basename "$(dirname "$spec")")
-  if ! rpmspec --define "_sourcedir $(dirname "$spec")" --define "dist .el10" --parse "$spec" > "$outdir/$name.spec" 2> "$outdir/$name.err"; then
-    echo "rpmspec failed for $name" >&2
-    cat "$outdir/$name.err" >&2
-    failed=1
-  fi
-  for query in names provides br; do
-    if [ "$query" = names ]; then
-      args=(--qf "%{NAME}\n")
-    elif [ "$query" = provides ]; then
-      args=(--provides)
-    else
-      args=(--buildrequires)
-    fi
-    if ! rpmspec -q "${args[@]}" --define "_sourcedir $(dirname "$spec")" \
-        --define "dist .el10" "$spec" > "$outdir/$name.$query" 2>> "$outdir/$name.err"; then
-      cat "$outdir/$name.err" >&2
-      failed=1
-    fi
-  done
-done
-test "$failed" -eq 0
+python3 - "$outdir" <<'PY'
+import sys
+from pathlib import Path
+sys.path.insert(0, "/repo/factory")
+from tools.extract_buildrequires import extract_spec_rows
+extract_spec_rows(Path('/packages'), Path(sys.argv[1]))
+PY
 # Map generated capabilities from CentOS metadata back to source packages.
 # This bootstraps pkgconfig/soname edges before a factory repo exists.
 python3 - "$outdir" <<'PY'

@@ -75,6 +75,20 @@ def _requirement_names(requirement: str) -> list[str]:
     return [match.group(0)] if match else []
 
 
+def checked_requirements(name: str, parsed: str, queried: str) -> set[str]:
+    """Reject saved query output that lost dependencies from the parsed spec."""
+    requirements = set(queried.splitlines())
+    declared = {capability for match in re.finditer(
+        r"^BuildRequires[0-9]*:\s*(.+)$", parsed, re.MULTILINE)
+        for capability in _requirement_names(match.group(1))}
+    actual = {capability for requirement in requirements
+              for capability in _requirement_names(requirement)}
+    missing = declared - actual
+    if missing:
+        raise ValueError(f"{name}: incomplete BuildRequires rows; missing: " + ", ".join(sorted(missing)))
+    return requirements
+
+
 def resolve_edges(
     rows: dict[str, set[str]],
     factory_packages: set[str],
@@ -233,7 +247,7 @@ def plan(root: Path | None = None, rows_dir: Path | None = None,
         for record in inventory(root):
             text = (rows_dir / f"{record.name}.spec").read_text()
             queried = rows_dir / f"{record.name}.br"
-            rows[record.name] = (set(queried.read_text().splitlines()) if queried.is_file()
+            rows[record.name] = (checked_requirements(record.name, text, queried.read_text()) if queried.is_file()
                                  else set(re.findall(
                                      r"^BuildRequires(?:[0-9]*)?:\s*(.+)$", text, re.MULTILINE)))
     names = [record.name for record in inventory(root)]
