@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:40:25+00:00",
+  "package": "colord-gtk",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "08066c86eed681547429cff6f4df6dc802f52ac46fed2c4419dff6f9529570dc",
+    "srpm_checksum_type": "sha256",
+    "tree": "404f100267ac936ffe43a447ea235cdcd6fc27f1"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:48+00:00",
+  "package": "libldac",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "2fe4826ae0cd2f3e15ae22cf73aafe807f245b7956bfc0d5c8f8f33a0fa3d653",
+    "srpm_checksum_type": "sha256",
+    "tree": "141377f185f60d9fe3d49f5348d2099ff29dabdf"
+  }
+}

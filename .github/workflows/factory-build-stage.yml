@@ -1,0 +1,162 @@
+# Build one wave of packages.
+#
+# Exists as a reusable workflow because the wave itself is the unit of build
+# parallelism: everything in wave N can build at once, and everything in wave
+# N+1 can resolve its BuildRequires against what wave N produced.
+#
+# This job knows nothing about the other waves beyond the artifacts they left
+# behind. All ordering lives in the caller.
+name: Factory build stage
+
+on:
+  workflow_call:
+    inputs:
+      stage:
+        description: Wave number, used in artifact names.
+        required: true
+        type: string
+      packages:
+        description: JSON array of package names to build.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      # One package failing must not stop its neighbours. A wave is a batch
+      # of independent builds, and cancelling the rest of it on the first
+      # failure would waste the whole wave over one recipe.
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(inputs.packages) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+
+      # Loaded from the artifact prepare produced, not pulled from a registry.
+      # See the comment in factory-build.yml: this is what makes every job in
+      # the run provably use the same build root bytes.
+      - name: Load the build root
+        uses: ./.github/actions/factory-load-buildroot
+
+      - name: Fetch and verify the package source
+        env:
+          PACKAGE: ${{ matrix.package }}
+        run: |
+          set -euo pipefail
+          python3 factory/tools/source_pipeline.py stage "$PACKAGE"
+          python3 factory/tools/source_pipeline.py verify-staged --package "$PACKAGE"
+
+      - name: Resolve BuildRequires against this wave's build root
+        id: buildrequires
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$PWD:/repo:Z" \
+            -w /repo \
+            factory-buildroot:run \
+            bash -exc '
+              dnf -y install dnf-plugins-core rpm-build
+              # CRB is where several of this stack's build roots live.
+              dnf config-manager --set-enabled crb || true
+              dnf -y builddep \
+                --define "_topdir /repo/work/builddep/$PACKAGE" \
+                --define "_sourcedir /repo/factory/packages/$PACKAGE" \
+                --define "_specdir /repo/factory/packages/$PACKAGE" \
+                "/repo/factory/packages/$PACKAGE/$PACKAGE.spec"
+            '
+
+      - name: Build the package
+        id: build
+        env:
+          PACKAGE: ${{ matrix.package }}
+          STAGE: ${{ inputs.stage }}
+        run: |
+          set -euo pipefail
+          mkdir -p "work/rpms/$PACKAGE"
+
+          # A container is not a build root in the sense mock means: it lacks
+          # the buildsys group, the build user, and the isolation a build
+          # expects. What it does provide is the exact c10s package set this
+          # factory is pinned to, which is what makes the ABI right. The
+          # tradeoff is stated in docs/architecture.md rather than hidden:
+          # builds here are not hermetic.
+          docker run --rm \
+            -e PACKAGE -e STAGE \
+            -v "$PWD:/repo:Z" \
+            factory-buildroot:run \
+            bash -exc '
+              dnf -y install rpm-build dnf-plugins-core
+
+              # CRB ships with CRB disabled in c10s, and several build roots
+              # for this stack live only there: meson, ninja-build,
+              # wayland-devel, gcc-g++. Without this the BuildRequires
+              # resolution fails on "No matching package to install: meson",
+              # which says nothing about the repository being off.
+              dnf config-manager --set-enabled crb || true
+
+              # The spec is named explicitly. Invoked with no spec argument,
+              # rpmbuild globs the working directory, finds nothing (the
+              # directory is a build output root, not the recipe directory),
+              # exits 0 and writes no output at all. That is the worst
+              # possible failure for a build: green, silent, no RPMs. The
+              # artifact guard below catches it, but naming the file means it
+              # never happens.
+              spec="/repo/factory/packages/$PACKAGE/$PACKAGE.spec"
+              test -f "$spec"
+
+              # -br resolves generated BuildRequires. A spec whose BuildRequires
+              # come from meson introspection is unresolvable without it, and
+              # skipping straight to -ba fails with "No such file or directory"
+              # from make, which says nothing about the real cause.
+              rpmbuild -br "$spec" \
+                --define "_topdir /repo/work/rpmbuild/$PACKAGE" \
+                --define "_sourcedir /repo/factory/packages/$PACKAGE" \
+                --define "_specdir /repo/factory/packages/$PACKAGE" \
+                --define "dist .el10"
+
+              rpmbuild -ba "$spec" \
+                --define "_topdir /repo/work/rpmbuild/$PACKAGE" \
+                --define "_sourcedir /repo/factory/packages/$PACKAGE" \
+                --define "_specdir /repo/factory/packages/$PACKAGE" \
+                --define "dist .el10"
+
+              mkdir -p "/repo/work/rpms/$PACKAGE"
+              find "/repo/work/rpmbuild/$PACKAGE/RPMS" -name "*.rpm" \
+                -exec cp -v {} "/repo/work/rpms/$PACKAGE/" \;
+            '
+
+          count=$(find "work/rpms/$PACKAGE" -name '*.rpm' | wc -l)
+          # A build that produced nothing must fail here rather than at the
+          # upload step, where a missing file can pass quietly.
+          if [ "$count" -eq 0 ]; then
+            echo "::error title=no RPMs produced::$PACKAGE"
+            exit 1
+          fi
+          echo "built $count RPM(s) for $PACKAGE"
+
+      - name: Record what this package produced
+        if: always()
+        run: |
+          set -euo pipefail
+          {
+            echo "package: ${{ matrix.package }}"
+            echo "stage: ${{ inputs.stage }}"
+            echo "built: $(find 'work/rpms/${{ matrix.package }}' -name '*.rpm' 2>/dev/null | wc -l)"
+            echo "---"
+            find "work/rpms/${{ matrix.package }}" -name '*.rpm' -printf '%f\n' 2>/dev/null || true
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: factory-rpm-s${{ inputs.stage }}-${{ matrix.package }}
+          path: work/rpms/${{ matrix.package }}
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,38 @@
+From 221cd8e1904f2ca35d89dff3c1068616c6ce588c Mon Sep 17 00:00:00 2001
+Date: Thu, 12 Mar 2026 17:04:59 +0000
+Subject: [PATCH] gtkapplication-wayland: Add a missing NULL check when
+ forgetting a window
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+It’s possible for `gtk_native_get_surface()` to return `NULL`, which
+`gdk_wayland_toplevel_remove_from_session()` doesn’t like.
+
+Copy the other `NULL` checks in the file and add the missing one here.
+
+Signed-off-by: Philip Withnall <pwithnall@gnome.org>
+
+Fixes: #8098
+Part-of: <https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/9643>
+---
+ gtk/gtkapplication-wayland.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/gtk/gtkapplication-wayland.c b/gtk/gtkapplication-wayland.c
+index 0ae4a30f279..7d8b5221267 100644
+--- a/gtk/gtkapplication-wayland.c
++++ b/gtk/gtkapplication-wayland.c
+@@ -222,7 +222,8 @@ gtk_application_impl_wayland_window_forget (GtkApplicationImpl *impl,
+   GTK_APPLICATION_IMPL_CLASS (gtk_application_impl_wayland_parent_class)->window_forget (impl, window);
+ 
+   surface = gtk_native_get_surface (GTK_NATIVE (window));
+-  gdk_wayland_toplevel_remove_from_session (GDK_TOPLEVEL (surface));
++  if (GDK_IS_WAYLAND_TOPLEVEL (surface))
++    gdk_wayland_toplevel_remove_from_session (GDK_TOPLEVEL (surface));
+ }
+ 
+ static guint
+-- 
+GitLab
+

@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:41:58+00:00",
+  "package": "gsettings-desktop-schemas",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "290c1563272e0d4053609408134bf3f627f7666375fdccdf0060fec36fcd0e1e",
+    "srpm_checksum_type": "sha256",
+    "tree": "2efb07e8a2a0c4f8b43c2657d331c131850073a4"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:55+00:00",
+  "package": "libxcvt",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "c0307f02af881c5a27042f17d192d07deec0d29d50438b5616afd81810b1e22d",
+    "srpm_checksum_type": "sha256",
+    "tree": "e76b10358bced1e020763e1f9f72f68a0627418b"
+  }
+}

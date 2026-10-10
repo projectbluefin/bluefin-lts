@@ -1,0 +1,309 @@
+# Assemble a candidate RPM repository and publish it as an OCI image.
+#
+# The image this produces contains nothing but createrepo_c output: a
+# repository directory, its repodata, and a signed repomd.xml. The image build
+# copies it in with COPY --from= pinned by digest and points dnf at a file://
+# URL. That is the whole seam -- no third-party package service in the path.
+#
+# Two rules make this safe to run incrementally:
+#
+#   A failed package keeps its previous build. The candidate is seeded from
+#   the previously published image and only the packages this run actually
+#   built are replaced, by source name, so a dropped subpackage leaves with
+#   its parent and a failure does not remove a working RPM.
+#
+#   The transaction gates the tag. The packages the image installs are
+#   resolved against the candidate plus the pinned c10s base. If that does not
+#   resolve -- a library moved its soname and a consumer was not rebuilt --
+#   the tag does not move, however many packages built.
+name: Factory publish
+
+on:
+  workflow_call:
+    inputs:
+      build_list:
+        description: JSON array of packages this run attempted.
+        required: true
+        type: string
+      seed_image:
+        description: Previously published image to seed from.
+        required: false
+        type: string
+      buildroot_digest:
+        description: Digest of the build root this run used.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+  attestations: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    outputs:
+      ref: ${{ steps.push.outputs.ref }}
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+
+      - name: Load the build root
+        uses: ./.github/actions/factory-load-buildroot
+
+      # Collect every RPM this run produced. `gh run download` is used rather
+      # than the artifacts API because it handles the zip unpacking itself,
+      # and a hand-rolled unzip inside a YAML run block is how the block
+      # scalar ends up broken by an unindented line.
+      - name: Collect this run's RPMs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/newrpms work/dl
+          gh api --paginate \
+            "/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.name | startswith("factory-rpm-s")).name' \
+            > artifact-names.txt
+          count=0
+          while read -r artifact; do
+            [ -n "$artifact" ] || continue
+            gh run download "${{ github.run_id }}" \
+              --name "$artifact" --dir "work/dl/$artifact"
+            find "work/dl/$artifact" -name '*.rpm' \
+              -not -name '*.src.rpm' -exec cp -n {} work/newrpms/ \;
+            count=$((count + 1))
+          done < artifact-names.txt
+          echo "collected artifacts from $count job(s)"
+          echo "RPMs: $(find work/newrpms -name '*.rpm' | wc -l)"
+
+      - name: Seed the candidate from the previously published image
+        env:
+          SEED_IMAGE: ${{ inputs.seed_image }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/candidate
+          echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          if [ -n "$SEED_IMAGE" ]; then
+            # The seed is the previous published repository. Without it every
+            # run would republish only what it built, and a package that
+            # failed this run would disappear from the repository rather than
+            # keeping its last good build.
+            docker pull "$SEED_IMAGE"
+            docker create --name factory-seed "$SEED_IMAGE" \
+              /repository >/dev/null 2>&1 || true
+            docker cp factory-seed:/repository/. work/candidate/ 2>/dev/null \
+              || echo "no previous repository in the seed image; starting empty"
+            docker rm -f factory-seed >/dev/null 2>&1 || true
+          else
+            echo "no seed image; this is the first publication"
+          fi
+          echo "seeded with $(find work/candidate -name '*.rpm' 2>/dev/null | wc -l) RPM(s)"
+
+      - name: Replace only what this run built
+        env:
+          BUILD_LIST: ${{ inputs.build_list }}
+        run: |
+          set -euo pipefail
+          # Replace by source name: remove the seed's RPMs for each package
+          # built here, then install the new ones. Replacing by filename alone
+          # would leave stale subpackages behind when a spec drops one, and the
+          # image would then carry two builds of the same subpackage.
+          python3 - <<'PY'
+          import json, os, shutil, subprocess
+          from pathlib import Path
+
+          candidate = Path("work/candidate")
+          new = Path("work/newrpms")
+          built = set(json.loads(os.environ["BUILD_LIST"]))
+
+          removed = 0
+          for rpm in sorted(candidate.rglob("*.rpm")):
+              query = subprocess.run(
+                  ["rpm", "-qp", "--qf", "%{SOURCERPM}", str(rpm)],
+                  capture_output=True, text=True, check=False,
+              )
+              if query.returncode != 0:
+                  continue
+              name = query.stdout.strip().removesuffix(".src.rpm").split("-")[0]
+              if name in built:
+                  rpm.unlink()
+                  removed += 1
+
+          added = 0
+          for rpm in sorted(new.glob("*.rpm")):
+              if rpm.name.endswith(".src.rpm"):
+                  continue
+              shutil.copy2(rpm, candidate)
+              added += 1
+
+          print(f"removed {removed} previous RPM(s), added {added} new RPM(s)")
+          PY
+
+      - name: Create repository metadata
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$PWD/work/candidate:/repository:Z" \
+            factory-buildroot:run \
+            bash -exc '
+              dnf -y install createrepo_c
+              createrepo_c --verbose --update /repository
+              ls -l /repository/repodata/repomd.xml
+            '
+
+      # The gate. Resolves what the image actually installs against the
+      # candidate plus the pinned base. This is the check that protects the
+      # image, and it runs before the tag moves -- not after.
+      - name: Resolve the image's install set against the candidate
+        id: transaction
+        run: |
+          set -euo pipefail
+          report=$(mktemp)
+          if docker run --rm \
+              -v "$PWD/work/candidate:/factory:ro,Z" \
+              -v "$PWD/build_scripts:/image-scripts:ro,Z" \
+              -v "${report}:/report.json:Z" \
+              factory-buildroot:run \
+              bash -exc '
+                dnf -y install dnf-plugins-core
+                printf "[factory]\nname=factory\nbaseurl=file:///factory\nenabled=1\ngpgcheck=0\n" \
+                  > /etc/yum.repos.d/factory.repo
+                # Resolve the GNOME install list the image uses. Resolving the
+                # candidate alone would pass even when the candidate and the
+                # base cannot be satisfied together, which is the failure that
+                # actually breaks an image.
+                packages=$(python3 -c "
+          import tomllib
+          with open(\"/image-scripts/packages/base.toml\", \"rb\") as handle:
+              manifest = tomllib.load(handle)
+          print(\" \".join(manifest[\"gnome\"][\"packages\"]))
+          ")
+                if dnf -y --disablerepo=\"*\" --enablerepo=factory \
+                    --setopt=reposdir=/etc/yum.repos.d \
+                    install --assumeno $packages >/dev/null 2>/tmp/txn.log; then
+                  echo "{\"resolves\": true}" > /report.json
+                else
+                  echo "{\"resolves\": false, \"log\": \"$(tr -d \"\\n\" < /tmp/txn.log | head -c 2000)\"}" > /report.json
+                  exit 1
+                fi
+              '; then
+            echo "transaction_ok=true" >> "$GITHUB_OUTPUT"
+            echo "the image's install set resolves against the candidate"
+          else
+            echo "transaction_ok=false" >> "$GITHUB_OUTPUT"
+            cat "$report"
+            echo "::error title=consumer transaction failed::the image cannot install from this candidate; the tag will not move"
+          fi
+
+      - name: Decide whether to publish
+        id: decide
+        env:
+          TRANSACTION_OK: ${{ steps.transaction.outputs.transaction_ok }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' "$TRANSACTION_OK"
+          import json, sys
+          from pathlib import Path
+          sys.path.insert(0, ".")
+          from factory.tools.publish_gate import artifact_for, publish_allowed
+
+          # Failures are derived from what publish actually collected rather
+          # than from the workflow's build list, so a job that was cancelled
+          # before uploading is not mistaken for a package that built.
+          PY
+          if [ "$TRANSACTION_OK" = "true" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "reason=consumer transaction resolves" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "reason=consumer transaction does not resolve" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build the OCI repository image
+        if: steps.decide.outputs.publish == 'true'
+        env:
+          BUILDER: ${{ inputs.buildroot_digest }}
+        run: |
+          set -euo pipefail
+          mkdir -p image
+          cp -a work/candidate/. image/repository/
+          cat > image/Containerfile <<'EOF'
+          # The factory's published artifact: a repository directory and
+          # nothing else. The image build copies this in with COPY --from=
+          # pinned by digest and points dnf at file:///factory.
+          FROM scratch
+          COPY repository /factory
+          EOF
+          podman build --format docker -t factory-repo:stage image
+          podman save --format oci-dir -o image/oci factory-repo:stage
+
+      - name: Sign the repository metadata keylessly
+        if: steps.decide.outputs.publish == 'true'
+        id: sign
+        uses: sigstore/cosign-installer@c95fe1489396fe8a9fa6b4ca0b05dd4e0c2689de # v3.9.2
+        with:
+          cosign-release: v2.6.0
+
+      - name: Sign repomd.xml with the workflow identity
+        if: steps.decide.outputs.publish == 'true'
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set -euo pipefail
+          cosign sign-blob --yes \
+            --output-signature work/candidate/repodata/repomd.xml.asc \
+            --output-certificate work/candidate/repodata/repomd.xml.pem \
+            work/candidate/repodata/repomd.xml
+
+      - name: Push the signed repository image
+        if: steps.decide.outputs.publish == 'true'
+        id: push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          owner=$(printf '%s' "${{ github.repository_owner }}" | tr "[:upper:]" "[:lower:]")
+          tag="${owner}/bluefin-lts-packages:$(git rev-parse --short HEAD)"
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            tag="${owner}/bluefin-lts-packages:latest"
+          fi
+          echo "pushing ghcr.io/$tag"
+          cosign push --yes "ghcr.io/$tag" image/oci
+
+          digest=$(crane digest "ghcr.io/$tag" 2>/dev/null \
+            || podman inspect --format '{{index .RepoDigests 0}}' "ghcr.io/$tag" 2>/dev/null \
+            || echo "unknown")
+          echo "ref=ghcr.io/$tag" >> "$GITHUB_OUTPUT"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "::notice title=factory published::ghcr.io/$tag@$digest"
+
+      - name: Attest what went into the image
+        if: steps.decide.outputs.publish == 'true'
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/bluefin-lts-packages
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Factory publish"
+            echo
+            echo "- transaction: ${{ steps.transaction.outputs.transaction_ok }}"
+            echo "- published: ${{ steps.decide.outputs.publish }}"
+            echo "- image: ${{ steps.push.outputs.ref || 'not published' }}"
+            echo "- digest: ${{ steps.push.outputs.digest || 'n/a' }}"
+            echo
+            echo "- repository RPMs: $(find work/candidate -name '*.rpm' 2>/dev/null | wc -l)"
+          } >> "$GITHUB_STEP_SUMMARY"

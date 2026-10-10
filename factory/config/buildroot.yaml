@@ -1,0 +1,39 @@
+# The factory's build root. This is the single source of truth: every tool
+# that needs the build root reads it from here.
+#
+# It is deliberately the same image the released artifact is built on.
+# Anything else is a different ABI target, and a package that links against it
+# does not link against the running system.
+#
+# CRB ships disabled in c10s and several build roots for this stack live only
+# there -- meson, ninja-build, wayland-devel, gcc-g++ -- so the build steps
+# enable it before resolving BuildRequires.
+#
+# The digest is verified at build time by tools/buildroot.py, and the pin is
+# pulled once per run and handed to every job as an artifact rather than
+# re-resolved per job. See docs/architecture.md, "Build root".
+image: quay.io/centos-bootc/centos-bootc:c10s
+
+# The build root is pulled once per run and passed between jobs as an
+# artifact. On GitHub-hosted runners the disk budget is 14 GB, and seven
+# c10s images is over it. Set true to have prepare re-pull the registry image
+# in each job instead; that costs a pull per job and loses the guarantee that
+# every job in a run used the same bytes.
+registry_pull_per_job: false
+
+# The digest the build root must resolve to. A tag alone is not a pin: it
+# means the factory builds against whatever the tag resolved to, which is
+# neither reproducible nor attestable.
+#
+# Move this with `just factory-relock`, never by hand, and open a pull request
+# doing so -- the image is the thing every published RPM is attributable to.
+digest: sha256:461475970a848fa4c819e458d6780e1f525be2a21b274436edfbb10440d5c850
+
+# Repositories the build root must have enabled before BuildRequires resolve.
+repositories:
+  - crb
+
+# Packages every build needs regardless of recipe.
+bootstrap:
+  - rpm-build
+  - dnf-plugins-core

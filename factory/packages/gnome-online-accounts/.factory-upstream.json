@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:41:22+00:00",
+  "package": "gnome-online-accounts",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "2128e0a2f4662185a6493e62f19545250448b80e29bcca0678f9a4118ef85479",
+    "srpm_checksum_type": "sha256",
+    "tree": "12431e3c2b980bfcfb8f418deb12352f9232ebb6"
+  }
+}

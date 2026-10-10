@@ -1,0 +1,29 @@
+module gdm-gnome50 1.1;
+
+require {
+	type etc_t;
+	type xdm_t;
+	type passwd_file_t;
+	type systemd_userdbd_runtime_t;
+	type systemd_unit_file_t;
+	class dir { add_name remove_name };
+	class sock_file { create unlink };
+	class file { create write };
+	class service { status };
+}
+
+# GDM 50 dynamically allocates greeter users and registers their userdb
+# Varlink socket at /run/systemd/userdb/org.gnome.DisplayManager.
+# EL10's stock xdm_t policy doesn't cover this.
+
+# Allow GDM to create/remove its socket in the userdb dir
+allow xdm_t systemd_userdbd_runtime_t:dir { add_name remove_name };
+allow xdm_t systemd_userdbd_runtime_t:sock_file { create unlink };
+
+# Allow GDM to write /etc/.pwd.lock (used when modifying user records)
+allow xdm_t passwd_file_t:file write;
+allow xdm_t etc_t:file create;
+
+# Allow gnome-session-init-worker (running as xdm_t) to query systemd unit
+# status — needed for GDM 50 greeter session registration (issue #15)
+allow xdm_t systemd_unit_file_t:service { status };

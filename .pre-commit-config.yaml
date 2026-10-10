@@ -29,3 +29,20 @@ repos:
         entry: 'uses:.*projectbluefin/(actions|testsuite).*@[0-9a-f]{40}'
         types: [yaml]
         files: '(^\.github/workflows/.*\.yml$|action\.yml$)'
+  - repo: local
+    hooks:
+      # The factory's own gate, run at commit time rather than only in CI so a
+      # broken recipe set is caught before it reaches a pull request. This is
+      # the fast check only -- it builds nothing.
+      - id: factory-validate
+        name: Validate the GNOME package factory
+        language: system
+        entry: python3 factory/tools/validate.py
+        pass_filenames: false
+        files: ^(factory/(packages|config|tools)/|\.packit\.yaml)
+      - id: factory-packit-config-current
+        name: .packit.yaml matches the recipe inventory
+        language: system
+        entry: python3 factory/tools/render_packit_config.py --check
+        pass_filenames: false
+        files: ^(factory/packages/|\.packit\.yaml)

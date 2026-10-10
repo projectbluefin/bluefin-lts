@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:45:03+00:00",
+  "package": "umockdev",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "fe5674a6039207a151e6877d8cd837264292e920a4af80fff852ea66d77a238f",
+    "srpm_checksum_type": "sha256",
+    "tree": "769092c16d79e8eae0f13a9cfc99ce344b4d30e8"
+  }
+}

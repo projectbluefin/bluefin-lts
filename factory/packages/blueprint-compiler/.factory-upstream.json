@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:40:14+00:00",
+  "package": "blueprint-compiler",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "0436bc64968e593ca67937dfeea17f11c9e800812bfe8919ec64720bbc9f5fa7",
+    "srpm_checksum_type": "sha256",
+    "tree": "6789280a1febd56082dceec1a14907fd65e33e39"
+  }
+}

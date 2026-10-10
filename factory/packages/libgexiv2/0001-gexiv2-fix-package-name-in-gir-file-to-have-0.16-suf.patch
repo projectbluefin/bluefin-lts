@@ -1,0 +1,45 @@
+From 3d03a4ae6bcd90b9b0cb6e41e81979d3a94cec67 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20P=2E=20Berrang=C3=A9?= <berrange@redhat.com>
+Date: Tue, 10 Feb 2026 11:41:55 +0000
+Subject: [PATCH] gexiv2: fix package name in gir file to have -0.16 suffix
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The generated GExiv2-0.16.gir file contains a reference to the 'gexiv2'
+package:
+
+   <package name="gexiv2"/>
+
+which is expected to match the pkg-config file name. The latter was
+renamed to have a "-0.16" suffix, and as a result g-ir-scanner now
+complains that 'gexiv2' pkg-config cannot be found:
+
+  # g-ir-scanner -n Demo --program demo  --include GExiv2-0.16  demo.c
+  Package gexiv2 was not found in the pkg-config search path.
+  Perhaps you should add the directory containing `gexiv2.pc'
+  to the PKG_CONFIG_PATH environment variable
+  Package 'gexiv2' not found
+
+Fixes: 06c6c36c13321a64f9ec9a6d071e2d5933b5ad1c
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+ gexiv2/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gexiv2/meson.build b/gexiv2/meson.build
+index ad95c67..7df3a28 100644
+--- a/gexiv2/meson.build
++++ b/gexiv2/meson.build
+@@ -115,7 +115,7 @@ if get_option('introspection')
+       nsversion : project_api_version,
+       symbol_prefix : 'gexiv2',
+       identifier_prefix : 'GExiv2',
+-      export_packages : 'gexiv2',
++      export_packages : 'gexiv2-0.16',
+       includes : ['GObject-2.0', 'Gio-2.0'],
+       header : 'gexiv2/gexiv2.h',
+       install : true)
+-- 
+2.53.0
+
