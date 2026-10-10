@@ -22,6 +22,7 @@ dnf -y builddep -D 'dist .el10' -D "_sourcedir /repo/factory/packages/$PACKAGE" 
 # BuildRequires. Other failures must retain their original exit status.
 ready=false
 for attempt in 1 2 3 4 5; do
+    echo "generated BuildRequires attempt $attempt/5"
     rm -f /repo/work/rpmbuild/"$PACKAGE"/SRPMS/*.buildreqs.nosrc.rpm
     status=0
     rpmbuild -br "$spec" "${args[@]}" || status=$?

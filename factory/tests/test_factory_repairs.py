@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from tools.assemble_repo import assemble, source_name
-from tools.build_graph import plan
+from tools.build_graph import plan, resolve_edges
 from tools.buildroot import resolve
 from tools.inventory import inventory
 from tools.source_pipeline import stage
@@ -101,3 +101,22 @@ class FactoryRepairs(unittest.TestCase):
     def test_report_recognizes_real_multidigit_wave_names(self):
         self.assertTrue(did_build({'factory-rpm-s12-gnome-shell'}, 'gnome-shell'))
         self.assertFalse(did_build({'factory-rpm-s12-gnome-shell-devel'}, 'gnome-shell'))
+
+    def test_capability_edges_use_providers_instead_of_token_fragments(self):
+        edges = resolve_edges(
+            {'gtk4': {'pkgconfig(glib-2.0) >= 2.86', 'glib2-devel'},
+             'consumer': {'pkgconfig(gtk4)'}},
+            {'glib2', 'gtk4', 'consumer'},
+            {'glib2': {'pkgconfig(glib-2.0)', 'glib2-devel'},
+             'gtk4': {'pkgconfig(gtk4)'}})
+        self.assertEqual(edges['gtk4'], {'glib2'})
+        self.assertEqual(edges['consumer'], {'gtk4'})
+
+    def test_staged_signature_does_not_change_recipe_inputs(self):
+        directory = self.recipe('demo')
+        self.locks[0]['sources'] = [dict(filename='demo.tar.xz.asc', url='https://example.org/demo.tar.xz.asc', sha512='a')]
+        (self.root / 'config/upstream-sources.json').write_text(json.dumps(dict(schema=1, packages=self.locks)))
+        record = inventory(self.root)[0]
+        before = input_digest(record, self.root)
+        (directory / 'demo.tar.xz.asc').write_bytes(b'signature')
+        self.assertEqual(input_digest(record, self.root), before)

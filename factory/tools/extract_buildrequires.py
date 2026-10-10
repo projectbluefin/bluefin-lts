@@ -40,9 +40,44 @@ for spec in /packages/*/*.spec; do
     cat "$outdir/$name.err" >&2
     failed=1
   fi
-  rm -f "$outdir/$name.err"
+  for query in names provides; do
+    if [ "$query" = names ]; then
+      args=(--qf "%{NAME}\n")
+    else
+      args=(--provides)
+    fi
+    if ! rpmspec -q "${args[@]}" --define "_sourcedir $(dirname "$spec")" \
+        --define "dist .el10" "$spec" > "$outdir/$name.$query" 2>> "$outdir/$name.err"; then
+      cat "$outdir/$name.err" >&2
+      failed=1
+    fi
+  done
 done
-exit "$failed"
+test "$failed" -eq 0
+# Map generated capabilities from CentOS metadata back to source packages.
+# This bootstraps pkgconfig/soname edges before a factory repo exists.
+python3 - "$outdir" <<'PY'
+import dnf, json, re, sys
+from pathlib import Path
+sys.path.insert(0, "/repo/factory")
+from tools.build_graph import _requirement_names
+from tools.assemble_repo import source_name
+rows = Path(sys.argv[1])
+requirements = set()
+for spec in rows.glob("*.spec"):
+    for line in re.findall(r"^BuildRequires(?:[0-9]*)?:\s*(.+)$", spec.read_text(), re.MULTILINE):
+        requirements.update(_requirement_names(line))
+base = dnf.Base()
+base.read_all_repos()
+base.fill_sack(load_system_repo=False)
+provided = {}
+for capability in sorted(requirements):
+    for package in base.sack.query().available().filter(provides=capability):
+        if package.sourcerpm:
+            name = source_name(package.sourcerpm)
+            provided.setdefault(name, set()).add(capability)
+(rows / "base-providers.json").write_text(json.dumps({name: sorted(caps) for name, caps in provided.items()}))
+PY
 """
 
 
@@ -62,6 +97,7 @@ def run(root: Path, image: str, output: Path, engine: str) -> None:
         [
             engine, "run", "--rm",
             "-v", f"{root / 'packages'}:/packages:ro,Z",
+            "-v", f"{root.parent}:/repo:ro,Z",
             "-v", f"{rows}:/out:Z",
             "-v", f"{script}:/extract.sh:ro,Z",
             image,

@@ -60,32 +60,41 @@ def parse_rows(text: str) -> dict[str, set[str]]:
     return dict(graph)
 
 
-def _requirement_names(requirement: str) -> list[str]:
-    """Extract candidate package names from a BuildRequires token.
+# Adapted from utah-packages: preserve capability namespaces.
+CAPABILITY = re.compile(r"[^\s()<>=!,]+(?:\([^()]*\))?")
 
-    ``gtk4 >= 4.20`` names gtk4. ``(glib2 >= 2.86 with pango)`` names two, and
-    an alternation names both -- either may satisfy it, so both are recorded
-    as predecessors. Over-approximating here is safe: it can only make a wave
-    later than strictly necessary. Under-approximating would break the build.
-    """
-    tokens = re.findall(r"[A-Za-z0-9][A-Za-z0-9+._-]*", requirement)
-    ignored = {"and", "or", "without", "with", "if", "else"}
-    return [token for token in tokens if token.lower() not in ignored]
+
+def _requirement_names(requirement: str) -> list[str]:
+    rich = requirement.strip().startswith("(")
+    if rich:
+        tokens = CAPABILITY.findall(requirement.strip()[1:-1])
+        return [token for token in tokens if token not in
+                {"and", "or", "with", "without", "if", "else", "unless"}
+                and not re.match(r"^[0-9%]", token)]
+    match = CAPABILITY.match(requirement.strip())
+    return [match.group(0)] if match else []
 
 
 def resolve_edges(
     rows: dict[str, set[str]],
     factory_packages: set[str],
+    provided: dict[str, set[str]] | None = None,
 ) -> dict[str, set[str]]:
-    """Reduce extracted rows to edges between packages this factory builds."""
+    """Resolve capabilities through subpackage names and RPM provides."""
+    providers: dict[str, set[str]] = defaultdict(set)
+    for package in factory_packages:
+        providers[package].add(package)
+    for package, capabilities in (provided or {}).items():
+        if package in factory_packages:
+            for capability in capabilities:
+                providers[capability].add(package)
     edges: dict[str, set[str]] = defaultdict(set)
     for package, requirements in rows.items():
         if package not in factory_packages:
             continue
         for requirement in requirements:
-            for name in _requirement_names(requirement):
-                if name in factory_packages and name != package:
-                    edges[package].add(name)
+            for capability in _requirement_names(requirement):
+                edges[package].update(providers.get(capability, set()) - {package})
     return dict(edges)
 
 
@@ -187,7 +196,19 @@ def plan(root: Path | None = None, rows_dir: Path | None = None) -> dict:
                 r"^BuildRequires(?:[0-9]*)?:\s*(.+)$", text, re.MULTILINE
             ))
     names = [record.name for record in inventory(root)]
-    edges = resolve_edges(rows, set(names))
+    provided: dict[str, set[str]] = defaultdict(set)
+    if rows_dir is not None:
+        for record in inventory(root):
+            for suffix in ("names", "provides"):
+                path = rows_dir / f"{record.name}.{suffix}"
+                if path.is_file():
+                    for line in path.read_text().splitlines():
+                        provided[record.name].update(_requirement_names(line))
+        base = rows_dir / "base-providers.json"
+        if base.is_file():
+            for package, capabilities in json.loads(base.read_text()).items():
+                provided[package].update(capabilities)
+    edges = resolve_edges(rows, set(names), provided)
     return {
         "packages": sorted(names),
         "waves": waves(edges, names),

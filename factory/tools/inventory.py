@@ -159,10 +159,11 @@ def recipe_files(record: Record) -> list[Path]:
     Used by the input digest so a patch change invalidates a cached build.
     The staged source archive is excluded: it is verified output, not recipe.
     """
+    staged = {source.get("filename") for source in record.sources}
     files = [
         path
         for path in sorted(record.directory.iterdir())
-        if path.is_file() and not path.name.endswith(".tar.xz")
+        if path.is_file() and path.name not in staged and not path.name.endswith(".tar.xz")
         and not path.name.endswith(".tar.gz")
         and not path.name.endswith(".tar.bz2")
         and not path.name.endswith(".tar.zst")

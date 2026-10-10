@@ -42,6 +42,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   id-token: write
   packages: write
   attestations: write
@@ -92,7 +93,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update && sudo apt-get install -y zstd
           python3 factory/tools/buildroot.py --output work/buildroot-resolved.json \
-            --snapshot work/buildroot-provenance.json
+            --snapshot buildroot-provenance.json
           digest="$(python3 -c 'import json; print(json.load(open("work/buildroot-resolved.json"))["actual"])')"
           test -n "$digest"
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
@@ -110,7 +111,7 @@ jobs:
           name: factory-buildroot-image
           path: |
             buildroot.tar.zst
-            work/buildroot-provenance.json
+            buildroot-provenance.json
           if-no-files-found: error
           retention-days: 1
 

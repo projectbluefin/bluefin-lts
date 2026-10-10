@@ -25,7 +25,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update && sudo apt-get install -y zstd
           python3 factory/tools/buildroot.py --output work/buildroot-resolved.json \
-            --snapshot work/buildroot-provenance.json
+            --snapshot buildroot-provenance.json
           docker tag "$(python3 factory/tools/buildroot.py --digest-only)" factory-buildroot:run
           docker save factory-buildroot:run | zstd -T0 -3 -o buildroot.tar.zst
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -33,7 +33,7 @@ jobs:
           name: factory-buildroot-image
           path: |
             buildroot.tar.zst
-            work/buildroot-provenance.json
+            buildroot-provenance.json
           if-no-files-found: error
           retention-days: 3
       - name: Parse the recipes in CentOS and solve the graph on the host
