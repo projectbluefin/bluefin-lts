@@ -220,7 +220,8 @@ def extract(root: Path | None, rows_dir: Path) -> dict[str, set[str]]:
 
 
 def plan(root: Path | None = None, rows_dir: Path | None = None,
-         selected: list[str] | None = None, graph_only: bool = False) -> dict:
+         selected: list[str] | None = None, graph_only: bool = False,
+         stack: bool = False) -> dict:
     """Produce the full build plan: waves plus the graph behind them."""
     root = factory_root(root)
     if rows_dir is None:
@@ -249,6 +250,29 @@ def plan(root: Path | None = None, rows_dir: Path | None = None,
             for package, capabilities in json.loads(base.read_text()).items():
                 provided[package].update(capabilities)
     edges = resolve_edges(rows, set(names), provided)
+    satisfied_path = rows_dir / "base-satisfied.json" if rows_dir is not None else None
+    satisfied = (json.loads(satisfied_path.read_text())
+                 if satisfied_path is not None and satisfied_path.is_file() else {})
+    if stack:
+        if not satisfied:
+            raise ValueError("stack selection requires CentOS provider witnesses")
+        targets = json.loads((root / "config" / "gnome-stack.json").read_text())["targets"]
+        building = set(targets)
+        pending = list(targets)
+        while pending:
+            consumer = pending.pop()
+            for requirement in rows[consumer]:
+                if satisfied.get(consumer, {}).get(requirement):
+                    continue
+                for provider in resolve_edges(
+                        {consumer: {requirement}}, set(names), provided).get(consumer, set()):
+                    if provider not in building:
+                        building.add(provider)
+                        pending.append(provider)
+        blocked = {record.name for record in inventory(root) if record.blocked} & building
+        if blocked:
+            raise ValueError("stack requires blocked recipes: " + ", ".join(sorted(blocked)))
+        selected = sorted(building)
     result = {
         "packages": sorted(names),
         "edges": {package: sorted(values) for package, values in sorted(edges.items())},
@@ -258,9 +282,6 @@ def plan(root: Path | None = None, rows_dir: Path | None = None,
         unknown = set(building) - set(names)
         if unknown:
             raise ValueError("unknown recipes: " + ", ".join(sorted(unknown)))
-        satisfied_path = rows_dir / "base-satisfied.json" if rows_dir is not None else None
-        satisfied = (json.loads(satisfied_path.read_text())
-                     if satisfied_path is not None and satisfied_path.is_file() else {})
         scheduling, witnesses = bootstrap_edges(edges, rows, set(building), provided, satisfied)
         result["bootstrap"] = witnesses
         result["waves"] = waves(scheduling, building)
@@ -277,6 +298,7 @@ def main() -> int:
     plan_parser.add_argument("--output", type=Path, default=None)
     plan_parser.add_argument("--packages", help="JSON array of the selected build set")
     plan_parser.add_argument("--graph-only", action="store_true")
+    plan_parser.add_argument("--stack", action="store_true", help="GNOME targets plus unmet base dependencies")
 
     reverse_parser = subparsers.add_parser("reverse-deps")
     reverse_parser.add_argument("package")
@@ -287,7 +309,7 @@ def main() -> int:
     try:
         if args.command == "plan":
             selected = json.loads(args.packages) if args.packages is not None else None
-            result = plan(args.root, args.rows, selected, args.graph_only)
+            result = plan(args.root, args.rows, selected, args.graph_only, args.stack)
             rendered = json.dumps(result, indent=2)
             if args.output:
                 args.output.parent.mkdir(parents=True, exist_ok=True)

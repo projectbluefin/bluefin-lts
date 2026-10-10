@@ -135,7 +135,7 @@ python3 factory/tools/srpm_gate.py gnome-shell --output /tmp/gnome-shell.src.rpm
 Stated plainly, because the list is short and each item is real:
 
 - **Complete desktop validation.** GNOME 51 sources are SHA-512 locked;
-  `Factory GNOME stack` builds the eligible stack in the pinned CentOS root.
+  `Factory GNOME stack` builds the targeted stack in the pinned CentOS root.
   RPM success does not establish image composition or desktop/boot behavior.
 - **arm64.** The build root and every recipe are amd64.
 - **Hermetic builds.** Builds run in the pinned container, which provides the
@@ -146,8 +146,8 @@ Stated plainly, because the list is short and each item is real:
 
 ## GNOME 51 build verification
 
-Dispatch `factory-stack.yml` on the candidate branch. It computes every wave
-from CentOS RPM dependencies, builds fresh containers, and retains per-package
+Dispatch `factory-stack.yml` on the candidate branch. It selects the GNOME 51 targets plus prerequisites whose exact requirements
+CentOS/CRB/EPEL cannot satisfy, then computes every wave from RPM dependencies, builds in fresh containers, and retains per-package
 logs, RPMs, buildroot provenance, and a JSON status report. It has no publication
 or signing permissions. The lane supports arbitrary graph depth; publication's
 older reusable workflow currently supports six waves.

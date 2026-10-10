@@ -127,7 +127,7 @@ stages cannot substitute for a successful dependency transaction.
 
 ## Full-stack verification
 
-Run `factory-stack.yml` on the candidate branch to build all eligible recipes
+Run `factory-stack.yml` on the candidate branch to build the GNOME 51 targets and unmet prerequisites
 without a fixed wave-depth limit. Inspect `factory-stack-evidence` for every
 package status and bootstrap witness; a partial RPM artifact is not a successful
 stack. Generated cargo bundles come from the upstream Cargo.lock, verify each

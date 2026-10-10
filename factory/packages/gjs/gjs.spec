@@ -1,4 +1,4 @@
-%global glib2_version 2.68.0
+%global glib2_version 2.86.0
 %global gobject_introspection_version 1.72.0
 %global mozjs140_version 140.1.0
 

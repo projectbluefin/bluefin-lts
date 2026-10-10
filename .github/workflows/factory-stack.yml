@@ -25,13 +25,12 @@ jobs:
           python3 factory/tools/buildroot.py --output work/buildroot-resolved.json \
             --snapshot work/buildroot-provenance.json
           docker tag "$(python3 factory/tools/buildroot.py --digest-only)" factory-buildroot:run
-      - name: Extract exact dependencies and solve the complete eligible stack
+      - name: Extract exact dependencies and solve the GNOME stack
         run: |
           set -euo pipefail
           python3 factory/tools/extract_buildrequires.py --image factory-buildroot:run --output work/graph
-          packages=$(python3 factory/tools/packit_workflow.py packages)
           python3 factory/tools/build_graph.py plan --rows work/graph/rows \
-            --packages "$packages" --output work/graph/plan.json
+            --stack --output work/graph/plan.json
       - name: Build every computed wave in CentOS
         run: python3 factory/tools/build_stack.py --plan work/graph/plan.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

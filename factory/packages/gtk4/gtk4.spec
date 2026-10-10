@@ -2,14 +2,14 @@
 %global with_broadway 1
 %endif
 
-%global glib2_version 2.84.0
+%global glib2_version 2.89.3
 %global pango_version 1.56.0
-%global cairo_version 1.18.0
+%global cairo_version 1.18.2
 %global gdk_pixbuf_version 2.30.0
 %global gstreamer_version 1.24.0
 %global harfbuzz_version 8.4
-%global wayland_protocols_version 1.31
-%global wayland_version 1.21.0
+%global wayland_protocols_version 1.48
+%global wayland_version 1.24.0
 %global epoxy_version 1.4
 
 %global bin_version 4.0.0
@@ -91,7 +91,7 @@ BuildRequires:  pkgconfig(egl)
 BuildRequires:  pkgconfig(epoxy)
 BuildRequires:  pkgconfig(gdk-pixbuf-2.0) >= %{gdk_pixbuf_version}
 BuildRequires:  pkgconfig(glib-2.0) >= %{glib2_version}
-BuildRequires:  pkgconfig(gobject-introspection-1.0)
+BuildRequires:  pkgconfig(gobject-introspection-1.0) >= 1.84
 BuildRequires:  pkgconfig(graphene-gobject-1.0)
 # gstreamer1-plugins-bad-free-devel pulls in libgtk-3 on EL10 (gtk3 removed); skip on RHEL
 %if !0%{?rhel}

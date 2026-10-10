@@ -16,6 +16,7 @@ Source:         https://download.gnome.org/sources/gnome-session/51/gnome-sessio
 Patch:          0001-Fedora-Set-grub-boot-flags-on-shutdown-reboot.patch
 
 BuildRequires:  meson
+BuildRequires:  pkgconfig(glib-2.0) >= 2.82.0
 BuildRequires:  gcc
 BuildRequires:  pkgconfig(gnome-desktop-4)
 BuildRequires:  pkgconfig(libsystemd)

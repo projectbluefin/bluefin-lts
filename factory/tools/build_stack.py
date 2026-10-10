@@ -61,7 +61,11 @@ def build_stack(plan: dict, repo: Path, image: str, engine: str, workers: int) -
                     shutil.copy2(rpm, prior / rpm.name)
         (work / "stack-report.json").write_text(json.dumps(report, indent=2) + "\n")
         # Save disk after each wave; RPMs and logs are retained as evidence.
-        shutil.rmtree(work / "rpmbuild", ignore_errors=True)
+        cleanup = subprocess.run(
+            [engine, "run", "--rm", "--pull=never", "-v", f"{repo}:/repo:Z",
+             image, "rm", "-rf", "/repo/work/rpmbuild"], check=False)
+        if cleanup.returncode:
+            raise RuntimeError("could not clean root-owned RPM build trees")
     return int(any(result["status"] for result in report["packages"].values()))
 
 

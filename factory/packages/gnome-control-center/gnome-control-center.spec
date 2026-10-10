@@ -6,7 +6,7 @@
 %global gsd_version 48~rc
 %global gsettings_desktop_schemas_version 48~alpha-2
 %global upower_version 1.90.6
-%global gtk4_version 4.15.2
+%global gtk4_version 4.23.0
 %global gnome_bluetooth_version 42~alpha
 %global libadwaita_version 1.8~alpha
 %global nm_version 1.52.0
