@@ -34,6 +34,13 @@ echo "exclude=libjxl*" >> "${GNOME50_REPO}"
 #   architecture; EL10 base 42.x lacks the necessary policy rules.
 # - gnutls: newer glib2 from COPR may depend on gnutls symbols not in base.
 dnf -y install selinux-policy selinux-policy-targeted gnutls
+
+# The policy RPM overwrites rpm-ostree's "/home /var/home" alias in file_contexts.subs_dist;
+# without it ~/.ssh labels as default_t and sshd ignores authorized_keys.
+# See: https://github.com/ublue-os/bluefin-lts/issues/1599 and https://github.com/ublue-os/bluefin/issues/4976
+sed -i 's|^/var/home[[:space:]]\+/home$|/home /var/home|' /etc/selinux/targeted/contexts/files/file_contexts.subs_dist
+matchpathcon -n /var/home/user/.ssh | grep -F -e ':ssh_home_t:'
+
 dnf -y upgrade glib2 fontconfig
 
 # Please, dont remove this as it will break everything GNOME related
