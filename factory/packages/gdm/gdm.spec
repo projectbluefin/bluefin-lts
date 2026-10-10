@@ -134,7 +134,6 @@ meson setup --wrap-mode=nodownload _build \
     --sysconfdir=%{_sysconfdir} \
     --localstatedir=%{_localstatedir} \
     --sharedstatedir=%{_sharedstatedir} \
-    --wrap-mode=nodownload \
     -Ddbus-sys=%{_datadir}/dbus-1/system.d \
     -Ddefault-path=/usr/local/bin:/usr/bin \
     -Ddefault-pam-config=redhat \

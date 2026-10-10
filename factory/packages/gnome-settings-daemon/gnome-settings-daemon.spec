@@ -55,7 +55,7 @@ BuildRequires:  pkgconfig(libcanberra-gtk3)
 %endif
 BuildRequires:  pkgconfig(libgeoclue-2.0)
 BuildRequires:  pkgconfig(libnm)
-BuildRequires:  pkgconfig(libnotify)
+BuildRequires:  pkgconfig(libnotify) >= 0.8.7
 BuildRequires:  pkgconfig(libpulse)
 BuildRequires:  pkgconfig(libpulse-mainloop-glib)
 BuildRequires:  pkgconfig(librsvg-2.0)

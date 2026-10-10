@@ -7,8 +7,8 @@ License:        LGPL-2.1-only AND CC-BY-3.0
 URL:            https://gitlab.freedesktop.org/pwithnall/%{name}/
 Source0:        https://tecnocode.co.uk/downloads/%{name}/%{name}-%{version}.tar.xz
 Source1:        https://gitlab.gnome.org/pwithnall/libgsystemservice/-/archive/0.3.0/libgsystemservice-0.3.0.tar.bz2
-Source2:        gvdb.tar.xz
-Source3:        tinycdb-0.81.tar.gz
+Source2:        https://src.fedoraproject.org/repo/pkgs/rpms/malcontent/gvdb.tar.xz/sha512/148b9317bb0930250ac2bf9a68c570370aeca6d0c493ff123839cff641d358b63bdfcff150cd7378f95977c94749a0b5644a261490d67ee12281f2ca918cbfa3/gvdb.tar.xz
+Source3:        https://deb.debian.org/debian/pool/main/t/tinycdb/tinycdb_0.81.orig.tar.gz
 
 BuildRequires:  gettext
 BuildRequires:  gi-docgen
@@ -67,6 +67,7 @@ This package contains tools for querying and updating the parental controls
 settings for users.
 
 %package ui-devel
+Provides:       pkgconfig(malcontent-ui-1) = %{version}
 Summary:        Development files for libmalcontent-ui
 Requires:       %{name}-ui-libs%{?_isa} = %{version}-%{release}
 
@@ -80,6 +81,7 @@ Summary:        Libraries for %{name}
 This package contains libmalcontent-ui.
 
 %package devel
+Provides:       pkgconfig(malcontent-0) = %{version}
 Summary:        Development files for %{name}
 Requires:       %{name}-libs%{?_isa} = %{version}-%{release}
 
@@ -119,7 +121,6 @@ meson setup --wrap-mode=nodownload _build \
     --mandir=%{_mandir} \
     --sysconfdir=%{_sysconfdir} \
     --localstatedir=%{_localstatedir} \
-    --wrap-mode=nodownload \
     -Dui=enabled \
     -Dinstalled_tests=false
 ninja -C _build -j%{_smp_build_ncpus}

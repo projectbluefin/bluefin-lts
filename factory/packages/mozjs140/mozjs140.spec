@@ -57,6 +57,10 @@ Patch16:        D261512.1755672843.diff
 # TODO: Check with mozilla for cause of these fails and re-enable spidermonkey compile time checks if needed
 Patch20:        spidermonkey_checks_disable.patch
 
+# Rust 1.98 adds vendor targets ambiguous to ESR 140 configure.
+# Adapted from projectbluefin/utah-packages (CentOS triplets are also affected).
+Patch21:        rust-target-vendor-narrowing.patch
+
 BuildRequires:  cargo
 %if "%{toolchain}" == "clang"
 BuildRequires:  clang

@@ -3,7 +3,7 @@
 %endif
 
 %global glib2_version 2.89.3
-%global pango_version 1.56.0
+%global pango_version 1.58.0
 %global cairo_version 1.18.2
 %global gdk_pixbuf_version 2.30.0
 %global gstreamer_version 1.24.0
@@ -81,7 +81,7 @@ BuildRequires:  gcc-c++
 BuildRequires:  gettext
 BuildRequires:  gi-docgen
 BuildRequires:  glslc
-BuildRequires:  meson
+BuildRequires:  meson >= 1.8.0
 BuildRequires:  python3-gobject
 BuildRequires:  pkgconfig(avahi-gobject)
 BuildRequires:  pkgconfig(cairo) >= %{cairo_version}
@@ -324,14 +324,14 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/*.desktop
 - Adopt %meson build macros
 - EL10: preserve gstreamer/tracker disable guards
 
-* Sat Mar 14 2026 James Reilly <jreilly1821@gmail.com> - 4.21.6-3
-- EL10: disable tracker/tinysparql integration (not available on EL10); gate
-  tracker-sparql-3.0 BuildRequires and -Dtracker=enabled behind %%if !0%%{?rhel}
-
 * Sat Mar 15 2026 James Reilly <jreilly1821@gmail.com> - 4.21.6-2
 - EL10: gate gstreamer1-plugins-bad-free-devel BR and gstreamer1-plugins-bad-free-libs
   runtime Requires behind %%if !0%%{?rhel} to fix buildroot on EL10 (gtk3 was removed
   and gstreamer1-plugins-bad-free-devel still depends on libgtk-3.so.0)
+
+* Sat Mar 14 2026 James Reilly <jreilly1821@gmail.com> - 4.21.6-3
+- EL10: disable tracker/tinysparql integration (not available on EL10); gate
+  tracker-sparql-3.0 BuildRequires and -Dtracker=enabled behind %%if !0%%{?rhel}
 
 * Fri Mar 14 2026 James Reilly <jreilly1821@gmail.com> - 4.21.6-1
 - Initial local spec based on Fedora rawhide gtk4 4.21.6

@@ -17,6 +17,7 @@ which complement the classes provided by GLib. It is intended to be used by
 any project which uses GLib and which wants to write internal unit tests.
 
 %package devel
+Provides: pkgconfig(glib-testing-0) = %{version}
 Summary:        Development files for %{name}
 License:        LicenseRef-Callaway-LGPLv2+
 Requires:       %{name}%{?_isa} = %{version}-%{release}

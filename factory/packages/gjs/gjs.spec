@@ -88,7 +88,6 @@ meson setup --wrap-mode=nodownload _build \
     --sysconfdir=%{_sysconfdir} \
     --localstatedir=%{_localstatedir} \
     --sharedstatedir=%{_sharedstatedir} \
-    --wrap-mode=nodownload \
     -Dinstalled_tests=false
 ninja -C _build -j%{_smp_build_ncpus}
 

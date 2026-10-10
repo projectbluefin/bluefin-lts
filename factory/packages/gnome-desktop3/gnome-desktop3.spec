@@ -114,7 +114,6 @@ meson setup --wrap-mode=nodownload \
     --sysconfdir=%{_sysconfdir} \
     --localstatedir=%{_localstatedir} \
     --sharedstatedir=%{_sharedstatedir} \
-    --wrap-mode=nodownload \
     --buildtype=plain \
     -Dgtk_doc=true -Dinstalled_tests=true \
     -Dlegacy_library=false \

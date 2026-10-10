@@ -74,7 +74,6 @@ meson setup --wrap-mode=nodownload _build \
     --mandir=%{_mandir} \
     --sysconfdir=%{_sysconfdir} \
     --localstatedir=%{_localstatedir} \
-    --wrap-mode=nodownload \
     %{nil}
 ninja -C _build -j%{_smp_build_ncpus}
 echo "Vendored dependencies." > LICENSE.dependencies

@@ -112,6 +112,8 @@ desktop-file-validate %{buildroot}/%{_datadir}/applications/org.gnome.OnlineAcco
 #%%{_datadir}/glib-2.0/schemas/org.gnome.online-accounts.gschema.xml
 %endif
 %{_datadir}/icons/hicolor/*/apps/goa-*.svg
+%{_datadir}/applications/org.gnome.goa-daemon.desktop
+%{_datadir}/icons/hicolor/symbolic/apps/org.gnome.goa-daemon-symbolic.svg
 
 %files libs
 %dir %{_libdir}/girepository-1.0

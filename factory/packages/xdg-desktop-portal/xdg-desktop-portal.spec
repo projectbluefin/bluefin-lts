@@ -94,7 +94,6 @@ meson setup --wrap-mode=nodownload \
     --sysconfdir=%{_sysconfdir} \
     --localstatedir=%{_localstatedir} \
     --sharedstatedir=%{_sharedstatedir} \
-    --wrap-mode=nodownload \
     --auto-features=enabled \
     --buildtype=plain \
     %{!?with_docs:-Ddocumentation=disabled} \

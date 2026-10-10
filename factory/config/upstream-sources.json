@@ -662,10 +662,20 @@
           "filename": "libgsystemservice-0.3.0.tar.bz2",
           "sha512": "e677e74e5d4feb253d94cf6ff374919788a608be99f9757c2d84cc4704e377b51b22bf4fbabc6241510dcf988e042adaee7aabaf862b5f2d0d22bb895cc98463",
           "checksum_type": "sha512"
+        },
+        {
+          "url": "https://src.fedoraproject.org/repo/pkgs/rpms/malcontent/gvdb.tar.xz/sha512/148b9317bb0930250ac2bf9a68c570370aeca6d0c493ff123839cff641d358b63bdfcff150cd7378f95977c94749a0b5644a261490d67ee12281f2ca918cbfa3/gvdb.tar.xz",
+          "filename": "gvdb.tar.xz",
+          "sha512": "148b9317bb0930250ac2bf9a68c570370aeca6d0c493ff123839cff641d358b63bdfcff150cd7378f95977c94749a0b5644a261490d67ee12281f2ca918cbfa3",
+          "checksum_type": "sha512"
+        },
+        {
+          "url": "https://deb.debian.org/debian/pool/main/t/tinycdb/tinycdb_0.81.orig.tar.gz",
+          "filename": "tinycdb-0.81.tar.gz",
+          "sha512": "56d0422700835d7b0460c32c41e6d5f30b8b833cefea775eb7f2b5592d744942c1109eac1501421b02f196d15e551111bb2accc71f2fd32ef4b8d658c635340e",
+          "checksum_type": "sha512"
         }
-      ],
-      "blocked": true,
-      "blocked_reason": "references sources that are neither downloadable nor present in the recipe: gvdb.tar.xz, tinycdb-0.81.tar.gz"
+      ]
     },
     {
       "name": "meson",

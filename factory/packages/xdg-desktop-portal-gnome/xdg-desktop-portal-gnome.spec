@@ -19,7 +19,7 @@ BuildRequires:  pkgconfig(fontconfig)
 BuildRequires:  pkgconfig(gnome-bg-4)
 BuildRequires:  pkgconfig(gnome-desktop-4)
 BuildRequires:  pkgconfig(gsettings-desktop-schemas)
-BuildRequires:  pkgconfig(gtk4)
+BuildRequires:  pkgconfig(gtk4) >= 4.22.0
 BuildRequires:  pkgconfig(libadwaita-1)
 BuildRequires:  pkgconfig(xdg-desktop-portal) >= %{xdg_desktop_portal_version}
 BuildRequires:  systemd-rpm-macros
@@ -59,7 +59,6 @@ meson setup --wrap-mode=nodownload _build \
     --sysconfdir=%{_sysconfdir} \
     --localstatedir=%{_localstatedir} \
     --sharedstatedir=%{_sharedstatedir} \
-    --wrap-mode=nodownload \
     -Dsystemduserunitdir=%{_userunitdir}
 ninja -C _build -j%{_smp_build_ncpus}
 

@@ -97,7 +97,6 @@ meson setup --wrap-mode=nodownload _build \
     --sysconfdir=%{_sysconfdir} \
     --localstatedir=%{_localstatedir} \
     --sharedstatedir=%{_sharedstatedir} \
-    --wrap-mode=nodownload \
     -Dparental_controls=enabled \
 %if !%{with webkitgtk}
     -Dwebkitgtk=disabled \

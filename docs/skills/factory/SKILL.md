@@ -96,7 +96,9 @@ Run `just factory-check` before every commit that touches `factory/**` or
   Wayland minima, and source locks aligned with upstream meson.build. Remove
   backports already present upstream and rebase remaining patches. Match all
   upstream version minima in BuildRequires, including Pango’s HarfBuzz minimum,
-  so the graph selects a factory prerequisite when CentOS is too old. Manual
+  so the graph selects a factory prerequisite when CentOS is too old. Malcontent
+  supplies Initial Setup’s enabled parental controls; lock all of its bundled
+  subprojects and expose new pkgconfig capabilities before planning. Manual
   Meson setup calls must use `--wrap-mode=nodownload`; missing dependencies
   must fail instead of fetching an unlocked fallback.
 

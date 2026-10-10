@@ -93,7 +93,6 @@ meson setup --wrap-mode=nodownload _build \
     --localstatedir=%{_localstatedir} \
     --sharedstatedir=%{_sharedstatedir} \
     --auto-features=enabled \
-    --wrap-mode=nodownload \
     -Dglib_debug=disabled \
     -Ddocumentation=false \
     -Dinstalled_tests=false \

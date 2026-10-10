@@ -48,7 +48,7 @@ Source0:        https://download.gnome.org/sources/localsearch/3.12/localsearch-
 %if !0%{?rhel}
 BuildRequires:  asciidoc
 %endif
-BuildRequires:  gcc
+BuildRequires:  gcc gcc-c++
 BuildRequires:  giflib-devel
 BuildRequires:  meson
 BuildRequires:  systemd-rpm-macros
@@ -125,7 +125,6 @@ meson setup --wrap-mode=nodownload _build \
     --sysconfdir=%{_sysconfdir} \
     --localstatedir=%{_localstatedir} \
     --sharedstatedir=%{_sharedstatedir} \
-    --wrap-mode=nodownload \
 %if 0%{?flatpak}
     -Dwriteback=false \
     -Dsystemd_user_services=false \
