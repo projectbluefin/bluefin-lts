@@ -87,6 +87,9 @@ workspace Cargo package selectors before compilation, so test-environment
 failures and duplicate registry names fail early.
 The stack CI gate runs that namespace probe with the recipe's syscall profile
 before wave zero as well; a passing graph cannot prove host sandbox support.
+On AppArmor hosts it also loads a recipe-specific Moby-based profile retaining
+the default restrictions except the mount/pivot operations Bubblewrap needs
+inside its private user namespace. The engine's capabilities remain unchanged.
 
 ### Why nothing downloads during a build
 

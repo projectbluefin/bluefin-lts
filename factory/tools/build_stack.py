@@ -13,7 +13,11 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tools.container_policy import security_args
 
 
 def build_stack(plan: dict, repo: Path, image: str, engine: str, workers: int,
@@ -40,9 +44,7 @@ def build_stack(plan: dict, repo: Path, image: str, engine: str, workers: int,
                 command = [engine, "run", "--rm", "--pull=never", "-e", "PACKAGE",
                            "-v", f"{repo}:/repo:Z", "-v", f"{prior}:/prior:Z",
                            image, "bash", "/repo/factory/tools/build_package.sh"]
-                profile = repo / "factory/packages" / package / f"{package}-seccomp.json"
-                if profile.is_file():
-                    command[2:2] = ["--security-opt", f"seccomp={profile}"]
+                command[2:2] = security_args(repo / "factory", package, engine)
                 status = subprocess.run(command, env=env, stdout=log,
                                         stderr=subprocess.STDOUT, check=False).returncode
         rpms = sorted(output.glob("*.rpm"))

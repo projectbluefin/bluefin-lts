@@ -99,11 +99,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "work/rpms/$PACKAGE"
-          security_args=()
-          profile="$PWD/factory/packages/$PACKAGE/$PACKAGE-seccomp.json"
-          if [ -f "$profile" ]; then
-            security_args=(--security-opt "seccomp=$profile")
-          fi
+          python3 factory/tools/container_policy.py load --package "$PACKAGE"
+          python3 factory/tools/container_policy.py args --package "$PACKAGE" > work/policy-args
+          mapfile -t security_args < work/policy-args
           docker run --rm --pull=never "${security_args[@]}" -e PACKAGE \
             -v "$PWD:/repo:Z" -v "$PWD/work/prior:/prior:Z" \
             factory-buildroot:run bash /repo/factory/tools/build_package.sh

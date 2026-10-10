@@ -187,3 +187,8 @@ registry package names are ambiguous. Keep its pre-compilation Bubblewrap and
 offline Cargo selector probes enabled, and retain complete Meson failure logs.
 The stack CI preflight must run the namespace probe with the recipe's actual
 syscall profile before wave zero, since graph coverage cannot verify host support.
+On AppArmor hosts, load and select the recipe's `glycin.apparmor` profile through
+`container_policy.py`. It preserves the pinned Moby default restrictions and
+permits mount/pivot operations in Bubblewrap's private user namespace with the
+engine's existing capabilities. Use the same policy in preflight and both build
+paths; never fall back to an unconfined profile or disable tests.
