@@ -13,7 +13,8 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: factory-smoke-${{ github.ref }}
+  # Each commit owns its artifacts; a slow pull must not block newer checks.
+  group: factory-smoke-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
 jobs:
   prepare:
