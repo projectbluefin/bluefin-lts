@@ -64,17 +64,17 @@ jobs:
           mkdir -p work/fixture/system_files/shared work/fixture/system_files/bluefin
           touch work/fixture/system_files/shared/.keep work/fixture/system_files/bluefin/.keep
           printf 'FROM scratch\nCOPY system_files /system_files\n' > work/fixture/Containerfile
-          docker build -t factory-context-fixture work/fixture
+          docker build -f work/fixture/Containerfile -t factory-context-fixture work/fixture
           args=(--build-arg COMMON_IMAGE_REF=factory-context-fixture
                 --build-arg BREW_IMAGE_REF=factory-context-fixture)
-          docker build "${args[@]}" --target ctx -t factory-context-check .
+          docker build -f Containerfile "${args[@]}" --target ctx -t factory-context-check .
           docker create --name context-check factory-context-check /unused
           docker cp context-check:/build_scripts/build.sh work/build.sh
           test -s work/build.sh
           docker cp context-check:/factory/system/install-factory-repo.sh work/install-repo.sh
           test -s work/install-repo.sh
           docker rm context-check
-          docker build "${args[@]}" --target gnome_packages -t factory-empty-check .
+          docker build -f Containerfile "${args[@]}" --target gnome_packages -t factory-empty-check .
           docker create --name empty-check factory-empty-check /unused
           mkdir -p work/empty
           docker cp empty-check:/factory/. work/empty/

@@ -162,7 +162,7 @@ jobs:
           cp -a work/candidate/. image/repository/
           cp work/buildroot-provenance.json image/repository/reports/buildroot.json
           printf 'FROM scratch\nCOPY repository /factory\n' > image/Containerfile
-          docker build --label "org.projectbluefin.factory.state=$(cat work/state.json)" \
+          docker build -f image/Containerfile --label "org.projectbluefin.factory.state=$(cat work/state.json)" \
             --label "org.projectbluefin.factory.buildroot=$BUILDROOT_DIGEST" \
             --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \
             -t factory-repo:stage image
