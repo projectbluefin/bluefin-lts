@@ -197,8 +197,8 @@ upstream config rewrite helper. Retarget private JPEG XL RPATHs only in those
 test copies so the sandbox resolves the staged libraries. The RPM buildroot
 remains unchanged.
 
-GTK 4.24 removed `gtk4-encode-symbolic-svg`; do not retain its executable or
-manual-page entries in the RPM file list.
+GTK 4.24 removed `gtk4-encode-symbolic-svg`, `gtk4-icon-editor`, and Shaper;
+do not retain their executable, manual, desktop, or icon entries in RPM lists.
 
 Glycin uses a recipe-scoped syscall profile for Bubblewrap namespace setup
 without adding container capabilities or privileged mode. Its copied test

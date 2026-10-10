@@ -167,6 +167,9 @@ Its SELinux tests detect active SELinux, rather than the existence of the
 Match Meson test directories to the actual setup directory. Manual `build/`
 recipes cannot use `%meson_test` without overriding its default directory.
 
+Check every GTK subpackage file list against the new release's installed tools,
+including removed icon-editor and Shaper entries.
+
 Recipe-scoped syscall profiles retain Moby default restrictions and kernel
 capability checks. Glycin permits nested Bubblewrap namespace setup without
 extra capabilities; keep sandbox tests enabled and stage private test libraries
