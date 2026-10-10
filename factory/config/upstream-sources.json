@@ -23,7 +23,9 @@
           "sha512": "c4e9fbd858666d3e5c3b4fe7f89aa3e8e3a0a00dc7e166f8147d937d911b77ba3ac6a016f9d223ccdd830bc8960b3e60397c0607cc6a1fd2c50c7492839ddd17",
           "checksum_type": "sha512"
         }
-      ]
+      ],
+      "srpm_gate": "skip",
+      "srpm_gate_reason": "computes a Provides alias with a %(...) shell expansion inside %global. rpm 4.19 (EL10, the build root) expands it; rpm 6.0 in Packit's container leaves it literal, so the gate cannot parse the spec. Builds correctly against the pinned root."
     },
     {
       "name": "avahi",

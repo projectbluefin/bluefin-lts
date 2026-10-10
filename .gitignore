@@ -9,6 +9,13 @@ __pycache__/
 # produced by a tool run, never authored.
 factory/work/
 
+# Stray SRPMs in the repository root. Packit is invoked with a working
+# directory inside the checkout, and a direct `rpmbuild -bs` with an explicit
+# `_srcrpmdir` will drop one here rather than in work/. These are build
+# output; the only SRPM this repository cares about lives in a workflow
+# artifact.
+*.src.rpm
+
 # Verified source archives staged beside a recipe by the source pipeline.
 # They are verified output, not recipe files: the recipe is the spec and its
 # patches, and the payload is fetched and checked on demand. Committing these

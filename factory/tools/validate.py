@@ -255,7 +255,7 @@ def check_spec_sanity(root: Path) -> list[str]:
 
 
 def check_generated_sources(root: Path) -> list[str]:
-    """Report recipes the factory cannot source, without failing the gate.
+    """Report recipes the factory cannot source or gate, without failing.
 
     Informational rather than fatal, and deliberately so: a recipe blocked
     because its vendor tarball is hand-generated is a *correct* state of the
@@ -263,13 +263,11 @@ def check_generated_sources(root: Path) -> list[str]:
     Failing here would mean the gate is red for a known, documented reason, and
     a permanently red gate is a gate people stop reading.
     """
-    blocked = [(record.name, record.blocked_reason) for record in inventory(root) if record.blocked]
-    if not blocked:
-        print("no recipe is blocked on an unsourceable input")
-        return []
-    print(f"{len(blocked)} recipe(s) excluded from builds:", file=sys.stderr)
-    for name, reason in blocked:
-        print(f"  {name}: {reason}", file=sys.stderr)
+    for record in inventory(root):
+        if record.blocked:
+            print(f"{record.name}: blocked from builds -- {record.blocked_reason}", file=sys.stderr)
+        elif record.gate_incompatible:
+            print(f"{record.name}: skipped by the SRPM gate -- {record.gate_reason}", file=sys.stderr)
     return []
 
 

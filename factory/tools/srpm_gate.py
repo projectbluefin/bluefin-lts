@@ -17,6 +17,7 @@ recipe is not malformed.
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -29,7 +30,31 @@ from tools.source_pipeline import fetch_source, verify_staged
 PACKIT_IMAGE = "quay.io/packit/packit"
 
 
-def command(package: str, record, output: Path, root: Path, image: str) -> list[str]:
+def container_engine(explicit: str | None = None) -> str:
+    """Pick a container engine.
+
+    GitHub-hosted runners have docker; a developer machine may only have
+    podman. Hard-coding docker means the gate cannot be run locally at all,
+    which is how "this only works in CI" starts.
+    """
+    if explicit:
+        return explicit
+    for candidate in ("docker", "podman"):
+        if shutil.which(candidate):
+            return candidate
+    raise ValueError(
+        "no container engine found; install docker or podman, or pass --engine"
+    )
+
+
+def command(
+    package: str,
+    record,
+    output: Path,
+    root: Path,
+    image: str,
+    engine: str = "docker",
+) -> list[str]:
     """Build the docker invocation. Separated so the paths can be tested.
 
     Every host path in a ``-v`` must be absolute. Docker reads a relative one
@@ -48,7 +73,7 @@ def command(package: str, record, output: Path, root: Path, image: str) -> list[
         raise ValueError(f"output directory does not exist: {out_dir}")
 
     return [
-        "docker", "run", "--rm",
+        engine, "run", "--rm",
         "-e", f"PACKAGE={package}",
         "-e", "PACKIT_SPECFILE_PATH=" + str(record.spec.relative_to(root.parent)),
         "-v", f"{repo_dir}:/repo:Z",
@@ -64,8 +89,15 @@ def command(package: str, record, output: Path, root: Path, image: str) -> list[
     ]
 
 
-def build(package: str, output: Path, root: Path | None, image: str) -> int:
+def build(
+    package: str,
+    output: Path,
+    root: Path | None,
+    image: str,
+    engine: str | None = None,
+) -> int:
     root = factory_root(root)
+    engine = engine or container_engine()
     matches = [record for record in inventory(root) if record.name == package]
     if not matches:
         print(f"{package} is not a recipe in this factory", file=sys.stderr)
@@ -76,13 +108,30 @@ def build(package: str, output: Path, root: Path | None, image: str) -> int:
     # missing archive. `rpmbuild -bs` reports "Bad file:
     # .../glycin-2.0.8-vendor.tar.xz: No such file or directory", which names
     # the archive and not the reason the factory cannot produce it.
+    #
+    # This is exit 0, not 1. A blocked recipe is a correct state of the
+    # configuration -- the factory identified it and will not try to build it
+    # -- so a gate that fails on it is red for a reason nobody can act on. The
+    # reason is printed so the skip is visible rather than silent.
     if record.blocked:
         print(
-            f"{package}: not buildable by this factory.\n"
+            f"{package}: skipped, not buildable by this factory.\n"
             f"  {record.blocked_reason}",
             file=sys.stderr,
         )
-        return 1
+        return 0
+
+    if record.gate_incompatible:
+        # A spec that builds under the pinned rpm but will not parse under
+        # Packit's newer one. Exit 0 with the reason, because a red gate here
+        # would be red for something nobody can fix: the recipe is correct for
+        # the rpm this factory builds with.
+        print(
+            f"{package}: skipped, not parseable by the Packit SRPM gate.\n"
+            f"  {record.gate_reason}",
+            file=sys.stderr,
+        )
+        return 0
 
     # Resolve before anything else: the caller may pass a relative --output,
     # and a relative path reaches docker as a volume name.
@@ -102,7 +151,7 @@ def build(package: str, output: Path, root: Path | None, image: str) -> int:
         return 1
 
     try:
-        argv = command(package, record, output, root, image)
+        argv = command(package, record, output, root, image, engine)
     except ValueError as error:
         print(f"{package}: {error}", file=sys.stderr)
         return 1
@@ -127,12 +176,17 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=None)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
+        "--engine",
+        default=None,
+        help="container engine; defaults to docker, then podman",
+    )
+    parser.add_argument(
         "--image",
         default=f"{PACKIT_IMAGE}:latest",
         help="Packit container image; pin by digest in CI",
     )
     args = parser.parse_args()
-    return build(args.package, args.output, args.root, args.image)
+    return build(args.package, args.output, args.root, args.image, args.engine)
 
 
 if __name__ == "__main__":

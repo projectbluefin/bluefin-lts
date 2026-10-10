@@ -75,6 +75,28 @@ class Record:
         return self.lock.get("blocked_reason", "")
 
     @property
+    def gate_incompatible(self) -> bool:
+        """True when the spec builds but the Packit SRPM gate cannot parse it.
+
+        Distinct from ``blocked``, which means the factory cannot build the
+        recipe at all. A gate-incompatible recipe builds correctly against the
+        pinned rpm and fails only under the newer rpm in Packit's container,
+        because the two disagree about a construct in the spec.
+
+        autoconf is the case in point: it computes an alias with a ``%(...)``
+        shell expansion inside ``%global``, which rpm 4.19 (EL10, the build
+        root) expands and rpm 6.0 (Packit) leaves literal. Excluding it is
+        principled rather than a workaround -- the spec is well formed for the
+        rpm this factory builds with, and the gate is a Fedora tool parsing it
+        with a different rpm.
+        """
+        return bool(self.lock.get("srpm_gate") == "skip")
+
+    @property
+    def gate_reason(self) -> str:
+        return self.lock.get("srpm_gate_reason", "")
+
+    @property
     def sources(self) -> list[dict]:
         """Every locked source, in Source0, Source1, ... order.
 
