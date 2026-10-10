@@ -44,7 +44,7 @@ org.gnome.SessionManager D-Bus interfaces.
 
 
 %build
-meson setup _build \
+meson setup --wrap-mode=nodownload _build \
     --buildtype=plain \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \

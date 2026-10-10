@@ -73,7 +73,7 @@ Tests are disabled.
 %autosetup -p1
 
 %build
-meson setup _build \
+meson setup --wrap-mode=nodownload _build \
     --buildtype=plain \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \

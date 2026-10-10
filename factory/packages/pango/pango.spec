@@ -1,7 +1,7 @@
 %global glib2_version 2.88
 %global fribidi_version 1.0.6
 %global libthai_version 0.1.9
-%global harfbuzz_version 8.4.0
+%global harfbuzz_version 11.0.0
 %global fontconfig_version 2.17.0
 %global libXft_version 2.0.0
 %global cairo_version 1.18
@@ -87,7 +87,7 @@ rm -f subprojects/fontconfig.wrap
 
 %build
 export CFLAGS='-std=c11 %optflags'
-meson setup --prefix=/usr --libdir=/usr/lib64 --buildtype=plain -Dfontconfig=enabled build \
+meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype=plain -Dfontconfig=enabled build \
   -Dbuild-testsuite=true \
   -Dbuild-examples=true \
   -Ddocumentation=true

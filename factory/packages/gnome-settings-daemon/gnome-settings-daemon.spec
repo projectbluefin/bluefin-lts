@@ -109,7 +109,7 @@ for the default behavior of Workstation in the Server with GUI product.
 %autosetup -p1 -n %{name}-%{tarball_version}
 
 %build
-meson setup _build \
+meson setup --wrap-mode=nodownload _build \
     --buildtype=plain \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \

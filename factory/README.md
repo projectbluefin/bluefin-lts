@@ -151,7 +151,11 @@ CentOS/CRB/EPEL cannot satisfy, then computes every wave from RPM dependencies, 
 logs, RPMs, buildroot provenance, and a JSON status report. It has no publication
 or signing permissions. Both CI and publication admit up to sixteen computed waves and fail explicitly
 if the graph exceeds that limit. Per-wave artifacts expose failures while later
-waves continue.
+waves continue. After every selected recipe succeeds, the consumer check
+downloads the complete GNOME transaction, installs those RPMs with all network
+repositories disabled, asserts core package versions are 51, and checks the
+installed shell executable. This establishes installation and version evidence;
+a graphical session and boot still require an image/VM test.
 
 Cycles can use a CentOS/CRB/EPEL provider only when the extractor records a
 provider for the exact versioned BuildRequires. The planner removes only cyclic

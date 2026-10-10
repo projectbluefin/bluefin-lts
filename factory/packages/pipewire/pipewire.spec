@@ -448,7 +448,7 @@ cp %{SOURCE1} subprojects/packagefiles/
 %endif
 
 %build
-meson setup --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
+meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
     -D docs=enabled -D man=enabled -D gstreamer=enabled -D libsystemd=enabled -D gsettings-pulse-schema=enabled -D systemd-user-service=enabled	\
     -D sdl2=disabled 								\
     -D audiotestsrc=disabled -D videotestsrc=disabled				\

@@ -100,7 +100,7 @@ the functionality of the installed %{name} package.
 
 %build
 mkdir -p redhat-linux-build
-meson setup \
+meson setup --wrap-mode=nodownload \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \
     --libexecdir=%{_libexecdir} \

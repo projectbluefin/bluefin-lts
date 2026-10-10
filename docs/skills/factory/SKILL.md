@@ -94,7 +94,11 @@ Run `just factory-check` before every commit that touches `factory/**` or
   surfaced it.
 - **GNOME 51 changes API and dependencies.** Keep Mutter's API version,
   Wayland minima, and source locks aligned with upstream meson.build. Remove
-  backports already present upstream and rebase remaining patches.
+  backports already present upstream and rebase remaining patches. Match all
+  upstream version minima in BuildRequires, including Pango’s HarfBuzz minimum,
+  so the graph selects a factory prerequisite when CentOS is too old. Manual
+  Meson setup calls must use `--wrap-mode=nodownload`; missing dependencies
+  must fail instead of fetching an unlocked fallback.
 
 ## Build and publication verification
 
@@ -106,11 +110,16 @@ Run `just factory-check` before every commit that touches `factory/**` or
 - Pass JSON-encoded chunks to reusable build matrices, including a single package.
 - Keep dependency installation and compilation in one container. Resolve RPM
   exit code 11 from generated BuildRequires with a bounded install/retry loop.
+- Retry DNF once with refreshed metadata for mirror/Curl errors only. Missing
+  dependencies and signature failures remain fatal.
 - Admit artifacts only from strictly earlier waves; never same-wave siblings.
 - Replace seed RPMs by the successful binaries' full source name, splitting
   the NEVR from the right. Failed recipes keep their old binaries and state.
 - Resolve the consumer transaction using CentOS/CRB/EPEL and the candidate,
-  with DNF download mode; `--assumeno` is not a successful solve signal.
+  with DNF download mode; `--assumeno` is not a successful solve signal. The
+  stack workflow must also install the resolved RPMs without network repos,
+  assert the installed core versions are 51, and run `gnome-shell --version`.
+  A source version or dependency solve alone does not verify the installed stack.
 - Sign metadata before copying it into the image, and sign the immutable OCI
   digest before moving a stream tag. Seed extraction uses `/factory`.
 - Verify `Factory CentOS smoke` in CI before trusting local fast gates.

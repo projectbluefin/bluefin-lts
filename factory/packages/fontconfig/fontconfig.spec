@@ -75,7 +75,7 @@ which is useful for developing applications that uses fontconfig.
 mv conf.d/65-nonlatin.conf conf.d/69-nonlatin.conf
 
 %build
-meson setup --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build -Ddoc=disabled -Dcache-build=disabled -Dxml-backend=libxml2 \
+meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build -Ddoc=disabled -Dcache-build=disabled -Dxml-backend=libxml2 \
        -Dadditional-fonts-dirs=/usr/share/X11/fonts/Type1,/usr/share/X11/fonts/TTF,/usr/local/share/fonts \
        -Dcache-dir=/usr/lib/fontconfig/cache \
        --default-library=shared

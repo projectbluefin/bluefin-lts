@@ -70,7 +70,7 @@ the functionality of the installed %{name} package.
 %autosetup -n gdk-pixbuf-%{version} -p1
 
 %build
-meson setup \
+meson setup --wrap-mode=nodownload \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \
     --buildtype=plain \

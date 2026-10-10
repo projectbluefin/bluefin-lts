@@ -62,7 +62,7 @@ Desktop file to add GNOME on wayland to display manager session menu.
 %autosetup -p1 -n %{name}-%{tarball_version}
 
 %build
-meson setup _build \
+meson setup --wrap-mode=nodownload _build \
     --buildtype=plain \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \

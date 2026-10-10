@@ -107,7 +107,7 @@ for developing nautilus extensions.
 sed -i '/-Werror/d' meson.build
 
 %build
-meson setup --prefix=/usr --libdir=%{_libdir} --buildtype=plain build \
+meson setup --wrap-mode=nodownload --prefix=/usr --libdir=%{_libdir} --buildtype=plain build \
   -Ddocs=true \
   -Dextensions=true \
   -Dintrospection=true \

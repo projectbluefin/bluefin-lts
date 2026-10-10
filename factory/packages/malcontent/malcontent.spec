@@ -107,7 +107,7 @@ tar -xf %{SOURCE3} -C subprojects
 cp subprojects/packagefiles/tinycdb/meson.build subprojects/tinycdb-0.81
 
 %build
-meson setup _build \
+meson setup --wrap-mode=nodownload _build \
     --buildtype=plain \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \

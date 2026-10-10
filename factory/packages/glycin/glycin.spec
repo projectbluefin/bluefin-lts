@@ -259,7 +259,7 @@ export PKG_CONFIG_PATH="%{_builddir}/jxl-private/lib/pkgconfig:%{_builddir}/jxl-
 # Return to glycin source dir (%setup -T -b 2 in %prep leaves CWD at libjxl dir)
 cd %{_builddir}/glycin-%{version}
 
-meson setup --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
+meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
     -Dloaders=%{?with_heif:glycin-heif,}glycin-image-rs,%{?with_jpegxl:glycin-jxl,}glycin-svg \
     -Dtest_skip_install=true \
     %{nil}

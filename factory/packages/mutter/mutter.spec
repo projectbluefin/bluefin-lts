@@ -165,7 +165,7 @@ Viewer for nested mutter instances.
 %autosetup -n %{name}-%{tarball_version}
 
 %build
-meson setup --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build
+meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build
 meson compile -C build
 
 %install

@@ -86,7 +86,7 @@ This package contains tools for working with the cairo graphics library.
 %autosetup -p1
 
 %build
-meson setup --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
+meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
   -Dfreetype=enabled \
   -Dfontconfig=enabled \
   -Dglib=enabled \

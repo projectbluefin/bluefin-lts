@@ -184,7 +184,7 @@ BuildArch: noarch
 %autosetup -S git -n %{name}-%{tarball_version}
 
 %build
-meson setup --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
+meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
 %if %{portal_helper}
   -Dportal_helper=true \
 %else

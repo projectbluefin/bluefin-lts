@@ -50,7 +50,7 @@ with open('meson.build', 'w') as f: f.write(content)
 "
 
 %build
-meson setup --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
+meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
     -Dgtk_doc=true
 meson compile -C build
 
