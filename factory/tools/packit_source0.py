@@ -84,9 +84,13 @@ def verified_source0(package: str | None = None) -> str:
     if record.no_upstream_source:
         return str(placeholder_archive(record.directory, package, record.version))
 
-    filename = record.filename
+    # Source0 only. Packit asks for a single archive, and the recipe's other
+    # Sources are staged alongside the spec for rpmbuild to find -- they are
+    # not something Packit should upload.
+    primary = record.source0
+    filename = primary.get("filename", "")
     if not filename:
-        raise ValueError(f"{package}: source lock has no filename")
+        raise ValueError(f"{package}: source lock has no filename for Source0")
     archive = record.directory / filename
     if not archive.is_file():
         raise ValueError(

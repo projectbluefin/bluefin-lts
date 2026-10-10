@@ -87,9 +87,22 @@ def select(
     names = [record.name for record in records]
     digests = {record.name: input_digest(record, root) for record in records}
 
+    # A recipe whose sources the factory cannot supply is excluded here, with
+    # the reason carried into the report. Selecting it would build a package
+    # that fails in rpmbuild on a missing archive, and the failure would name
+    # the archive rather than the lock that could not provide it.
+    blocked = {
+        record.name: record.blocked_reason
+        for record in records
+        if record.blocked
+    }
+    buildable = [name for name in names if name not in blocked]
+
     reasons: dict[str, str] = {}
     for record in records:
         name = record.name
+        if name in blocked:
+            continue
         if only and name not in only:
             continue
         previous = witness.get(name)
@@ -104,7 +117,7 @@ def select(
     dependents_added = []
     if edges and reasons:
         reverse = reverse_dependencies(
-            {package: set(values) for package, values in edges.items()}, names
+            {package: set(values) for package, values in edges.items()}, buildable
         )
         changed = list(reasons)
         while changed:
@@ -122,6 +135,7 @@ def select(
         "digests": digests,
         "reasons": reasons,
         "dependents_added": sorted(dependents_added),
+        "blocked": blocked,
     }
 
 
@@ -147,9 +161,14 @@ def main() -> int:
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(rendered + "\n")
-        print(f"selected {len(result['build_list'])} of {len(inventory(root))} packages")
+        total = len(inventory(root))
+        print(f"selected {len(result['build_list'])} of {total} recipes")
         for name in result["build_list"]:
             print(f"  {name}: {result['reasons'][name]}")
+        if result["blocked"]:
+            print(f"  {len(result['blocked'])} recipe(s) excluded as unbuildable:")
+            for name, reason in sorted(result["blocked"].items()):
+                print(f"  {name}: {reason}")
     else:
         print(rendered)
     return 0

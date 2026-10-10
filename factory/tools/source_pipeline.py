@@ -37,14 +37,28 @@ def _digest(blob: bytes, algorithm: str) -> str:
     return hashlib.new(algorithm, blob).hexdigest()
 
 
-def fetch_source(record: Record, root: Path, allow_missing: bool = False) -> Path | None:
-    """Fetch, verify and stage one recipe's Source0. Returns its path.
+def source_filename(url: str) -> str:
+    """The local filename rpmbuild gives a downloaded source.
 
-    The primary URL is fetched directly from upstream. ``fallback_urls`` exist
-    because a build must not be blocked by one host being down, but they are
-    only tried after the primary fails -- and every one of them is verified
-    against the same recorded digest, so a fallback cannot substitute different
-    bytes.
+    A URL fragment selects a subdirectory inside the archive
+    (``...tar.gz#/libjxl-0.11.1``), and rpm names the file after the URL *path*
+    with the fragment removed. Leaving the fragment in the name stages a file
+    rpmbuild will not find.
+    """
+    return url.partition("#")[0].rstrip("/").rsplit("/", 1)[-1]
+
+
+def fetch_source(record: Record, root: Path, allow_missing: bool = False) -> list[Path] | None:
+    """Fetch and verify every one of a recipe's sources.
+
+    All of them, not just Source0. A recipe with a second downloadable Source
+    -- glycin's vendored libjxl, malcontent's libgsystemservice -- fails
+    `rpmbuild -bs` without it, and the failure names the missing archive
+    rather than the lock that failed to fetch it.
+
+    Each URL is fetched directly from upstream. ``fallback_urls`` exist so one
+    host being down does not block a build, but every one is verified against
+    the same recorded digest, so a fallback cannot substitute different bytes.
     """
     root = factory_root(root)
     lock = record.lock
@@ -56,38 +70,64 @@ def fetch_source(record: Record, root: Path, allow_missing: bool = False) -> Pat
     if lock.get("no_upstream_source"):
         return None
 
-    filename = lock.get("filename") or ""
-    if not filename:
-        raise ValueError(f"{record.name}: lock has no filename")
-    if not filename.endswith(ARCHIVE_SUFFIXES):
+    if record.blocked:
         raise ValueError(
-            f"{record.name}: {filename} is not a recognised source archive "
-            f"(expected one of {', '.join(ARCHIVE_SUFFIXES)})"
+            f"{record.name}: not buildable by this factory.\n  {record.blocked_reason}"
         )
 
-    algorithm = lock.get("checksum_type", "sha512")
-    expected = lock.get("sha512") or lock.get("sha256")
-    if not expected:
-        raise ValueError(f"{record.name}: lock has no sha512 or sha256")
+    sources = record.sources
+    if not sources:
+        raise ValueError(f"{record.name}: lock lists no sources")
 
-    urls = [lock["url"], *lock.get("fallback_urls", [])]
-    failures = []
-    for url in urls:
-        try:
-            blob = _fetch(url)
-        except OSError as error:
-            failures.append(f"{url}: {error}")
-            continue
-        actual = _digest(blob, algorithm)
-        if actual != expected:
-            failures.append(f"{url}: {algorithm} mismatch (got {actual})")
-            continue
+    staged: list[Path] = []
+    for index, source in enumerate(sources):
+        label = "Source0" if index == 0 else f"Source{index}"
 
-        staged = record.directory / filename
-        staged.write_bytes(blob)
-        return staged
+        url = source.get("url", "")
+        if not url:
+            raise ValueError(f"{record.name}: {label} has no url")
 
-    raise ValueError(f"{record.name}: no source verified\n  " + "\n  ".join(failures))
+        expected = source.get("sha512") or source.get("sha256")
+        if not expected:
+            raise ValueError(f"{record.name}: {label} has no recorded digest")
+        algorithm = source.get("checksum_type") or (
+            "sha256" if source.get("sha256") else "sha512"
+        )
+
+        filename = source.get("filename") or source_filename(url)
+        # .sig and .asc are detached signatures, not payload. They still have
+        # to be staged -- the spec verifies against them -- so they are a
+        # legitimate source file even though they are not an archive.
+        if not filename.endswith(ARCHIVE_SUFFIXES) and not filename.endswith((".sig", ".asc")):
+            raise ValueError(
+                f"{record.name}: {label}: {filename!r} is neither an archive nor a "
+                "signature; the source policy covers neither"
+            )
+
+        failures = []
+        blob = None
+        for candidate in [url, *source.get("fallback_urls", [])]:
+            try:
+                fetched = _fetch(candidate)
+            except OSError as error:
+                failures.append(f"{candidate}: {error}")
+                continue
+            digest = _digest(fetched, algorithm)
+            if digest != expected:
+                failures.append(f"{candidate}: {algorithm} mismatch (got {digest})")
+                continue
+            blob = fetched
+            break
+
+        if blob is None:
+            raise ValueError(
+                f"{record.name}: {label}: no source verified\n  " + "\n  ".join(failures)
+            )
+
+        path = record.directory / filename
+        path.write_bytes(blob)
+        staged.append(path)
+    return staged
 
 
 def stage(package: str, root: Path | None, output: Path | None = None) -> int:
@@ -142,17 +182,25 @@ def verify_staged(root: Path | None = None, package: str | None = None) -> int:
         lock = record.lock
         if lock.get("no_upstream_source"):
             continue
-        filename = lock.get("filename") or ""
-        staged = record.directory / filename
-        if not filename or not staged.is_file():
-            failures.append(f"{record.name}: {filename or '(no filename)'} is not staged")
-            continue
-        algorithm = lock.get("checksum_type", "sha512")
-        expected = lock.get("sha512") or lock.get("sha256")
-        actual = _digest(staged.read_bytes(), algorithm)
-        checked += 1
-        if actual != expected:
-            failures.append(f"{record.name}: {filename} fails {algorithm} verification")
+        for index, source in enumerate(record.sources):
+            label = "Source0" if index == 0 else f"Source{index}"
+            filename = source.get("filename") or source_filename(source.get("url", ""))
+            staged = record.directory / filename
+            if not filename or not staged.is_file():
+                failures.append(
+                    f"{record.name}: {label}: {filename or '(no filename)'} is not staged"
+                )
+                continue
+            algorithm = source.get("checksum_type") or (
+                "sha256" if source.get("sha256") else "sha512"
+            )
+            expected = source.get("sha512") or source.get("sha256")
+            actual = _digest(staged.read_bytes(), algorithm)
+            checked += 1
+            if actual != expected:
+                failures.append(
+                    f"{record.name}: {label}: {filename} fails {algorithm} verification"
+                )
 
     if failures:
         print("staged source verification failed:", file=sys.stderr)
@@ -168,16 +216,20 @@ def report(root: Path | None = None) -> int:
     root = factory_root(root)
     rows = []
     for record in inventory(root):
-        lock = record.lock
-        if not lock:
+        if not record.lock:
             rows.append((record.name, "UNLOCKED", "-"))
-        elif lock.get("no_upstream_source"):
-            rows.append((record.name, "no-upstream-source", lock.get("version", "")))
+        elif record.no_upstream_source:
+            rows.append((record.name, "no-upstream-source", record.version))
         else:
-            rows.append((record.name, lock.get("version", "?"), lock.get("url", "")))
+            urls = " ".join(source.get("url", "") for source in record.sources)
+            count = len(record.sources)
+            # The count is shown because a recipe with several sources is the
+            # one that breaks when the lock only carries the first.
+            suffix = f" ({count} sources)" if count > 1 else ""
+            rows.append((record.name, f"{record.version}{suffix}", urls))
     width = max(len(row[0]) for row in rows) if rows else 10
     for name, version, url in rows:
-        print(f"{name:<{width}}  {version:<24}  {url}")
+        print(f"{name:<{width}}  {version:<28}  {url}")
     return 0
 
 

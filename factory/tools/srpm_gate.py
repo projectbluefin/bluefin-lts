@@ -72,6 +72,18 @@ def build(package: str, output: Path, root: Path | None, image: str) -> int:
         return 1
     record = matches[0]
 
+    # Refuse here, with the reason, rather than letting rpmbuild fail on a
+    # missing archive. `rpmbuild -bs` reports "Bad file:
+    # .../glycin-2.0.8-vendor.tar.xz: No such file or directory", which names
+    # the archive and not the reason the factory cannot produce it.
+    if record.blocked:
+        print(
+            f"{package}: not buildable by this factory.\n"
+            f"  {record.blocked_reason}",
+            file=sys.stderr,
+        )
+        return 1
+
     # Resolve before anything else: the caller may pass a relative --output,
     # and a relative path reaches docker as a volume name.
     output = output.resolve()

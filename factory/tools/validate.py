@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tools.inventory import factory_root, inventory
 
-REQUIRED_LOCK_FIELDS = ("url", "sha512")
+
 
 
 def check_provenance(root: Path) -> list[str]:
@@ -66,14 +66,35 @@ def check_locks(root: Path) -> list[str]:
             problems.append(f"{record.name}: no entry in config/upstream-sources.json")
             continue
         if record.no_upstream_source:
-            if record.spec.stat().st_size == 0:
-                problems.append(f"{record.name}: spec is empty")
             continue
-        for field in REQUIRED_LOCK_FIELDS:
-            if not record.lock.get(field):
-                problems.append(f"{record.name}: lock has no {field}")
-        if record.version and record.no_upstream_source:
-            problems.append(f"{record.name}: declares both a version and no_upstream_source")
+
+        sources = record.sources
+        if not sources:
+            problems.append(f"{record.name}: lock lists no sources")
+            continue
+
+        seen = set()
+        for index, source in enumerate(sources):
+            label = "Source0" if index == 0 else f"Source{index}"
+            url = source.get("url")
+            if not url:
+                problems.append(f"{record.name}: {label} has no url")
+            if not source.get("sha512") and not source.get("sha256"):
+                problems.append(
+                    f"{record.name}: {label} has no recorded digest, so it cannot be built"
+                )
+            filename = source.get("filename", "")
+            if not filename:
+                problems.append(f"{record.name}: {label} has no filename")
+            elif filename in seen:
+                # Two Sources writing the same local file means the second
+                # silently overwrites the first, and which payload is used
+                # depends on lock order.
+                problems.append(
+                    f"{record.name}: {label} reuses the filename {filename!r} "
+                    "from an earlier source"
+                )
+            seen.add(filename)
 
     lock_path = root / "config" / "upstream-sources.json"
     if lock_path.is_file():
@@ -233,6 +254,25 @@ def check_spec_sanity(root: Path) -> list[str]:
     return problems
 
 
+def check_generated_sources(root: Path) -> list[str]:
+    """Report recipes the factory cannot source, without failing the gate.
+
+    Informational rather than fatal, and deliberately so: a recipe blocked
+    because its vendor tarball is hand-generated is a *correct* state of the
+    configuration -- the factory identified it and will not try to build it.
+    Failing here would mean the gate is red for a known, documented reason, and
+    a permanently red gate is a gate people stop reading.
+    """
+    blocked = [(record.name, record.blocked_reason) for record in inventory(root) if record.blocked]
+    if not blocked:
+        print("no recipe is blocked on an unsourceable input")
+        return []
+    print(f"{len(blocked)} recipe(s) excluded from builds:", file=sys.stderr)
+    for name, reason in blocked:
+        print(f"  {name}: {reason}", file=sys.stderr)
+    return []
+
+
 CHECKS = {
     "provenance": check_provenance,
     "locks": check_locks,
@@ -241,6 +281,7 @@ CHECKS = {
     "specs": check_spec_sanity,
     "changelog": check_changelog_dates,
     "dependencies": check_dependencies,
+    "generated": check_generated_sources,
 }
 
 

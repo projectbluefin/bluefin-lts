@@ -4,58 +4,104 @@
     {
       "name": "appstream",
       "version": "1.0.2",
-      "url": "http://www.freedesktop.org/software/appstream/releases/AppStream-1.0.2.tar.xz",
-      "filename": "AppStream-1.0.2.tar.xz",
-      "sha512": "e5c109c383e3bf3af3693bfb3146663767c2c61fac0bd421f2ce52242fe7b869effeacc4d207987321dfeb4ab0ba77ece6c1c6eea054a7365204cd955426517a"
+      "sources": [
+        {
+          "url": "http://www.freedesktop.org/software/appstream/releases/AppStream-1.0.2.tar.xz",
+          "filename": "AppStream-1.0.2.tar.xz",
+          "sha512": "e5c109c383e3bf3af3693bfb3146663767c2c61fac0bd421f2ce52242fe7b869effeacc4d207987321dfeb4ab0ba77ece6c1c6eea054a7365204cd955426517a",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "autoconf",
       "version": "2.72",
-      "url": "https://ftp.gnu.org/gnu/autoconf/autoconf-2.72.tar.xz",
-      "filename": "autoconf-2.72.tar.xz",
-      "sha512": "c4e9fbd858666d3e5c3b4fe7f89aa3e8e3a0a00dc7e166f8147d937d911b77ba3ac6a016f9d223ccdd830bc8960b3e60397c0607cc6a1fd2c50c7492839ddd17"
+      "sources": [
+        {
+          "url": "https://ftp.gnu.org/gnu/autoconf/autoconf-2.72.tar.xz",
+          "filename": "autoconf-2.72.tar.xz",
+          "sha512": "c4e9fbd858666d3e5c3b4fe7f89aa3e8e3a0a00dc7e166f8147d937d911b77ba3ac6a016f9d223ccdd830bc8960b3e60397c0607cc6a1fd2c50c7492839ddd17",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "avahi",
       "version": "0.9%{?rc:~%{rc}}",
-      "url": "https://github.com/avahi/avahi/archive/refs/tags/v0.9-rc2.tar.gz",
-      "filename": "v0.9-rc2.tar.gz",
-      "sha512": "29d6c9d075d0202b9da2cdf935fa04fad31ba95475ba5de086c9958d25caa405925bbd82ed439a024febf7880325e80c1a032a660284a7708c71dae9076f413b"
+      "sources": [
+        {
+          "url": "https://github.com/avahi/avahi/archive/refs/tags/v0.9-rc2.tar.gz",
+          "filename": "v0.9-rc2.tar.gz",
+          "sha512": "29d6c9d075d0202b9da2cdf935fa04fad31ba95475ba5de086c9958d25caa405925bbd82ed439a024febf7880325e80c1a032a660284a7708c71dae9076f413b",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "blueprint-compiler",
       "version": "0.20.0",
-      "url": "https://download.gnome.org/sources/blueprint-compiler/0.20/blueprint-compiler-0.20.0.tar.xz",
-      "filename": "blueprint-compiler-0.20.0.tar.xz",
-      "sha512": "0c3e9ba35c058240f0f988dacc5b718ac11173fccbbd80b1720fd6637a614d324e5c0dd611deeaf20aafbe30e889401fafd5c1929efc4cad0a2e6155eb0845a4"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/blueprint-compiler/0.20/blueprint-compiler-0.20.0.tar.xz",
+          "filename": "blueprint-compiler-0.20.0.tar.xz",
+          "sha512": "0c3e9ba35c058240f0f988dacc5b718ac11173fccbbd80b1720fd6637a614d324e5c0dd611deeaf20aafbe30e889401fafd5c1929efc4cad0a2e6155eb0845a4",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "cairo",
       "version": "1.18.4",
-      "url": "https://cairographics.org/releases/cairo-1.18.4.tar.xz",
-      "filename": "cairo-1.18.4.tar.xz",
-      "sha512": "863679f817ed67dc2c916c035d740916e27e7e69c04fca63936e37d274e7f4c79848d16c8f7c481798864602e8847c489f698df89b785cbc576c925dbd513316"
+      "sources": [
+        {
+          "url": "https://cairographics.org/releases/cairo-1.18.4.tar.xz",
+          "filename": "cairo-1.18.4.tar.xz",
+          "sha512": "863679f817ed67dc2c916c035d740916e27e7e69c04fca63936e37d274e7f4c79848d16c8f7c481798864602e8847c489f698df89b785cbc576c925dbd513316",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "colord-gtk",
       "version": "0.3.1",
-      "url": "https://github.com/hughsie/colord-gtk/archive/refs/tags/0.3.1.tar.gz#/colord-gtk-0.3.1.tar.gz",
-      "filename": "colord-gtk-0.3.1.tar.gz",
-      "sha512": "772ecb4a88e47975458814304dcaf76484b6054ba132bcf1da6f08ab87e3f00b7589a5b4d34109d594f394028661e10d4151840e1baefa98c8aa364be764c742"
+      "sources": [
+        {
+          "url": "https://github.com/hughsie/colord-gtk/archive/refs/tags/0.3.1.tar.gz#/colord-gtk-0.3.1.tar.gz",
+          "filename": "0.3.1.tar.gz",
+          "sha512": "772ecb4a88e47975458814304dcaf76484b6054ba132bcf1da6f08ab87e3f00b7589a5b4d34109d594f394028661e10d4151840e1baefa98c8aa364be764c742",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "docbook-style-xsl",
       "version": "1.79.2",
-      "url": "https://github.com/docbook/xslt10-stylesheets/releases/download/release%2F1.79.2/docbook-xsl-nons-1.79.2.tar.bz2",
-      "filename": "docbook-xsl-nons-1.79.2.tar.bz2",
-      "sha512": "d19aad5ae91c7f9a9690836bd472ec6e01a29eaeac6b1838b5c9ea54e2ef4cc90f515d7b6640fe94e909a5a51eee80cd32e2ccbee457de6f0c6652ea43325d7d"
+      "sources": [
+        {
+          "url": "https://github.com/docbook/xslt10-stylesheets/releases/download/release%2F1.79.2/docbook-xsl-nons-1.79.2.tar.bz2",
+          "filename": "docbook-xsl-nons-1.79.2.tar.bz2",
+          "sha512": "d19aad5ae91c7f9a9690836bd472ec6e01a29eaeac6b1838b5c9ea54e2ef4cc90f515d7b6640fe94e909a5a51eee80cd32e2ccbee457de6f0c6652ea43325d7d",
+          "checksum_type": "sha512"
+        },
+        {
+          "url": "https://github.com/docbook/xslt10-stylesheets/releases/download/release%2F1.79.2/docbook-xsl-doc-1.79.2.tar.bz2",
+          "filename": "docbook-xsl-doc-1.79.2.tar.bz2",
+          "sha512": "98390d47f0052913746b1449331c4aee9a710f500d4c844d89c72a1ee84212f74006abbd553c8d60ffd613df4bd298226bd4bcb23d8cca5df05545af45376f8e",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "docbook-utils",
       "version": "0.6.15",
-      "url": "https://github.com/devexp-db/docbook-utils/releases/download/v0.6.15/docbook-utils-0.6.15.tar.xz",
-      "filename": "docbook-utils-0.6.15.tar.xz",
-      "sha512": "f75168d50d03cb7f06450792118425504691b0da0b369afc323b13cbee6fb8016d75faf11c508d2cd6004f6c00680efbe4755b856b7790e81bac41c8ec2a5ac6"
+      "sources": [
+        {
+          "url": "https://github.com/devexp-db/docbook-utils/releases/download/v0.6.15/docbook-utils-0.6.15.tar.xz",
+          "filename": "docbook-utils-0.6.15.tar.xz",
+          "sha512": "f75168d50d03cb7f06450792118425504691b0da0b369afc323b13cbee6fb8016d75faf11c508d2cd6004f6c00680efbe4755b856b7790e81bac41c8ec2a5ac6",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "el10-v2-buildflags",
@@ -65,121 +111,216 @@
     {
       "name": "flatpak",
       "version": "1.16.0",
-      "url": "https://github.com/flatpak/flatpak/releases/download/1.16.0/flatpak-1.16.0.tar.xz",
-      "filename": "flatpak-1.16.0.tar.xz",
-      "sha512": "57a8b660193ef1f9724718533963d854fa8bb0eb823470261f3f0a685f8ddbd209d6a1ae8378411c131e9c298cba605863d394f43c8d9eccda608001aadbb68d"
+      "sources": [
+        {
+          "url": "https://github.com/flatpak/flatpak/releases/download/1.16.0/flatpak-1.16.0.tar.xz",
+          "filename": "flatpak-1.16.0.tar.xz",
+          "sha512": "57a8b660193ef1f9724718533963d854fa8bb0eb823470261f3f0a685f8ddbd209d6a1ae8378411c131e9c298cba605863d394f43c8d9eccda608001aadbb68d",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "fontconfig",
       "version": "2.17.0",
-      "url": "https://gitlab.freedesktop.org/fontconfig/fontconfig/-/archive/2.17.0/fontconfig-2.17.0.tar.bz2",
-      "filename": "fontconfig-2.17.0.tar.bz2",
-      "sha512": "18696493484fa9f431579a64d2428ebe80389b305471bcf4e53494fd6b229f3707438efd68b2be182e591f3cea839ba4d26ff2b421511c9bf487726ab08f0144"
+      "sources": [
+        {
+          "url": "https://gitlab.freedesktop.org/fontconfig/fontconfig/-/archive/2.17.0/fontconfig-2.17.0.tar.bz2",
+          "filename": "fontconfig-2.17.0.tar.bz2",
+          "sha512": "18696493484fa9f431579a64d2428ebe80389b305471bcf4e53494fd6b229f3707438efd68b2be182e591f3cea839ba4d26ff2b421511c9bf487726ab08f0144",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gdk-pixbuf2",
       "version": "2.44.5",
-      "url": "https://download.gnome.org/sources/gdk-pixbuf/2.44/gdk-pixbuf-2.44.5.tar.xz",
-      "filename": "gdk-pixbuf-2.44.5.tar.xz",
-      "sha512": "b83170ef214b78c661ac4fefac59e6bf9d75e26755073bbd1edea80340529d08c22f022c653135600ccf2048f80732ff5394d09f32f85195f5dee41011e21a7f"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gdk-pixbuf/2.44/gdk-pixbuf-2.44.5.tar.xz",
+          "filename": "gdk-pixbuf-2.44.5.tar.xz",
+          "sha512": "b83170ef214b78c661ac4fefac59e6bf9d75e26755073bbd1edea80340529d08c22f022c653135600ccf2048f80732ff5394d09f32f85195f5dee41011e21a7f",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gdm",
       "version": "50.0",
-      "url": "https://download.gnome.org/sources/gdm/50/gdm-50.0.tar.xz",
-      "filename": "gdm-50.0.tar.xz",
-      "sha512": "e4236564014dd79d9369e56be0933278811ae276e6296b580e4b724b3f7fb2f1209b886230fb59137d66d67bee4124251404f998b2cb41e58e36882a4186325a"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gdm/50/gdm-50.0.tar.xz",
+          "filename": "gdm-50.0.tar.xz",
+          "sha512": "e4236564014dd79d9369e56be0933278811ae276e6296b580e4b724b3f7fb2f1209b886230fb59137d66d67bee4124251404f998b2cb41e58e36882a4186325a",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gi-docgen",
       "version": "2026.1",
-      "url": "https://files.pythonhosted.org/packages/source/g/gi-docgen/gi_docgen-2026.1.tar.gz",
-      "filename": "gi_docgen-2026.1.tar.gz",
-      "sha512": "0bbe9422cfcebb794631e14f2940a110393f966cc906510c52e787b1b1a2d9990de2f7cc91d8e884043d751b71a57da9782192444a6b73a78dfe6f7a58fe6455"
+      "sources": [
+        {
+          "url": "https://files.pythonhosted.org/packages/source/g/gi-docgen/gi_docgen-2026.1.tar.gz",
+          "filename": "gi_docgen-2026.1.tar.gz",
+          "sha512": "0bbe9422cfcebb794631e14f2940a110393f966cc906510c52e787b1b1a2d9990de2f7cc91d8e884043d751b71a57da9782192444a6b73a78dfe6f7a58fe6455",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gjs",
       "version": "1.88.0",
-      "url": "https://download.gnome.org/sources/gjs/1.88/gjs-1.88.0.tar.xz",
-      "filename": "gjs-1.88.0.tar.xz",
-      "sha512": "5a58dacbeda62dfb89bfb5d115e706a965eb04bf92f29592769e9ae7a687c4f943fb5e94bf2db20524c73f21ec61e53375cccc01156ed5f41bb3169df0695567"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gjs/1.88/gjs-1.88.0.tar.xz",
+          "filename": "gjs-1.88.0.tar.xz",
+          "sha512": "5a58dacbeda62dfb89bfb5d115e706a965eb04bf92f29592769e9ae7a687c4f943fb5e94bf2db20524c73f21ec61e53375cccc01156ed5f41bb3169df0695567",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "glib2",
       "version": "2.88.0",
-      "url": "https://download.gnome.org/sources/glib/2.88/glib-2.88.0.tar.xz",
-      "filename": "glib-2.88.0.tar.xz",
-      "sha512": "ceead8d88720db17dc6bbff7aff14f261f90afc5e8261448aae0657f89b5fcc616cf62f4b049be88a4ddd3f50a869bbcdb66b29777da4969a47987828ecac280"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/glib/2.88/glib-2.88.0.tar.xz",
+          "filename": "glib-2.88.0.tar.xz",
+          "sha512": "ceead8d88720db17dc6bbff7aff14f261f90afc5e8261448aae0657f89b5fcc616cf62f4b049be88a4ddd3f50a869bbcdb66b29777da4969a47987828ecac280",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "glycin",
       "version": "2.0.8",
-      "url": "https://download.gnome.org/sources/glycin/2.0/glycin-2.0.8.tar.xz",
-      "filename": "glycin-2.0.8.tar.xz",
-      "sha512": "0e73d4851d8fa16452e352234870a968673d93657016a239bb24bf9372bbf8970df114d39fd773532b555a73e6c3577573167766d01ba7fe28f6b33e445abb31"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/glycin/2.0/glycin-2.0.8.tar.xz",
+          "filename": "glycin-2.0.8.tar.xz",
+          "sha512": "0e73d4851d8fa16452e352234870a968673d93657016a239bb24bf9372bbf8970df114d39fd773532b555a73e6c3577573167766d01ba7fe28f6b33e445abb31",
+          "checksum_type": "sha512"
+        },
+        {
+          "url": "https://github.com/libjxl/libjxl/archive/refs/tags/v0.11.1.tar.gz#/libjxl-0.11.1.tar.gz",
+          "filename": "v0.11.1.tar.gz",
+          "sha512": "0cfd81d9d3b783f96bd04f244d73ffbc12186c89993d46064a2751bef0a446a5e86be05add5c10f60d4482d39333d9bf3f9a866d6eb84f8fa0d4e8b5828fd74c",
+          "checksum_type": "sha512"
+        }
+      ],
+      "blocked": true,
+      "blocked_reason": "references sources that are neither downloadable nor present in the recipe: glycin-2.0.8-vendor.tar.xz"
     },
     {
       "name": "gnome-autoar",
       "version": "0.4.5",
-      "url": "https://download.gnome.org/sources/gnome-autoar/0.4/gnome-autoar-0.4.5.tar.xz",
-      "filename": "gnome-autoar-0.4.5.tar.xz",
-      "sha512": "ba38dfc0ad3c00fd8316d02d1a8e38ce3c743e11032f7c4efff74e7c3f8e8e815a1debe51eae8e2ee653155356d34992f1bc0e35e6cfab82398265fde8648050"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gnome-autoar/0.4/gnome-autoar-0.4.5.tar.xz",
+          "filename": "gnome-autoar-0.4.5.tar.xz",
+          "sha512": "ba38dfc0ad3c00fd8316d02d1a8e38ce3c743e11032f7c4efff74e7c3f8e8e815a1debe51eae8e2ee653155356d34992f1bc0e35e6cfab82398265fde8648050",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gnome-control-center",
       "version": "50.0",
-      "url": "https://download.gnome.org/sources/gnome-control-center/50/gnome-control-center-50.0.tar.xz",
-      "filename": "gnome-control-center-50.0.tar.xz",
-      "sha512": "d694a8e8f18f8d50f0445220bc409d14601466c422d8d53ac29efe4e2d4a25a6db65e386cc873f92872a4425bf994d620bbe2be2edf7bd794df107d1aa8c46dd"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gnome-control-center/50/gnome-control-center-50.0.tar.xz",
+          "filename": "gnome-control-center-50.0.tar.xz",
+          "sha512": "d694a8e8f18f8d50f0445220bc409d14601466c422d8d53ac29efe4e2d4a25a6db65e386cc873f92872a4425bf994d620bbe2be2edf7bd794df107d1aa8c46dd",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gnome-desktop3",
       "version": "44.5",
-      "url": "https://download.gnome.org/sources/gnome-desktop/44/gnome-desktop-44.5.tar.xz",
-      "filename": "gnome-desktop-44.5.tar.xz",
-      "sha512": "538f9c70726cca592b36c8e1c31d74b26e2be9394ef4e823f3c45e23ec7e84e8b5f45c627901df351f6ae62fd1b2a8960c99cf70924aeb455fbbda268b9ad657"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gnome-desktop/44/gnome-desktop-44.5.tar.xz",
+          "filename": "gnome-desktop-44.5.tar.xz",
+          "sha512": "538f9c70726cca592b36c8e1c31d74b26e2be9394ef4e823f3c45e23ec7e84e8b5f45c627901df351f6ae62fd1b2a8960c99cf70924aeb455fbbda268b9ad657",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gnome-initial-setup",
       "version": "50.0",
-      "url": "https://download.gnome.org/sources/gnome-initial-setup/50/gnome-initial-setup-50.0.tar.xz",
-      "filename": "gnome-initial-setup-50.0.tar.xz",
-      "sha512": "b358b52bfee150df204365659c6cdff59220976f1ee5d78bca2a54bbe38b2bd8a1baeb61c0d7f8b4901b2a27579b38ea9fa5c108fcbd8cc6d6ddb5ea4e634c12"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gnome-initial-setup/50/gnome-initial-setup-50.0.tar.xz",
+          "filename": "gnome-initial-setup-50.0.tar.xz",
+          "sha512": "b358b52bfee150df204365659c6cdff59220976f1ee5d78bca2a54bbe38b2bd8a1baeb61c0d7f8b4901b2a27579b38ea9fa5c108fcbd8cc6d6ddb5ea4e634c12",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gnome-online-accounts",
       "version": "3.56.4",
-      "url": "https://download.gnome.org/sources/gnome-online-accounts/3.56/gnome-online-accounts-3.56.4.tar.xz",
-      "filename": "gnome-online-accounts-3.56.4.tar.xz",
-      "sha512": "bfb5ad7ebcd4dde70f1c43b95730312bc7e38fbb2f2223f708135ca75387acadbeb07b71254576d37533877216119a0a884e951d86d1ab4502a6ba6de51c7d9c"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gnome-online-accounts/3.56/gnome-online-accounts-3.56.4.tar.xz",
+          "filename": "gnome-online-accounts-3.56.4.tar.xz",
+          "sha512": "bfb5ad7ebcd4dde70f1c43b95730312bc7e38fbb2f2223f708135ca75387acadbeb07b71254576d37533877216119a0a884e951d86d1ab4502a6ba6de51c7d9c",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gnome-session",
       "version": "50.0",
-      "url": "https://download.gnome.org/sources/gnome-session/50/gnome-session-50.0.tar.xz",
-      "filename": "gnome-session-50.0.tar.xz",
-      "sha512": "53217cdbd84483ede31df3fa2cb521581c8aa83ac8f5d4addb25457a8edf6272f90e81be4f4fd4e544b37b18a932c63ed25faece5687addf4d63f224e2f55073"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gnome-session/50/gnome-session-50.0.tar.xz",
+          "filename": "gnome-session-50.0.tar.xz",
+          "sha512": "53217cdbd84483ede31df3fa2cb521581c8aa83ac8f5d4addb25457a8edf6272f90e81be4f4fd4e544b37b18a932c63ed25faece5687addf4d63f224e2f55073",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gnome-settings-daemon",
       "version": "50.0",
-      "url": "https://download.gnome.org/sources/gnome-settings-daemon/50/gnome-settings-daemon-50.0.tar.xz",
-      "filename": "gnome-settings-daemon-50.0.tar.xz",
-      "sha512": "47628f6f3375607f838759d9c46490f3d576e53a40dd859f20104bfede75af472d752e7164308595266e4691e3b7b74da720730fa56292d47dffdff486c683c7"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gnome-settings-daemon/50/gnome-settings-daemon-50.0.tar.xz",
+          "filename": "gnome-settings-daemon-50.0.tar.xz",
+          "sha512": "47628f6f3375607f838759d9c46490f3d576e53a40dd859f20104bfede75af472d752e7164308595266e4691e3b7b74da720730fa56292d47dffdff486c683c7",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gnome-shell",
       "version": "50.0",
-      "url": "https://download.gnome.org/sources/gnome-shell/50/gnome-shell-50.0.tar.xz",
-      "filename": "gnome-shell-50.0.tar.xz",
-      "sha512": "de754fdc7a1ab8dfa793f82d6cfbf8b8f3d625a5998bc6992b256fd51d652c02c07c40a8a17425defac75052ce76d6c4043d0b414066eb4c3f2580b01050bf6d"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gnome-shell/50/gnome-shell-50.0.tar.xz",
+          "filename": "gnome-shell-50.0.tar.xz",
+          "sha512": "de754fdc7a1ab8dfa793f82d6cfbf8b8f3d625a5998bc6992b256fd51d652c02c07c40a8a17425defac75052ce76d6c4043d0b414066eb4c3f2580b01050bf6d",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gnome-user-share",
       "version": "48.1",
-      "url": "https://download.gnome.org/sources/gnome-user-share/48/gnome-user-share-48.1.tar.xz",
-      "filename": "gnome-user-share-48.1.tar.xz",
-      "sha512": "abffa9da63316ffc3c869855251ea25d03a67d4174fecd5039022da6deeb95328d095956a562c1dfc0fd6b22eed5d4e6cfe7ab11578970214fb1eb00594e057a"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gnome-user-share/48/gnome-user-share-48.1.tar.xz",
+          "filename": "gnome-user-share-48.1.tar.xz",
+          "sha512": "abffa9da63316ffc3c869855251ea25d03a67d4174fecd5039022da6deeb95328d095956a562c1dfc0fd6b22eed5d4e6cfe7ab11578970214fb1eb00594e057a",
+          "checksum_type": "sha512"
+        }
+      ],
+      "blocked": true,
+      "blocked_reason": "references sources that are neither downloadable nor present in the recipe: gnome-user-share-48.1-vendor.tar.xz"
     },
     {
       "name": "gnome50-el10-compat",
@@ -189,352 +330,616 @@
     {
       "name": "gobject-introspection",
       "version": "1.86.0",
-      "url": "https://download.gnome.org/sources/gobject-introspection/1.86/gobject-introspection-1.86.0.tar.xz",
-      "filename": "gobject-introspection-1.86.0.tar.xz",
-      "sha512": "a9d2edbe1cea710e10ef1ea8059a45cf5689bace43b5d2a6861809e863a6de7114b4763db8df3916ad6202c9967f48f7997acd0810a86e5e88dea7e0be88b585"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gobject-introspection/1.86/gobject-introspection-1.86.0.tar.xz",
+          "filename": "gobject-introspection-1.86.0.tar.xz",
+          "sha512": "a9d2edbe1cea710e10ef1ea8059a45cf5689bace43b5d2a6861809e863a6de7114b4763db8df3916ad6202c9967f48f7997acd0810a86e5e88dea7e0be88b585",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "graphviz",
       "version": "14.1.4",
-      "url": "https://gitlab.com/api/v4/projects/graphviz%2Fgraphviz/packages/generic/graphviz-releases/14.1.4/graphviz-14.1.4.tar.xz",
-      "filename": "graphviz-14.1.4.tar.xz",
-      "sha512": "3b51be1aa9f5a0540ab5f205069eb193aca48226a06c225786b79515f0f32d385ea49f88b0d97f36dc72eae0d907975fcc94a81b0085c325e4aa2d9580037a3a"
+      "sources": [
+        {
+          "url": "https://gitlab.com/api/v4/projects/graphviz%2Fgraphviz/packages/generic/graphviz-releases/14.1.4/graphviz-14.1.4.tar.xz",
+          "filename": "graphviz-14.1.4.tar.xz",
+          "sha512": "3b51be1aa9f5a0540ab5f205069eb193aca48226a06c225786b79515f0f32d385ea49f88b0d97f36dc72eae0d907975fcc94a81b0085c325e4aa2d9580037a3a",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gsettings-desktop-schemas",
       "version": "50.0",
-      "url": "https://download.gnome.org/sources/gsettings-desktop-schemas/50/gsettings-desktop-schemas-50.0.tar.xz",
-      "filename": "gsettings-desktop-schemas-50.0.tar.xz",
-      "sha512": "8791a587b419873d7efec811b5e4594bd9969fddd0dd5614e817fb0e44375ecd72956adf463cfb6800fbc7a4c6491ae7ebf77b509b7bc1012adf23872a5215ee"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gsettings-desktop-schemas/50/gsettings-desktop-schemas-50.0.tar.xz",
+          "filename": "gsettings-desktop-schemas-50.0.tar.xz",
+          "sha512": "8791a587b419873d7efec811b5e4594bd9969fddd0dd5614e817fb0e44375ecd72956adf463cfb6800fbc7a4c6491ae7ebf77b509b7bc1012adf23872a5215ee",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gsound",
       "version": "1.0.3",
-      "url": "https://download.gnome.org/sources/gsound/1.0/gsound-1.0.3.tar.xz",
-      "filename": "gsound-1.0.3.tar.xz",
-      "sha512": "5d7c4f17154b840abb94b432c33ba950929ddc5aba8c2795b54834d6c6b0280d3d8846acebb1e4e02688045bfb44cfac7dbb96fef44af5a73a12a70f3ece84eb"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gsound/1.0/gsound-1.0.3.tar.xz",
+          "filename": "gsound-1.0.3.tar.xz",
+          "sha512": "5d7c4f17154b840abb94b432c33ba950929ddc5aba8c2795b54834d6c6b0280d3d8846acebb1e4e02688045bfb44cfac7dbb96fef44af5a73a12a70f3ece84eb",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "gtk4",
       "version": "4.22.1",
-      "url": "https://download.gnome.org/sources/gtk/4.22/gtk-4.22.1.tar.xz",
-      "filename": "gtk-4.22.1.tar.xz",
-      "sha512": "15bba747de9622b2dea812c6c2f056f88a3c12b84e38473011dbaedcd2f6333e97ef53a9d1897827e2e10b00a06b59c6917b69d85e11f10b5e51ef70879548d4"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gtk/4.22/gtk-4.22.1.tar.xz",
+          "filename": "gtk-4.22.1.tar.xz",
+          "sha512": "15bba747de9622b2dea812c6c2f056f88a3c12b84e38473011dbaedcd2f6333e97ef53a9d1897827e2e10b00a06b59c6917b69d85e11f10b5e51ef70879548d4",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "harfbuzz",
       "version": "13.1.1",
-      "url": "https://github.com/harfbuzz/harfbuzz/releases/download/13.1.1/harfbuzz-13.1.1.tar.xz",
-      "filename": "harfbuzz-13.1.1.tar.xz",
-      "sha512": "a4330bdd972a7e91071e72f784c2c70b0fcd2b2b7a5e88c4e062b2d4ec7fbb78ef26bf214c2f58f5b28988d831dfc6946d34b134de2749918047b6df97fa6291"
+      "sources": [
+        {
+          "url": "https://github.com/harfbuzz/harfbuzz/releases/download/13.1.1/harfbuzz-13.1.1.tar.xz",
+          "filename": "harfbuzz-13.1.1.tar.xz",
+          "sha512": "a4330bdd972a7e91071e72f784c2c70b0fcd2b2b7a5e88c4e062b2d4ec7fbb78ef26bf214c2f58f5b28988d831dfc6946d34b134de2749918047b6df97fa6291",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "highway",
       "version": "1.3.0",
-      "url": "https://github.com/google/highway/archive/1.3.0/highway-1.3.0.tar.gz",
-      "filename": "highway-1.3.0.tar.gz",
-      "sha512": "8b9f4fdc4fa60b6817417959853f5b55bf86aec9d35fc6664dda15179cc55e0a9940f3a46011a84b95263ba342dc47ca1cb93b04481ff4b63d724cce1815d7c6"
+      "sources": [
+        {
+          "url": "https://github.com/google/highway/archive/1.3.0/highway-1.3.0.tar.gz",
+          "filename": "highway-1.3.0.tar.gz",
+          "sha512": "8b9f4fdc4fa60b6817417959853f5b55bf86aec9d35fc6664dda15179cc55e0a9940f3a46011a84b95263ba342dc47ca1cb93b04481ff4b63d724cce1815d7c6",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libadwaita",
       "version": "1.9.0",
-      "url": "https://download.gnome.org/sources/libadwaita/1.9/libadwaita-1.9.0.tar.xz",
-      "filename": "libadwaita-1.9.0.tar.xz",
-      "sha512": "9baa403c230e0b80f75781ca97816b3b940f24895d79e97cbcd2b48ced0cb9da54233c14ddf952b97f12b5395a315e1fa7e9aa5282944c9f16444bf2f941070b"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/libadwaita/1.9/libadwaita-1.9.0.tar.xz",
+          "filename": "libadwaita-1.9.0.tar.xz",
+          "sha512": "9baa403c230e0b80f75781ca97816b3b940f24895d79e97cbcd2b48ced0cb9da54233c14ddf952b97f12b5395a315e1fa7e9aa5282944c9f16444bf2f941070b",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libcanberra",
       "version": "0.30",
-      "url": "https://0pointer.de/lennart/projects/libcanberra/libcanberra-0.30.tar.xz",
-      "filename": "libcanberra-0.30.tar.xz",
-      "sha512": "f7543582122256826cd01d0f5673e1e58d979941a93906400182305463d6166855cb51f35c56d807a56dc20b7a64f7ce4391368d24990c1b70782a7d0b4429c2"
+      "sources": [
+        {
+          "url": "https://0pointer.de/lennart/projects/libcanberra/libcanberra-0.30.tar.xz",
+          "filename": "libcanberra-0.30.tar.xz",
+          "sha512": "f7543582122256826cd01d0f5673e1e58d979941a93906400182305463d6166855cb51f35c56d807a56dc20b7a64f7ce4391368d24990c1b70782a7d0b4429c2",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libdecor",
       "version": "0.2.2",
-      "url": "https://gitlab.freedesktop.org/libdecor/libdecor/-/archive/0.2.2/libdecor-0.2.2.tar.gz",
-      "filename": "libdecor-0.2.2.tar.gz",
-      "sha512": "ddaaa75f1dc983e6d59e168896f8044cf6ac761675db6af410c6d2186bdc66942c98f36eb7a6e2836ce02dbb98189a80db30b7cef3dbaf49c7aae47c3eee22cc"
+      "sources": [
+        {
+          "url": "https://gitlab.freedesktop.org/libdecor/libdecor/-/archive/0.2.2/libdecor-0.2.2.tar.gz",
+          "filename": "libdecor-0.2.2.tar.gz",
+          "sha512": "ddaaa75f1dc983e6d59e168896f8044cf6ac761675db6af410c6d2186bdc66942c98f36eb7a6e2836ce02dbb98189a80db30b7cef3dbaf49c7aae47c3eee22cc",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libebur128",
       "version": "1.2.6",
-      "url": "https://github.com/jiixyj/libebur128/archive/v1.2.6.tar.gz#/libebur128-1.2.6.tar.gz",
-      "filename": "libebur128-1.2.6.tar.gz",
-      "sha512": "ab188c6d32cd14613119258313a8a3fb1167b55501c9f5b6d3ba738d674bc58f24ac3034c23d9730ed8dc3e95a23619bfb81719e4c79807a9a16c1a5b3423582"
+      "sources": [
+        {
+          "url": "https://github.com/jiixyj/libebur128/archive/v1.2.6.tar.gz#/libebur128-1.2.6.tar.gz",
+          "filename": "v1.2.6.tar.gz",
+          "sha512": "ab188c6d32cd14613119258313a8a3fb1167b55501c9f5b6d3ba738d674bc58f24ac3034c23d9730ed8dc3e95a23619bfb81719e4c79807a9a16c1a5b3423582",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libei",
       "version": "1.5.0",
-      "url": "https://gitlab.freedesktop.org/libinput/libei/-/archive/1.5.0/libei-1.5.0.tar.bz2",
-      "filename": "libei-1.5.0.tar.bz2",
-      "sha512": "a75cd7256ff15fe8a10f8c944b1484520d3af7c4fb32dcecc9a4bc1dc4f92184599bbdb60765cdefc006cda7c79a308f2412bf6a63ff364fa286e93c378f6d6d"
+      "sources": [
+        {
+          "url": "https://gitlab.freedesktop.org/libinput/libei/-/archive/1.5.0/libei-1.5.0.tar.bz2",
+          "filename": "libei-1.5.0.tar.bz2",
+          "sha512": "a75cd7256ff15fe8a10f8c944b1484520d3af7c4fb32dcecc9a4bc1dc4f92184599bbdb60765cdefc006cda7c79a308f2412bf6a63ff364fa286e93c378f6d6d",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libgda",
       "version": "6.0.0",
-      "url": "http://ftp.gnome.org/pub/GNOME/sources/libgda/6.0/libgda-6.0.0.tar.xz",
-      "filename": "libgda-6.0.0.tar.xz",
-      "sha512": "adf81589b4c27e3a229cd95cf19df329678677b4c860ea1944bcb774795fc442a288e6de7e2a88efad88e645b5586b7cf9443d2932c703f177e41a582c65fd52"
+      "sources": [
+        {
+          "url": "http://ftp.gnome.org/pub/GNOME/sources/libgda/6.0/libgda-6.0.0.tar.xz",
+          "filename": "libgda-6.0.0.tar.xz",
+          "sha512": "adf81589b4c27e3a229cd95cf19df329678677b4c860ea1944bcb774795fc442a288e6de7e2a88efad88e645b5586b7cf9443d2932c703f177e41a582c65fd52",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libgee",
       "version": "0.20.8",
-      "url": "https://download.gnome.org/sources/libgee/0.20/libgee-0.20.8.tar.xz",
-      "filename": "libgee-0.20.8.tar.xz",
-      "sha512": "9af883bb4b2c25c429271201e634d1851378631b913bab282fe432b2b76a44674111e65caa99269fd403454c87b5474f2567c554bddd0b3ea58ca6e138c311e1"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/libgee/0.20/libgee-0.20.8.tar.xz",
+          "filename": "libgee-0.20.8.tar.xz",
+          "sha512": "9af883bb4b2c25c429271201e634d1851378631b913bab282fe432b2b76a44674111e65caa99269fd403454c87b5474f2567c554bddd0b3ea58ca6e138c311e1",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libgexiv2",
       "version": "0.16.0",
-      "url": "https://download.gnome.org/sources/gexiv2/0.16/gexiv2-0.16.0.tar.xz",
-      "filename": "gexiv2-0.16.0.tar.xz",
-      "sha512": "f4f112a223dcb902641f1cdfadf0f49d53cab260d69dba7e2dc2cb4a9b37d35ee2a110f55b23e5465dd611d65ec492138b682d2352afdbaaf93931050c5ae33d"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/gexiv2/0.16/gexiv2-0.16.0.tar.xz",
+          "filename": "gexiv2-0.16.0.tar.xz",
+          "sha512": "f4f112a223dcb902641f1cdfadf0f49d53cab260d69dba7e2dc2cb4a9b37d35ee2a110f55b23e5465dd611d65ec492138b682d2352afdbaaf93931050c5ae33d",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libglib-testing",
       "version": "0.1.0",
-      "url": "https://gitlab.gnome.org/pwithnall/libglib-testing/-/archive/0.1.0/libglib-testing-0.1.0.tar.bz2",
-      "filename": "libglib-testing-0.1.0.tar.bz2",
-      "sha512": "a1001111d8f2b7367783dc9378982ce216cb7d05ad6a90759f026d851e76a37ae88f1976910d5d188fc22a913cf928f18512fda008fcf3435a8ffb1cb6f80ba6"
+      "sources": [
+        {
+          "url": "https://gitlab.gnome.org/pwithnall/libglib-testing/-/archive/0.1.0/libglib-testing-0.1.0.tar.bz2",
+          "filename": "libglib-testing-0.1.0.tar.bz2",
+          "sha512": "a1001111d8f2b7367783dc9378982ce216cb7d05ad6a90759f026d851e76a37ae88f1976910d5d188fc22a913cf928f18512fda008fcf3435a8ffb1cb6f80ba6",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libinput",
       "version": "1.31.1",
-      "url": "https://gitlab.freedesktop.org/libinput/libinput/-/archive/1.31.1/libinput-1.31.1.tar.bz2",
-      "filename": "libinput-1.31.1.tar.bz2",
-      "sha512": "7f60f6180e6e62ca43f557dd2bb77bce00be6afaab6a682ca03d6b83c1d130bd32188c5b3e5489831887b286099040aa181384b364625b4b9f6d3dd9574124c7"
+      "sources": [
+        {
+          "url": "https://gitlab.freedesktop.org/libinput/libinput/-/archive/1.31.1/libinput-1.31.1.tar.bz2",
+          "filename": "libinput-1.31.1.tar.bz2",
+          "sha512": "7f60f6180e6e62ca43f557dd2bb77bce00be6afaab6a682ca03d6b83c1d130bd32188c5b3e5489831887b286099040aa181384b364625b4b9f6d3dd9574124c7",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libldac",
       "version": "%{sonamebase}.0.2.3",
-      "url": "https://github.com/EHfive/ldacBT/releases/download/v2.0.2.3/ldacBT-2.0.2.3.tar.gz",
-      "filename": "ldacBT-2.0.2.3.tar.gz",
-      "sha512": "0e42723a1e7d748b28b13d73823fd5378a64100d5e27ae90cf3214494f3e199c526e219efd1329b2ec2b3195e1a6b3c98c8210ab7e4e6b98077199ef0f64c02e"
+      "sources": [
+        {
+          "url": "https://github.com/EHfive/ldacBT/releases/download/v2.0.2.3/ldacBT-2.0.2.3.tar.gz",
+          "filename": "ldacBT-2.0.2.3.tar.gz",
+          "sha512": "0e42723a1e7d748b28b13d73823fd5378a64100d5e27ae90cf3214494f3e199c526e219efd1329b2ec2b3195e1a6b3c98c8210ab7e4e6b98077199ef0f64c02e",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libnotify",
       "version": "0.8.8",
-      "url": "https://download.gnome.org/sources/libnotify/0.8/libnotify-0.8.8.tar.xz",
-      "filename": "libnotify-0.8.8.tar.xz",
-      "sha512": "0fedd230d3c8b9bd3c783794e690752cf6388fc178854267effe3ba26aaa9248415cdf0ab994f596ace8bef59e0c1e41196f42a225221d7f0e1efc54683c310a"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/libnotify/0.8/libnotify-0.8.8.tar.xz",
+          "filename": "libnotify-0.8.8.tar.xz",
+          "sha512": "0fedd230d3c8b9bd3c783794e690752cf6388fc178854267effe3ba26aaa9248415cdf0ab994f596ace8bef59e0c1e41196f42a225221d7f0e1efc54683c310a",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libsoup",
       "version": "2.74.3",
-      "url": "https://download.gnome.org/sources/libsoup/2.74/libsoup-2.74.3.tar.xz",
-      "filename": "libsoup-2.74.3.tar.xz",
-      "sha512": "72f8a055df984cb35105fe67f4ca67d3fb110d40a9cacb660fccd89f93b06bc32e25d94375dcc76608a245f7c5e081d968d7aaf5952eb16013d81c741247cb4c"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/libsoup/2.74/libsoup-2.74.3.tar.xz",
+          "filename": "libsoup-2.74.3.tar.xz",
+          "sha512": "72f8a055df984cb35105fe67f4ca67d3fb110d40a9cacb660fccd89f93b06bc32e25d94375dcc76608a245f7c5e081d968d7aaf5952eb16013d81c741247cb4c",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libxcvt",
       "version": "0.1.2",
-      "url": "https://xorg.freedesktop.org/archive/individual/lib/libxcvt-0.1.2.tar.xz",
-      "filename": "libxcvt-0.1.2.tar.xz",
-      "sha512": "3f6b2baca712a4608780686932f8881255c07bb74b1a788f9b07d4e22975c038d75111cd6b452257882a0b2bad57eebb2002f80a3e435d2e2d16936597f039b0"
+      "sources": [
+        {
+          "url": "https://xorg.freedesktop.org/archive/individual/lib/libxcvt-0.1.2.tar.xz",
+          "filename": "libxcvt-0.1.2.tar.xz",
+          "sha512": "3f6b2baca712a4608780686932f8881255c07bb74b1a788f9b07d4e22975c038d75111cd6b452257882a0b2bad57eebb2002f80a3e435d2e2d16936597f039b0",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "libzip",
       "version": "1.11.4",
-      "url": "https://libzip.org/download/libzip-1.11.4.tar.xz",
-      "filename": "libzip-1.11.4.tar.xz",
-      "sha512": "dc7929ed7a0f43e793041fc3f0639649233d4ecbe59f90b0275582b51d2951e240ce5182220fb14ade7dcccc08dab90fda22c87dc7365fec4fe70ee4f14eaa37"
+      "sources": [
+        {
+          "url": "https://libzip.org/download/libzip-1.11.4.tar.xz",
+          "filename": "libzip-1.11.4.tar.xz",
+          "sha512": "dc7929ed7a0f43e793041fc3f0639649233d4ecbe59f90b0275582b51d2951e240ce5182220fb14ade7dcccc08dab90fda22c87dc7365fec4fe70ee4f14eaa37",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "localsearch",
       "version": "3.11~rc",
-      "url": "https://download.gnome.org/sources/localsearch/3.11/localsearch-3.11.rc.tar.xz",
-      "filename": "localsearch-3.11.rc.tar.xz",
-      "sha512": "c773eb0a56c53fc789c94ffa63205a1386138c5583c36bb277975dcb0bd011c9e7baf4fda75e724ae4791c2810baea7a2090bfbf80fb68cc1ab69061673937cb"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/localsearch/3.11/localsearch-3.11.rc.tar.xz",
+          "filename": "localsearch-3.11.rc.tar.xz",
+          "sha512": "c773eb0a56c53fc789c94ffa63205a1386138c5583c36bb277975dcb0bd011c9e7baf4fda75e724ae4791c2810baea7a2090bfbf80fb68cc1ab69061673937cb",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "lzo",
       "version": "2.10",
-      "url": "http://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz",
-      "filename": "lzo-2.10.tar.gz",
-      "sha512": "a3dae5e4a6b93b1f5bf7435e8ab114a9be57252e9efc5dd444947d7a2d031b0819f34bcaeb35f60b5629a01b1238d738735a64db8f672be9690d3c80094511a4"
+      "sources": [
+        {
+          "url": "http://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz",
+          "filename": "lzo-2.10.tar.gz",
+          "sha512": "a3dae5e4a6b93b1f5bf7435e8ab114a9be57252e9efc5dd444947d7a2d031b0819f34bcaeb35f60b5629a01b1238d738735a64db8f672be9690d3c80094511a4",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "malcontent",
       "version": "0.14.0",
-      "url": "https://tecnocode.co.uk/downloads/malcontent/malcontent-0.14.0.tar.xz",
-      "filename": "malcontent-0.14.0.tar.xz",
-      "sha512": "e1b7d1d5895b37dce0662ac4e01d1a8dc726a32361c159ae41b4338e06c0920f6a5d14ad7df9a5d98e5ac6e648d06017ccbb2100896cbe11446733d5ba1e449d"
+      "sources": [
+        {
+          "url": "https://tecnocode.co.uk/downloads/malcontent/malcontent-0.14.0.tar.xz",
+          "filename": "malcontent-0.14.0.tar.xz",
+          "sha512": "e1b7d1d5895b37dce0662ac4e01d1a8dc726a32361c159ae41b4338e06c0920f6a5d14ad7df9a5d98e5ac6e648d06017ccbb2100896cbe11446733d5ba1e449d",
+          "checksum_type": "sha512"
+        },
+        {
+          "url": "https://gitlab.gnome.org/pwithnall/libgsystemservice/-/archive/0.3.0/libgsystemservice-0.3.0.tar.bz2",
+          "filename": "libgsystemservice-0.3.0.tar.bz2",
+          "sha512": "e677e74e5d4feb253d94cf6ff374919788a608be99f9757c2d84cc4704e377b51b22bf4fbabc6241510dcf988e042adaee7aabaf862b5f2d0d22bb895cc98463",
+          "checksum_type": "sha512"
+        }
+      ],
+      "blocked": true,
+      "blocked_reason": "references sources that are neither downloadable nor present in the recipe: gvdb.tar.xz, tinycdb-0.81.tar.gz"
     },
     {
       "name": "meson",
       "version": "1.10.2",
-      "url": "https://github.com/mesonbuild/meson/releases/download/1.10.2/meson-1.10.2.tar.gz",
-      "filename": "meson-1.10.2.tar.gz",
-      "sha512": "43d408fde7390c81eaef63b835deb4acfcae279cf05bcd63a368c4bc1de69b7fb620f801a7700345d4c41e155a4429a43cdef12e60322aa20a33edfaeb5ce7e9"
+      "sources": [
+        {
+          "url": "https://github.com/mesonbuild/meson/releases/download/1.10.2/meson-1.10.2.tar.gz",
+          "filename": "meson-1.10.2.tar.gz",
+          "sha512": "43d408fde7390c81eaef63b835deb4acfcae279cf05bcd63a368c4bc1de69b7fb620f801a7700345d4c41e155a4429a43cdef12e60322aa20a33edfaeb5ce7e9",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "mod_dnssd",
       "version": "0.6",
-      "url": "http://0pointer.de/lennart/projects/mod_dnssd/mod_dnssd-0.6.tar.gz",
-      "filename": "mod_dnssd-0.6.tar.gz",
-      "sha512": "c3eacd2065f996ace76496b828a5be4b735225782c88ed0fba00c37ffed91af7c81cef755556968880e11e05fbaf65a4326728cb82abcad03ccaf925be1f29d3"
+      "sources": [
+        {
+          "url": "http://0pointer.de/lennart/projects/mod_dnssd/mod_dnssd-0.6.tar.gz",
+          "filename": "mod_dnssd-0.6.tar.gz",
+          "sha512": "c3eacd2065f996ace76496b828a5be4b735225782c88ed0fba00c37ffed91af7c81cef755556968880e11e05fbaf65a4326728cb82abcad03ccaf925be1f29d3",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "mozjs140",
       "version": "140.6.0",
-      "url": "https://ftp.mozilla.org/pub/firefox/releases/140.6.0esr/source/firefox-140.6.0esr.source.tar.xz",
-      "filename": "firefox-140.6.0esr.source.tar.xz",
-      "sha512": "ed66657bd4b2d94791892261d7c0c0d950b4f630d12ab28a777d93393427451a9aa125e5a01ee15f2ac0ff378d0be074a08583dcffd35609112ba4e6f9ada798"
+      "sources": [
+        {
+          "url": "https://ftp.mozilla.org/pub/firefox/releases/140.6.0esr/source/firefox-140.6.0esr.source.tar.xz",
+          "filename": "firefox-140.6.0esr.source.tar.xz",
+          "sha512": "ed66657bd4b2d94791892261d7c0c0d950b4f630d12ab28a777d93393427451a9aa125e5a01ee15f2ac0ff378d0be074a08583dcffd35609112ba4e6f9ada798",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "mutter",
       "version": "50.0",
-      "url": "https://download.gnome.org/sources/mutter/50/mutter-50.0.tar.xz",
-      "filename": "mutter-50.0.tar.xz",
-      "sha512": "9070d5a7c3ceea9054475e4adbe9086f2b92e446c90619b1b6dbffa02759c188042c2fdbe107a9d9a310feba173086b7007300e9952ba3ef1cb6adf4810de0c6"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/mutter/50/mutter-50.0.tar.xz",
+          "filename": "mutter-50.0.tar.xz",
+          "sha512": "9070d5a7c3ceea9054475e4adbe9086f2b92e446c90619b1b6dbffa02759c188042c2fdbe107a9d9a310feba173086b7007300e9952ba3ef1cb6adf4810de0c6",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "nautilus",
       "version": "50.0",
-      "url": "https://download.gnome.org/sources/nautilus/50/nautilus-50.0.tar.xz",
-      "filename": "nautilus-50.0.tar.xz",
-      "sha512": "474d2faedb96c620e6678d8ba2fd68df73837c6bdcd5052c378208d31d3cd1800e59bf7e4e6ef28b2630ce11fe6625ea87f5bd6889d1c420b8be367b1b91f472"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/nautilus/50/nautilus-50.0.tar.xz",
+          "filename": "nautilus-50.0.tar.xz",
+          "sha512": "474d2faedb96c620e6678d8ba2fd68df73837c6bdcd5052c378208d31d3cd1800e59bf7e4e6ef28b2630ce11fe6625ea87f5bd6889d1c420b8be367b1b91f472",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "orca",
       "version": "50.0.9",
-      "url": "https://download.gnome.org/sources/orca/50/orca-50.0.9.tar.xz",
-      "filename": "orca-50.0.9.tar.xz",
-      "sha512": "b49769a53cbbc8c36890370a75f8782b1f45a8ebf4fec690851798651b7bd825fdf1754e6613af77b4b2111e364bc732f1e85dd33a18ed4a6c5599729a347419"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/orca/50/orca-50.0.9.tar.xz",
+          "filename": "orca-50.0.9.tar.xz",
+          "sha512": "b49769a53cbbc8c36890370a75f8782b1f45a8ebf4fec690851798651b7bd825fdf1754e6613af77b4b2111e364bc732f1e85dd33a18ed4a6c5599729a347419",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "pango",
       "version": "1.57.0",
-      "url": "https://download.gnome.org/sources/pango/1.57/pango-1.57.0.tar.xz",
-      "filename": "pango-1.57.0.tar.xz",
-      "sha512": "e3d251e0c2d5cb7f2e9d26e675aa2fae0c3cedce9e73b77f92a4abbeff55eaa819811e4c064ca036d3964a3ee4592f596ebfa7c0a760189b9d8c38a5f3a4ea3a"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/pango/1.57/pango-1.57.0.tar.xz",
+          "filename": "pango-1.57.0.tar.xz",
+          "sha512": "e3d251e0c2d5cb7f2e9d26e675aa2fae0c3cedce9e73b77f92a4abbeff55eaa819811e4c064ca036d3964a3ee4592f596ebfa7c0a760189b9d8c38a5f3a4ea3a",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "pipewire",
       "version": "%{majorversion}.%{minorversion}.%{microversion}",
-      "url": "https://gitlab.freedesktop.org/pipewire/pipewire/-/archive/1.6.1/pipewire-1.6.1.tar.gz",
-      "filename": "pipewire-1.6.1.tar.gz",
-      "sha512": "0f3b4f5ed8542373cc8700ad5b88edecb1f1226a0a54e313ff6c5ba5174e7ce106abbd4b79baddc7b5abf61fb1bacfdf3509389e7ac246ece7a8ff8df3740aa0"
+      "sources": [
+        {
+          "url": "https://gitlab.freedesktop.org/pipewire/pipewire/-/archive/1.6.1/pipewire-1.6.1.tar.gz",
+          "filename": "pipewire-1.6.1.tar.gz",
+          "sha512": "0f3b4f5ed8542373cc8700ad5b88edecb1f1226a0a54e313ff6c5ba5174e7ce106abbd4b79baddc7b5abf61fb1bacfdf3509389e7ac246ece7a8ff8df3740aa0",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "ptyxis",
       "version": "50.1",
-      "url": "https://download.gnome.org/sources/ptyxis/50/ptyxis-50.1.tar.xz",
-      "filename": "ptyxis-50.1.tar.xz",
-      "sha512": "34fafdcfa5c51155ebc026814daf5bbb82e24a6565a621a268cce0042d209dc633095ab148c2198b43fb612f995efc46426361b8b8eb616d94b319ec6b170977"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/ptyxis/50/ptyxis-50.1.tar.xz",
+          "filename": "ptyxis-50.1.tar.xz",
+          "sha512": "34fafdcfa5c51155ebc026814daf5bbb82e24a6565a621a268cce0042d209dc633095ab148c2198b43fb612f995efc46426361b8b8eb616d94b319ec6b170977",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "python-dbusmock",
       "version": "0.38.0",
-      "url": "https://files.pythonhosted.org/packages/source/p/python-dbusmock/python_dbusmock-0.38.0.tar.gz",
-      "filename": "python_dbusmock-0.38.0.tar.gz",
-      "sha512": "8b331eef64dcc885e3dfbb53445e79b2b93f3f671e5ba1b34f12c7bdfd367b9526b791ddd5a145bd314d3dcf312c26a942c1c49ebb49c4f39cbd621eee22683d"
+      "sources": [
+        {
+          "url": "https://files.pythonhosted.org/packages/source/p/python-dbusmock/python_dbusmock-0.38.0.tar.gz",
+          "filename": "python_dbusmock-0.38.0.tar.gz",
+          "sha512": "8b331eef64dcc885e3dfbb53445e79b2b93f3f671e5ba1b34f12c7bdfd367b9526b791ddd5a145bd314d3dcf312c26a942c1c49ebb49c4f39cbd621eee22683d",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "python-smartypants",
       "version": "2.0.1",
-      "url": "https://github.com/leohemsted/smartypants.py/archive/v2.0.1/smartypants-2.0.1.tar.gz",
-      "filename": "smartypants-2.0.1.tar.gz",
-      "sha512": "d47a866a5478c3520251f87a93a468a5eea10318b24b2e8d4bc918d533b5a5789aa56d3a8d5fb8ccff9572fb63e5b6f2eafc44f93fb57a19e6621ebef5d64d9d"
+      "sources": [
+        {
+          "url": "https://github.com/leohemsted/smartypants.py/archive/v2.0.1/smartypants-2.0.1.tar.gz",
+          "filename": "smartypants-2.0.1.tar.gz",
+          "sha512": "d47a866a5478c3520251f87a93a468a5eea10318b24b2e8d4bc918d533b5a5789aa56d3a8d5fb8ccff9572fb63e5b6f2eafc44f93fb57a19e6621ebef5d64d9d",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "python-typogrify",
       "version": "2.0.7",
-      "url": "https://files.pythonhosted.org/packages/source/t/typogrify/typogrify-2.0.7.tar.gz",
-      "filename": "typogrify-2.0.7.tar.gz",
-      "sha512": "6212024a88372f1b14e5932c0541ec4d5a2ada7514c1327dc8f3775cd7adf3372cae0037c4310ed4a03fd0657a91eb4c0d114b74172190f7f84d82908441ddd0"
+      "sources": [
+        {
+          "url": "https://files.pythonhosted.org/packages/source/t/typogrify/typogrify-2.0.7.tar.gz",
+          "filename": "typogrify-2.0.7.tar.gz",
+          "sha512": "6212024a88372f1b14e5932c0541ec4d5a2ada7514c1327dc8f3775cd7adf3372cae0037c4310ed4a03fd0657a91eb4c0d114b74172190f7f84d82908441ddd0",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "selinux-policy",
       "version": "43.4",
-      "url": "https://github.com/fedora-selinux/selinux-policy/archive/8ad5d5112fa8b47426e0e6674616d5577f825fde/selinux-policy-8ad5d51.tar.gz",
-      "filename": "selinux-policy-8ad5d51.tar.gz",
-      "sha512": "c847db1e85980e699f33d564d4e8c203e31a4060d9c521f571c81a6f3965de9ca89902946c4b5d74c08991aba28aa4352769e85da1f14dfa7bee0f3a9155a517"
+      "sources": [
+        {
+          "url": "https://github.com/fedora-selinux/selinux-policy/archive/8ad5d5112fa8b47426e0e6674616d5577f825fde/selinux-policy-8ad5d51.tar.gz",
+          "filename": "selinux-policy-8ad5d51.tar.gz",
+          "sha512": "c847db1e85980e699f33d564d4e8c203e31a4060d9c521f571c81a6f3965de9ca89902946c4b5d74c08991aba28aa4352769e85da1f14dfa7bee0f3a9155a517",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "shaderc",
       "version": "2026.1",
-      "url": "https://github.com/google/shaderc/archive/301b4ede53d59b68bf55f95bb26412d9233c8187.tar.gz",
-      "filename": "301b4ede53d59b68bf55f95bb26412d9233c8187.tar.gz",
-      "sha512": "de81f189417a452daef5466c4a679cc5c2dde364d90e6aed5a47d3a8dd2e6cb0cc5e367794489f144fd9bb56ccadf958d5a69eed50006175b3a3a9c59b615126"
+      "sources": [
+        {
+          "url": "https://github.com/google/shaderc/archive/301b4ede53d59b68bf55f95bb26412d9233c8187.tar.gz",
+          "filename": "301b4ede53d59b68bf55f95bb26412d9233c8187.tar.gz",
+          "sha512": "de81f189417a452daef5466c4a679cc5c2dde364d90e6aed5a47d3a8dd2e6cb0cc5e367794489f144fd9bb56ccadf958d5a69eed50006175b3a3a9c59b615126",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "simdutf",
       "version": "7.2.1",
-      "url": "https://github.com/simdutf/simdutf/archive/v7.2.1/simdutf-7.2.1.tar.gz",
-      "filename": "simdutf-7.2.1.tar.gz",
-      "sha512": "589c27549fd74755fabd6f06f6f80b2b19768dc9a5b73447d448d2fa66fffba9770ac1ab756f7c757c9eb4f40b333a622b8b5d5657df27dfab5779a2d8afacd7"
+      "sources": [
+        {
+          "url": "https://github.com/simdutf/simdutf/archive/v7.2.1/simdutf-7.2.1.tar.gz",
+          "filename": "simdutf-7.2.1.tar.gz",
+          "sha512": "589c27549fd74755fabd6f06f6f80b2b19768dc9a5b73447d448d2fa66fffba9770ac1ab756f7c757c9eb4f40b333a622b8b5d5657df27dfab5779a2d8afacd7",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "source-highlight",
       "version": "3.1.9",
-      "url": "ftp://ftp.gnu.org/gnu/src-highlite/source-highlight-3.1.9.tar.gz",
-      "filename": "source-highlight-3.1.9.tar.gz",
-      "sha512": "d8e154e9a5d62c77807e4e5d36c0faed5ce2964291be5f8b83e2968a6de52229503689a4ca2109a717ae2632a14b63ec937ca0430c91684c72063f6bc0294195"
+      "sources": [
+        {
+          "url": "ftp://ftp.gnu.org/gnu/src-highlite/source-highlight-3.1.9.tar.gz",
+          "filename": "source-highlight-3.1.9.tar.gz",
+          "sha512": "d8e154e9a5d62c77807e4e5d36c0faed5ce2964291be5f8b83e2968a6de52229503689a4ca2109a717ae2632a14b63ec937ca0430c91684c72063f6bc0294195",
+          "checksum_type": "sha512"
+        },
+        {
+          "url": "ftp://ftp.gnu.org/gnu/src-highlite/source-highlight-3.1.9.tar.gz.sig",
+          "filename": "source-highlight-3.1.9.tar.gz.sig",
+          "sha512": "a0bbee3dda6e97fb82c5a455a161030d3b5d053606b0b455de504714a2e2b088af920b86ef340546bdeef79156bedc5e9e4b8911f2c066e0e172eb7dc805b9a6",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "sqlcipher",
       "version": "4.5.2",
-      "url": "https://github.com/sqlcipher/sqlcipher/archive/v4.5.2/sqlcipher-4.5.2.tar.gz",
-      "filename": "sqlcipher-4.5.2.tar.gz",
-      "sha512": "1de5b219392bb976631857e32b4523258fd660fedb558d478e536b7e10c711c72c7e7c9062e45bd8a5ceaecbc1fee717935d2357f6811c3ddf76702167f4601b"
+      "sources": [
+        {
+          "url": "https://github.com/sqlcipher/sqlcipher/archive/v4.5.2/sqlcipher-4.5.2.tar.gz",
+          "filename": "sqlcipher-4.5.2.tar.gz",
+          "sha512": "1de5b219392bb976631857e32b4523258fd660fedb558d478e536b7e10c711c72c7e7c9062e45bd8a5ceaecbc1fee717935d2357f6811c3ddf76702167f4601b",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "tecla",
       "version": "50~rc",
-      "url": "https://download.gnome.org/sources/tecla/50/tecla-50.rc.tar.xz",
-      "filename": "tecla-50.rc.tar.xz",
-      "sha512": "89e18d92959d467e238c67ecb8b59809bf2a59812b450e7adfe17144e620c8d7b088d017ada32bb934f90f42a52b9c70f3e8ee07ebe19538df7b3e3e2fcdbf2f"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/tecla/50/tecla-50.rc.tar.xz",
+          "filename": "tecla-50.rc.tar.xz",
+          "sha512": "89e18d92959d467e238c67ecb8b59809bf2a59812b450e7adfe17144e620c8d7b088d017ada32bb934f90f42a52b9c70f3e8ee07ebe19538df7b3e3e2fcdbf2f",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "tinysparql",
       "version": "3.11~rc",
-      "url": "https://download.gnome.org/sources/tinysparql/3.11/tinysparql-3.11.rc.tar.xz",
-      "filename": "tinysparql-3.11.rc.tar.xz",
-      "sha512": "cdbe80f15ed956593f372af3de47ad4ad1f7bb417de3f9e658994cf444bd2e3c76a99502124d43a99955470a1b63228b98b37bb3e6b48d1bee2f8143c94e608b"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/tinysparql/3.11/tinysparql-3.11.rc.tar.xz",
+          "filename": "tinysparql-3.11.rc.tar.xz",
+          "sha512": "cdbe80f15ed956593f372af3de47ad4ad1f7bb417de3f9e658994cf444bd2e3c76a99502124d43a99955470a1b63228b98b37bb3e6b48d1bee2f8143c94e608b",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "umockdev",
       "version": "0.19.5",
-      "url": "https://github.com/martinpitt/umockdev/releases/download/0.19.5/umockdev-0.19.5.tar.xz",
-      "filename": "umockdev-0.19.5.tar.xz",
-      "sha512": "7827fd392cd30b54052921516b13c325b3ed27f929d594665f79f37f36db43db86de898dcd5a91949275ec332e0ae8abdf51b015a848276a153ce88136579919"
+      "sources": [
+        {
+          "url": "https://github.com/martinpitt/umockdev/releases/download/0.19.5/umockdev-0.19.5.tar.xz",
+          "filename": "umockdev-0.19.5.tar.xz",
+          "sha512": "7827fd392cd30b54052921516b13c325b3ed27f929d594665f79f37f36db43db86de898dcd5a91949275ec332e0ae8abdf51b015a848276a153ce88136579919",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "vala",
       "version": "0.56.19",
-      "url": "https://download.gnome.org/sources/vala/0.56/vala-0.56.19.tar.xz",
-      "filename": "vala-0.56.19.tar.xz",
-      "sha512": "68e87db80362243a071b33dd33b35e0b788e6f16fa993bcf1bbf3ccc65fb704fd3be50d41a8d50530328061c55edbe53a4fd094745435b858fd07851e963ef36"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/vala/0.56/vala-0.56.19.tar.xz",
+          "filename": "vala-0.56.19.tar.xz",
+          "sha512": "68e87db80362243a071b33dd33b35e0b788e6f16fa993bcf1bbf3ccc65fb704fd3be50d41a8d50530328061c55edbe53a4fd094745435b858fd07851e963ef36",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "vte291",
       "version": "0.84.0",
-      "url": "https://download.gnome.org/sources/vte/0.84/vte-0.84.0.tar.xz",
-      "filename": "vte-0.84.0.tar.xz",
-      "sha512": "76f26a46d55da107458682de82dc620aec5da3a89d813628c31764b2f06805435ee976e43326d792ca55c5db310da37667a6b8094bd12e6c09084d30b0332eb6"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/vte/0.84/vte-0.84.0.tar.xz",
+          "filename": "vte-0.84.0.tar.xz",
+          "sha512": "76f26a46d55da107458682de82dc620aec5da3a89d813628c31764b2f06805435ee976e43326d792ca55c5db310da37667a6b8094bd12e6c09084d30b0332eb6",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "wayland-protocols",
       "version": "1.47",
-      "url": "https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/1.47/downloads/wayland-protocols-1.47.tar.xz",
-      "filename": "wayland-protocols-1.47.tar.xz",
-      "sha512": "2a89d5b2f16a42a195acd09ff5e093e4ef021ee7f50447bb59890d5fe630bad353485b6edcdfd5e193e8262ce538a4aff57a49b2dd5cc14b2858bf3e5b7ee17e"
+      "sources": [
+        {
+          "url": "https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/1.47/downloads/wayland-protocols-1.47.tar.xz",
+          "filename": "wayland-protocols-1.47.tar.xz",
+          "sha512": "2a89d5b2f16a42a195acd09ff5e093e4ef021ee7f50447bb59890d5fe630bad353485b6edcdfd5e193e8262ce538a4aff57a49b2dd5cc14b2858bf3e5b7ee17e",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "xdg-desktop-portal",
       "version": "1.21.0",
-      "url": "https://github.com/flatpak/xdg-desktop-portal/releases/download/1.21.0/xdg-desktop-portal-1.21.0.tar.xz",
-      "filename": "xdg-desktop-portal-1.21.0.tar.xz",
-      "sha512": "6b9657643c455046f8a31f7c69f69a8fa3f3470fa8086a4b6be0fb44dc719954416f63140acc9eec4f018e86153dbab6bedcdaf3360f4d71f173ed3fe1249c9d"
+      "sources": [
+        {
+          "url": "https://github.com/flatpak/xdg-desktop-portal/releases/download/1.21.0/xdg-desktop-portal-1.21.0.tar.xz",
+          "filename": "xdg-desktop-portal-1.21.0.tar.xz",
+          "sha512": "6b9657643c455046f8a31f7c69f69a8fa3f3470fa8086a4b6be0fb44dc719954416f63140acc9eec4f018e86153dbab6bedcdaf3360f4d71f173ed3fe1249c9d",
+          "checksum_type": "sha512"
+        }
+      ]
     },
     {
       "name": "xdg-desktop-portal-gnome",
       "version": "50.0",
-      "url": "https://download.gnome.org/sources/xdg-desktop-portal-gnome/50/xdg-desktop-portal-gnome-50.0.tar.xz",
-      "filename": "xdg-desktop-portal-gnome-50.0.tar.xz",
-      "sha512": "0128240c3dfa58e5e7e5043b3db20ea4413cfc13f4458b507afc9cbc8223047ff192c0b21afac10bf1c6455b710f0365c2add7d7446d4ec51ee739fbdd23eb63"
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/xdg-desktop-portal-gnome/50/xdg-desktop-portal-gnome-50.0.tar.xz",
+          "filename": "xdg-desktop-portal-gnome-50.0.tar.xz",
+          "sha512": "0128240c3dfa58e5e7e5043b3db20ea4413cfc13f4458b507afc9cbc8223047ff192c0b21afac10bf1c6455b710f0365c2add7d7446d4ec51ee739fbdd23eb63",
+          "checksum_type": "sha512"
+        }
+      ]
     }
   ]
 }

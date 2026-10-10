@@ -59,8 +59,54 @@ class Record:
         return bool(self.lock.get("no_upstream_source"))
 
     @property
+    def blocked(self) -> bool:
+        """True when the recipe cannot be built from what the factory can fetch.
+
+        Set when a spec references a source that is neither downloadable nor
+        present in the recipe -- a hand-generated ``cargo vendor`` tarball, a
+        bundled archive. Selecting one of these produces a red build whose
+        error names the missing archive rather than the lock that could not
+        supply it, so they are excluded from the build list instead.
+        """
+        return bool(self.lock.get("blocked"))
+
+    @property
+    def blocked_reason(self) -> str:
+        return self.lock.get("blocked_reason", "")
+
+    @property
+    def sources(self) -> list[dict]:
+        """Every locked source, in Source0, Source1, ... order.
+
+        A recipe may have more than one downloadable Source. glycin carries a
+        vendored libjxl tarball as Source2, and rpmbuild fails without it --
+        so the lock has to cover all of them. Assuming one URL per recipe
+        builds the recipes that happen to be self-contained and breaks the
+        rest, which is a bad way to learn it.
+
+        Accepts the old flat `url`/`sha512` shape so a lock written before
+        this change still reads.
+        """
+        sources = self.lock.get("sources")
+        if isinstance(sources, list) and sources:
+            return sources
+        if self.lock.get("url"):
+            return [{
+                "url": self.lock["url"],
+                "filename": self.lock.get("filename", ""),
+                "sha512": self.lock.get("sha512"),
+                "checksum_type": self.lock.get("checksum_type", "sha512"),
+            }]
+        return []
+
+    @property
+    def source0(self) -> dict:
+        """The primary source -- the one Packit is handed."""
+        return self.sources[0] if self.sources else {}
+
+    @property
     def filename(self) -> str:
-        return self.lock.get("filename", "")
+        return self.source0.get("filename", "")
 
 
 def inventory(root: Path | None = None) -> list[Record]:
