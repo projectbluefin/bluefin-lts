@@ -7,6 +7,8 @@ License:          LGPL-2.1-or-later
 URL:              https://github.com/martinpitt/%{name}
 Source0:          https://github.com/martinpitt/%{name}/releases/download/%{version}/%{name}-%{version}.tar.xz
 
+Patch0:           tests-detect-active-selinux.patch
+
 BuildRequires:    git
 BuildRequires:    gcc
 BuildRequires:    meson
@@ -34,7 +36,7 @@ The %{name}-devel package contains the libraries to develop
 using %{name}.
 
 %prep
-%autosetup -S git -n %{name}-%{version}
+%autosetup -p1 -S git -n %{name}-%{version}
 
 %build
 %meson -Dgtk_doc=true

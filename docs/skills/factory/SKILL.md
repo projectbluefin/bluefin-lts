@@ -158,3 +158,8 @@ speech and braille support. Capture `%{cargo_license}` inside a shell group
 with redirection after the closing brace, then require a nonempty summary.
 A bare parametric macro can consume shell redirection as a macro argument.
 Do not run cargo downloads in rpmbuild.
+
+Umockdev builds use the narrow `config/seccomp/umockdev.json` profile to allow
+`open_tree` while preserving the default syscall restrictions and capabilities.
+Its SELinux tests detect active SELinux, rather than the existence of the
+`selinuxenabled` program; keep the full test suite enabled.

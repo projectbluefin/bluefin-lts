@@ -169,3 +169,12 @@ Cargo.lock. Every crate is verified against its upstream SHA-256, and normalized
 tar metadata makes the bundle reproducible. Its SHA-512 is independently locked
 as a generated source, then checked again inside the build container. Git-based
 crate sources are refused.
+
+Umockdev builds use the narrow `config/seccomp/umockdev.json` profile to allow
+`open_tree` while preserving the default syscall restrictions and capabilities.
+Its SELinux tests detect active SELinux, rather than the existence of the
+`selinuxenabled` program; keep the full test suite enabled.
+
+GTK 4.24 requires `pkgconfig(libdrm)` on Linux for `drm_fourcc.h`.
+Localsearch 3.12 test helpers include `<stdint.h>` explicitly for fixed-width
+integer types; functional tests remain enabled.

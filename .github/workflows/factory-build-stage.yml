@@ -99,7 +99,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "work/rpms/$PACKAGE"
-          docker run --rm --pull=never -e PACKAGE \
+          security_args=()
+          if [ "$PACKAGE" = umockdev ]; then
+            security_args=(--security-opt "seccomp=$PWD/factory/config/seccomp/umockdev.json")
+          fi
+          docker run --rm --pull=never "${security_args[@]}" -e PACKAGE \
             -v "$PWD:/repo:Z" -v "$PWD/work/prior:/prior:Z" \
             factory-buildroot:run bash /repo/factory/tools/build_package.sh
 
