@@ -122,14 +122,18 @@ jobs:
           changed=$(git diff --name-only "$base" HEAD -- factory/packages \
             | awk -F/ '$1=="factory" && $2=="packages" {print $3}' | sort -u)
           printf '%s\n' "$changed" | jq -R 'select(length > 0)' | jq -s . > changed.json
+          tooling=$(git diff --name-only "$base" HEAD -- factory/tools factory/config .packit.yaml)
+          export TOOLING_CHANGED="$tooling"
+          # Shared tooling or locks require the gate to cover every recipe.
           # Removed or explicitly blocked recipes cannot produce an SRPM.
           python3 - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
           from factory.tools.packit_workflow import package_names
           path = Path('changed.json')
           eligible = set(package_names())
-          path.write_text(json.dumps([name for name in json.loads(path.read_text()) if name in eligible]))
+          names = sorted(eligible) if os.environ['TOOLING_CHANGED'] else [name for name in json.loads(path.read_text()) if name in eligible]
+          path.write_text(json.dumps(names))
           PY
           count=$(jq length changed.json)
           echo "$count changed recipes"

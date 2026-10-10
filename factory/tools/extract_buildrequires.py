@@ -95,7 +95,7 @@ def run(root: Path, image: str, output: Path, engine: str) -> None:
 
     result = subprocess.run(
         [
-            engine, "run", "--rm",
+            engine, "run", "--rm", "--pull=never",
             "-v", f"{root / 'packages'}:/packages:ro,Z",
             "-v", f"{root.parent}:/repo:ro,Z",
             "-v", f"{rows}:/out:Z",
