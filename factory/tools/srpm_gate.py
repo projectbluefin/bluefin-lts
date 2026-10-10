@@ -29,6 +29,41 @@ from tools.source_pipeline import fetch_source, verify_staged
 PACKIT_IMAGE = "quay.io/packit/packit"
 
 
+def command(package: str, record, output: Path, root: Path, image: str) -> list[str]:
+    """Build the docker invocation. Separated so the paths can be tested.
+
+    Every host path in a ``-v`` must be absolute. Docker reads a relative one
+    as a *volume name* and rejects it: ``create work/srpm: "work/srpm"
+    includes invalid characters for a local volume name``. The error names the
+    path and nothing about the fix.
+
+    A missing host path is worse than an invalid one: docker silently creates
+    it as an empty named volume, and the build runs against nothing. Both are
+    avoided by resolving the paths and checking the sources exist.
+    """
+    out_dir = output.parent.resolve()
+    repo_dir = root.parent.resolve()
+
+    if not out_dir.is_dir():
+        raise ValueError(f"output directory does not exist: {out_dir}")
+
+    return [
+        "docker", "run", "--rm",
+        "-e", f"PACKAGE={package}",
+        "-e", "PACKIT_SPECFILE_PATH=" + str(record.spec.relative_to(root.parent)),
+        "-v", f"{repo_dir}:/repo:Z",
+        "-v", f"{out_dir}:/out:Z",
+        "-w", "/repo",
+        image,
+        "bash", "-exc",
+        (
+            'git config --global --add safe.directory "*"; '
+            'packit srpm --preserve-spec --output "/out/$PACKAGE.src.rpm" -p "$PACKAGE"; '
+            'rpm -qp --qf "%{NAME}-%{VERSION}-%{RELEASE}\\n" "/out/$PACKAGE.src.rpm"'
+        ),
+    ]
+
+
 def build(package: str, output: Path, root: Path | None, image: str) -> int:
     root = factory_root(root)
     matches = [record for record in inventory(root) if record.name == package]
@@ -37,6 +72,9 @@ def build(package: str, output: Path, root: Path | None, image: str) -> int:
         return 1
     record = matches[0]
 
+    # Resolve before anything else: the caller may pass a relative --output,
+    # and a relative path reaches docker as a volume name.
+    output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
 
     # Stage the verified source first. packit_source0.py will refuse to print
@@ -51,23 +89,13 @@ def build(package: str, output: Path, root: Path | None, image: str) -> int:
     if verify_staged(root, package) != 0:
         return 1
 
-    command = [
-        "docker", "run", "--rm",
-        "-e", f"PACKAGE={package}",
-        "-e", "PACKIT_SPECFILE_PATH=" + str(record.spec.relative_to(root.parent)),
-        "-v", f"{root.parent}:/repo:Z",
-        "-v", f"{output.parent}:/out:Z",
-        "-w", "/repo",
-        image,
-        "bash", "-exc",
-        (
-            'git config --global --add safe.directory "*"; '
-            'packit srpm --preserve-spec --output "/out/$PACKAGE.src.rpm" -p "$PACKAGE"; '
-            'rpm -qp --qf "%{NAME}-%{VERSION}-%{RELEASE}\\n" "/out/$PACKAGE.src.rpm"'
-        ),
-    ]
+    try:
+        argv = command(package, record, output, root, image)
+    except ValueError as error:
+        print(f"{package}: {error}", file=sys.stderr)
+        return 1
 
-    result = subprocess.run(command, check=False)
+    result = subprocess.run(argv, check=False)
     if result.returncode != 0:
         print(f"{package}: packit srpm failed", file=sys.stderr)
         return result.returncode
