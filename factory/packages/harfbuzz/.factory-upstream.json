@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:47:00+00:00",
+  "package": "harfbuzz",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "096aee2bea77aa6dbc86ea919e56e9642ef4e117936826fe825d73d93e117f56",
+    "srpm_checksum_type": "sha256",
+    "tree": "ddfdf2b58af6963ce71c069a1893137719c17a9d"
+  }
+}

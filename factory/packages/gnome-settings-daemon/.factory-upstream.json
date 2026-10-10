@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:41:28+00:00",
+  "package": "gnome-settings-daemon",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "8ae5a2e157a489106a6999ec3c38caf73dade8c82c1e090424511a9feddc3585",
+    "srpm_checksum_type": "sha256",
+    "tree": "93dc06c18467cdb65048ccb6f4631f8a68acbf4e"
+  }
+}

@@ -1,0 +1,23 @@
+From 36e54f831324c8ad441ef66b49b2149edd752ea9 Mon Sep 17 00:00:00 2001
+From: Matthias Klumpp <matthias@tenstral.net>
+Date: Sat, 9 Mar 2024 20:07:32 +0100
+Subject: [PATCH] utils: Explicitly set format style when installing catalog
+ metadata
+
+CC: https://github.com/PackageKit/PackageKit/issues/720
+---
+ src/as-utils.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/as-utils.c b/src/as-utils.c
+index 5efa237f..218f1774 100644
+--- a/src/as-utils.c
++++ b/src/as-utils.c
+@@ -2481,6 +2481,7 @@ as_utils_install_metadata_file_internal (const gchar *filename,
+ 	if (origin != NULL && !is_yaml) {
+ 		g_autoptr(AsMetadata) mdata = as_metadata_new ();
+ 		as_metadata_set_locale (mdata, "ALL");
++		as_metadata_set_format_style (mdata, AS_FORMAT_STYLE_CATALOG);
+ 		if (!as_metadata_parse_file (mdata, file_dest, AS_FORMAT_KIND_XML, error))
+ 			return FALSE;
+ 		as_metadata_set_origin (mdata, origin);

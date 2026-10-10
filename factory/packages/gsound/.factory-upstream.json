@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:00+00:00",
+  "package": "gsound",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "0badb608a381ef82603b2e729cf902ee1d52dde6daa7773ff54f5137c6197a82",
+    "srpm_checksum_type": "sha256",
+    "tree": "fc7e0b99853f75af0ca7596a106779b55c8aac0b"
+  }
+}

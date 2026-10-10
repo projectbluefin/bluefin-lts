@@ -45,6 +45,21 @@ copy_systemfiles_for() {
 # Satisfy dracut-install when installing the /root symlink pointing to var/roothome
 mkdir -p /var/roothome
 
+# The GNOME package factory. Its repository is copied into the image by the
+# Containerfile; this enables it before any dnf call, so the base packages and
+# the GNOME group below all resolve against the same repository.
+#
+# Runs before the base overrides because those install glib2, fontconfig and
+# selinux-policy, and dnf decides which repository answers for a name at
+# resolution time. Enabling it afterwards would mean those three come from the
+# base image while GNOME comes from the factory -- the exact skew the
+# versionlock set in 10-packages-image-base.sh exists to prevent.
+if [ -d /run/gnome-packages ]; then
+	printf "::group:: ===gnome-factory-repo===\n"
+	"${CONTEXT_PATH}/factory/system/install-factory-repo.sh"
+	printf "::endgroup::\n"
+fi
+
 run_buildscripts_for base
 
 CUSTOM_NAME="bluefin"

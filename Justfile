@@ -9,6 +9,7 @@ export coreos_stable_kernel := env("COREOS_STABLE_KERNEL", "7.1.8-200.fc44")
 export HOME := env("HOME", "")
 export common_image := env("COMMON_IMAGE", "ghcr.io/projectbluefin/common:latest")
 export brew_image := env("BREW_IMAGE", "ghcr.io/ublue-os/brew:latest")
+export gnome_packages_image := env("GNOME_PACKAGES_IMAGE", "ghcr.io/projectbluefin/bluefin-lts-packages:latest")
 
 alias build-vm := build-qcow2
 alias rebuild-vm := rebuild-qcow2
@@ -128,6 +129,19 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     BUILD_ARGS+=("--build-arg" "ENABLE_DX=${dx}")
     BUILD_ARGS+=("--build-arg" "ENABLE_NVIDIA=${nvidia}")
     BUILD_ARGS+=("--build-arg" "GNOME_VERSION=${gnome_version}")
+
+    # The GNOME factory image is optional. An empty digest means the factory
+    # has not published yet, and the build must still work using the base
+    # image's GNOME -- so the arg is omitted entirely rather than passed empty,
+    # because "FROM ''" is a parse error rather than a fallback.
+    gnome_packages_sha=$(yq -r '.images[] | select(.name == "gnome_packages") | .digest // ""' image-versions.yaml)
+    if [[ -n "${gnome_packages_sha}" ]]; then
+        BUILD_ARGS+=("--build-arg" "GNOME_PACKAGES_IMAGE_REF=${gnome_packages_image}@${gnome_packages_sha}")
+        echo "GNOME packages from ${gnome_packages_image}@${gnome_packages_sha}"
+    else
+        echo "WARNING: no GNOME factory digest in image-versions.yaml; using the base image's GNOME"
+        echo "         expected until the factory publishes its first image"
+    fi
     # Select the pinned CoreOS akmods stream for mounted ZFS/NVIDIA images.
     ARCH=$(uname -m)
     coreos_fedora_ver="${coreos_stable_version}"
@@ -510,3 +524,65 @@ secureboot base="bluefin-lts" tag="stable" flavor="main":
 [group('Just')]
 unit-tests:
     bats tests/unit/
+
+# ── GNOME package factory ───────────────────────────────────────────────────
+# The factory in factory/ builds the GNOME stack against CentOS Stream 10 and
+# publishes it as an OCI repository image. See factory/README.md.
+#
+# These are fast local checks. Nothing here builds an RPM: that is the
+# `Factory build packages` workflow, against the pinned c10s build root.
+
+# Everything CI gates on for the factory, in the order it should fail.
+# Mirrors .github/workflows/factory-validate.yml.
+[group('Factory')]
+factory-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "==> factory unit tests"
+    python3 -m unittest discover -s factory/tests
+    echo "==> factory configuration"
+    for check in provenance locks buildroot contract specs; do
+        python3 factory/tools/validate.py --check "$check"
+    done
+    echo "==> recipe provenance sidecars"
+    python3 factory/tools/import_srpm.py status
+    echo "==> generated Packit configuration is current"
+    python3 factory/tools/render_packit_config.py --check
+
+# What the factory would build and why. Pass `full=true` to ignore the
+# published state and list everything.
+[group('Factory')]
+factory-plan full="false":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    args=(--root factory)
+    [[ "{{ full }}" == "true" ]] && args+=(--full)
+    python3 factory/tools/rebuild_plan.py "$${args[@]}"
+
+# The resolved upstream source for every recipe, and which are still unlocked.
+[group('Factory')]
+factory-sources:
+    python3 factory/tools/source_pipeline.py report
+
+# Re-render config/upstream-sources.json from the recipes, in the build root.
+# Needs a container engine; downloads every source to compute its digest.
+[group('Factory')]
+factory-relock engine="podman":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python3 factory/tools/render_source_locks.py --engine "{{ engine }}" --write
+    python3 factory/tools/render_packit_config.py --write
+
+# Re-render .packit.yaml after adding or removing a recipe.
+[group('Factory')]
+factory-packit-config:
+    python3 factory/tools/render_packit_config.py --write
+
+# Prove one recipe produces an SRPM. Needs a container engine.
+[group('Factory')]
+factory-srpm package engine="docker":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p factory/work/srpm
+    python3 factory/tools/srpm_gate.py "{{ package }}" \
+        --output "factory/work/srpm/{{ package }}.src.rpm"

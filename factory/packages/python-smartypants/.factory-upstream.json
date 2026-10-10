@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:37+00:00",
+  "package": "python-smartypants",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "94297802355ce26b3ad5f3fb983bce4edc8e8a86d831f1576484b10fd2780a98",
+    "srpm_checksum_type": "sha256",
+    "tree": "fca44543769ecf00b7c37765b8e090083912227e"
+  }
+}

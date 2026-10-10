@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:46:52+00:00",
+  "package": "gtk4",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "74192ad7681fd05398da6f3812943a8325209b67edbbe5a71a9587446e83c25e",
+    "srpm_checksum_type": "sha256",
+    "tree": "c7044dbc66df11b4cd955bf6ffbd16cf16f149aa"
+  }
+}

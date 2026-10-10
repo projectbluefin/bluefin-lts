@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:33+00:00",
+  "package": "ptyxis",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "9f81fcbd9fd2921dee294dcddadcf1e82352d933e8a3d160879bbb89008922b3",
+    "srpm_checksum_type": "sha256",
+    "tree": "9e9200f0caf781ad7c959254002256bf4ba5d7bc"
+  }
+}

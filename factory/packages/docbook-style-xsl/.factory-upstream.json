@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:45:58+00:00",
+  "package": "docbook-style-xsl",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "ae652b41a0d287a152fd7dcf489be6818ee3cdaf114eb977cafe4e996f8d7895",
+    "srpm_checksum_type": "sha256",
+    "tree": "42e7bbafe2763c9b92f5e456a517f1727b18bc28"
+  }
+}

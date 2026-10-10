@@ -4,6 +4,12 @@ ARG BASE_IMAGE_SHA="${BASE_IMAGE_SHA:-sha256-feea845d2e245b5e125181764cfbc26b6da
 ARG AKMODS_VERSION="${AKMODS_VERSION:-coreos-stable-43}"
 ARG COMMON_IMAGE_REF
 ARG BREW_IMAGE_REF
+# The GNOME stack this image installs, built by factory/ against this same
+# CentOS Stream base. Pinned by digest: a tag would let the repository change
+# under a rebuild, which would make the image unreproducible and the packages
+# in it unattributable. Empty by default so a build with no factory image
+# available still works -- it just falls back to the base image's GNOME.
+ARG GNOME_PACKAGES_IMAGE_REF=""
 # Upstream mounts akmods-zfs and akmods-nvidia-open; LTS defaults to CoreOS-stable kernel tags.
 # Keep this build recipe in sync with the testing promotion pipeline.
 FROM ghcr.io/ublue-os/akmods-zfs:${AKMODS_VERSION} AS akmods_zfs
@@ -11,6 +17,11 @@ FROM ghcr.io/ublue-os/akmods-nvidia-open:${AKMODS_VERSION} AS akmods_nvidia_open
 FROM ${COMMON_IMAGE_REF} AS common
 FROM ${BREW_IMAGE_REF} AS brew
 FROM scratch AS ctx
+# The factory publishes a createrepo_c repository as the image's only
+# content. COPY --from of a scratch image carries that directory and nothing
+# else, so there is no shell or package manager to reason about in the source
+# stage.
+FROM ${GNOME_PACKAGES_IMAGE_REF} AS gnome_packages
 
 COPY system_files /files
 COPY --from=brew /system_files /files
@@ -19,6 +30,7 @@ COPY --from=common /system_files/bluefin /files
 COPY system_files_overrides /overrides
 COPY build_scripts /build_scripts
 COPY image-versions.yaml /image-versions.yaml
+COPY factory /factory
 
 ARG MAJOR_VERSION="${MAJOR_VERSION:-c10s}"
 FROM quay.io/centos-bootc/centos-bootc:$MAJOR_VERSION
@@ -31,7 +43,14 @@ ARG IMAGE_NAME="${IMAGE_NAME:-bluefin}"
 ARG IMAGE_VENDOR="${IMAGE_VENDOR:-ublue-os}"
 ARG MAJOR_VERSION="${MAJOR_VERSION:-lts}"
 ARG SHA_HEAD_SHORT="${SHA_HEAD_SHORT:-deadbeef}"
+ARG GNOME_PACKAGES_IMAGE_REF
 ENV FEDORA_AKMODS_VERSION="${FEDORA_AKMODS_VERSION}"
+
+# The factory's RPM repository, installed by the GNOME group below. Copied in
+# rather than mounted: the RPMs must survive the RUN for the installed
+# packages to record a valid file reference for rpm verification, and a
+# tmpfs mount would leave dangling references in the rpm database.
+COPY --from=gnome_packages /factory /run/gnome-packages
 
 RUN --mount=type=tmpfs,dst=/opt \
   --mount=type=tmpfs,dst=/tmp \

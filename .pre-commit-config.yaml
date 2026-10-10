@@ -7,7 +7,25 @@ repos:
         - id: check-toml
         - id: check-yaml
         - id: end-of-file-fixer
+          # Imported recipes are excluded. They are upstream content, imported
+          # byte-for-byte and applied with `patch -p1`, and rewriting them
+          # breaks both halves of that:
+          #
+          #  - a patch that removes a line carrying trailing whitespace stops
+          #    matching once the whitespace is stripped, so `patch` fails.
+          #    factory/packages/fontconfig/fontconfig-fix-crash.patch has one
+          #    at line 26.
+          #  - AGENTS.md forbids modifying installed upstream/vendor content
+          #    unless the task is about that content.
+          #
+          # It also churns the input digest, which is what decides whether a
+          # package is selected for a rebuild, so re-importing the same
+          # upstream spec would select the factory for no reason.
+          exclude: ^factory/packages/
         - id: trailing-whitespace
+          # As above. 68 imported files carry trailing whitespace, 51 of them
+          # patches.
+          exclude: ^factory/packages/
         - id: check-merge-conflict
         - id: detect-private-key
         - id: check-added-large-files
@@ -29,3 +47,20 @@ repos:
         entry: 'uses:.*projectbluefin/(actions|testsuite).*@[0-9a-f]{40}'
         types: [yaml]
         files: '(^\.github/workflows/.*\.yml$|action\.yml$)'
+  - repo: local
+    hooks:
+      # The factory's own gate, run at commit time rather than only in CI so a
+      # broken recipe set is caught before it reaches a pull request. This is
+      # the fast check only -- it builds nothing.
+      - id: factory-validate
+        name: Validate the GNOME package factory
+        language: system
+        entry: python3 factory/tools/validate.py
+        pass_filenames: false
+        files: ^(factory/(packages|config|tools)/|\.packit\.yaml)
+      - id: factory-packit-config-current
+        name: .packit.yaml matches the recipe inventory
+        language: system
+        entry: python3 factory/tools/render_packit_config.py --check
+        pass_filenames: false
+        files: ^(factory/packages/|\.packit\.yaml)

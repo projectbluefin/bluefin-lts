@@ -1,0 +1,149 @@
+# Packit SRPM gate.
+#
+# Packit's job in this factory, and its limit, in one place: it turns a recipe
+# into an SRPM in seconds so a malformed spec fails before anything expensive
+# happens, and it stops there.
+#
+# It does NOT build binaries, and that is deliberate rather than unfinished.
+# Packit-as-a-service builds through Copr, and Copr has no CentOS Stream 10
+# chroot -- EL10 packages are built in epel-10-* or alma-kitten+epel-10-*, a
+# different ABI target from the c10s base this image ships on. So .packit.yaml
+# carries no `jobs:` section: Packit Service does no work on a pull request.
+# Binaries are built by factory-build.yml against the pinned c10s root.
+name: Packit SRPM gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "factory/packages/**"
+      - "factory/config/**"
+      - "factory/tools/**"
+      - ".packit.yaml"
+  pull_request:
+    paths:
+      - "factory/packages/**"
+      - "factory/config/**"
+      - "factory/tools/**"
+      - ".packit.yaml"
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Limit the gate to one package.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: factory-srpm-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  discover:
+    runs-on: ubuntu-24.04
+    outputs:
+      packages: ${{ steps.packages.outputs.packages }}
+      chunks: ${{ steps.packages.outputs.chunks }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - id: packages
+        env:
+          PACKAGE: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          if [ -n "$PACKAGE" ]; then
+            packages="[\"$PACKAGE\"]"
+          else
+            packages="$(python3 factory/tools/packit_workflow.py packages)"
+          fi
+          # Capture the substitution before writing it. "echo $(cmd) >> file"
+          # reports echo's status, not the command's, so a discovery failure
+          # would leave packages= behind a green job -- and an empty list is a
+          # matrix that runs nothing while the workflow still passes.
+          count=$(printf '%s' "$packages" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
+          test "$count" -gt 0
+          echo "discovered $count packages"
+          printf 'packages=%s\n' "$packages" >> "$GITHUB_OUTPUT"
+          # A non-empty list still is not enough: GitHub caps a matrix at 256
+          # jobs and expands a larger one to nothing rather than failing, so
+          # a run over the cap produces zero jobs under a green discover step.
+          chunks="$(python3 - "$packages" <<'PY'
+          import json, sys
+          from pathlib import Path
+          sys.path.insert(0, ".")
+          from factory.tools.packit_workflow import package_chunks
+          print(json.dumps(package_chunks(json.loads(sys.argv[1]))))
+          PY
+          )"
+          printf 'chunks=%s\n' "$chunks" >> "$GITHUB_OUTPUT"
+
+  srpm:
+    needs: discover
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.discover.outputs.chunks) }}
+    uses: ./.github/workflows/factory-packit-srpm-chunk.yml
+    with:
+      packages: ${{ matrix.chunk }}
+
+  # Pull requests get the same gate, but as a required check rather than as a
+  # fan-out: every changed recipe is covered, and nothing outside the diff is
+  # rebuilt to answer a question about one spec.
+  changed:
+    needs: discover
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      # Full history, not the default shallow fetch. This job diffs against
+      # the pull request's base commit, and a depth-1 checkout does not have
+      # that object: `git diff <base.sha> HEAD` answers "fatal: bad object",
+      # which names a SHA and says nothing about the shallow clone being the
+      # cause.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: List changed recipes
+        id: changed
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          # Name the cause rather than emitting git's "bad object" if the base
+          # is somehow still missing.
+          if ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+            echo "::error title=base commit unavailable::${base} is not in this clone. The checkout needs fetch-depth: 0 to diff against the pull request base."
+            exit 1
+          fi
+          changed=$(git diff --name-only "$base" HEAD -- factory/packages \
+            | awk -F/ '$1=="factory" && $2=="packages" {print $3}' | sort -u)
+          printf '%s\n' "$changed" | jq -R . | jq -s . > changed.json
+          count=$(jq length changed.json)
+          echo "$count changed recipes"
+          cat changed.json
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "packages=$(jq -c . changed.json)" >> "$GITHUB_OUTPUT"
+      - name: Build an SRPM for each changed recipe
+        if: steps.changed.outputs.count != '0'
+        env:
+          PACKAGES: ${{ steps.changed.outputs.packages }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/srpm
+          failed=0
+          while read -r package; do
+            [ -n "$package" ] || continue
+            echo "::group::packit srpm $package"
+            if python3 factory/tools/srpm_gate.py "$package" \
+                --output "work/srpm/$package.src.rpm"; then
+              echo "::endgroup::"
+              echo "SRPM OK: $package"
+            else
+              echo "::endgroup::"
+              echo "::error title=SRPM gate failed::$package"
+              failed=1
+            fi
+          done < <(jq -r '.[]' <<<"$PACKAGES")
+          test "$failed" -eq 0

@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:40:40+00:00",
+  "package": "el10-v2-buildflags",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "8e375123372d112b974ae7e6acad8a4b3860c5d796738f687d1e3dc1be9b63fa",
+    "srpm_checksum_type": "sha256",
+    "tree": "ecd967481cbe31576d2492a889472bba197a7498"
+  }
+}

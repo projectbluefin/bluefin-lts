@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:23+00:00",
+  "package": "libadwaita",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "7ee601d5292797250e4a1dd26c65a81aae1ab99c4591ecb6f99e46ae31c02e54",
+    "srpm_checksum_type": "sha256",
+    "tree": "b4f3abc576ef970ed79b80a2e7272b8df3dd4b48"
+  }
+}

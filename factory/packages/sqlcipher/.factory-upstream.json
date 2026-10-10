@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:49:22+00:00",
+  "package": "sqlcipher",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "161073e5976f5707af6f8c1960c2f677ab5be9678aa73e8059126b889f8b30e4",
+    "srpm_checksum_type": "sha256",
+    "tree": "bcd81a962b976b12fabff7d5616ea452935c9de2"
+  }
+}
