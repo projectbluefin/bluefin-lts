@@ -185,3 +185,6 @@ instead of accepting the older base version.
 
 The umockdev seccomp profile lives with its recipe and participates in the input
 digest, so a profile change selects a rebuild.
+
+AppStream staging uses the HTTPS release endpoint with the existing source
+checksum; the HTTP endpoint can fail before checksum verification.

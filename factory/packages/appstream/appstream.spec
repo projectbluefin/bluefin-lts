@@ -7,7 +7,7 @@ Release: 5%{?dist}
 License: GPL-2.0-or-later AND LGPL-2.1-or-later
 #URL:     http://www.freedesktop.org/wiki/Distributions/AppStream
 URL:     https://github.com/ximion/appstream
-Source0: http://www.freedesktop.org/software/appstream/releases/AppStream-%{version}.tar.xz
+Source0: https://www.freedesktop.org/software/appstream/releases/AppStream-%{version}.tar.xz
 
 # upstream patches
 # https://github.com/PackageKit/PackageKit/issues/720

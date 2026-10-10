@@ -6,7 +6,7 @@
       "version": "1.0.2",
       "sources": [
         {
-          "url": "http://www.freedesktop.org/software/appstream/releases/AppStream-1.0.2.tar.xz",
+          "url": "https://www.freedesktop.org/software/appstream/releases/AppStream-1.0.2.tar.xz",
           "filename": "AppStream-1.0.2.tar.xz",
           "sha512": "e5c109c383e3bf3af3693bfb3146663767c2c61fac0bd421f2ce52242fe7b869effeacc4d207987321dfeb4ab0ba77ece6c1c6eea054a7365204cd955426517a",
           "checksum_type": "sha512"
