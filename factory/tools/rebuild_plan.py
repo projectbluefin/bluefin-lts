@@ -47,12 +47,18 @@ def input_digest(record, root: Path) -> str:
         hasher.update(path.name.encode())
         hasher.update(path.read_bytes())
     hasher.update(json.dumps(record.lock, sort_keys=True).encode())
-    config = root / "config" / "buildroot.yaml"
-    if config.is_file():
-        # The pin and the CRB requirement both decide what a build resolves
-        # against, so both belong in the digest. Renaming the build root
-        # image or dropping CRB has to select the whole factory.
-        hasher.update(config.read_text().encode())
+    # Read through buildroot_config rather than opening the file directly: a
+    # wrong path here is silent. The build root would simply stop contributing
+    # to the digest, and moving it would stop selecting anything to rebuild.
+    from tools.buildroot import buildroot_config
+
+    try:
+        hasher.update(json.dumps(buildroot_config(root), sort_keys=True).encode())
+    except ValueError:
+        # validate.py is what reports a missing or malformed build root; this
+        # must not be the place that fails first, or the selection silently
+        # omits a build-root change.
+        pass
     return hasher.hexdigest()[:32]
 
 

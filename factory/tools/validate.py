@@ -18,11 +18,10 @@ provenance cannot be stated.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import sys
 from pathlib import Path
-
-import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -89,41 +88,75 @@ def check_locks(root: Path) -> list[str]:
 
 def check_buildroot(root: Path) -> list[str]:
     """The build root must be pinned by digest, and state its repositories."""
-    path = root / "config" / "buildroot.yaml"
+    path = root / "config" / "buildroot.json"
     if not path.is_file():
-        return ["config/buildroot.yaml: missing; the build root must be pinned"]
+        return ["config/buildroot.json: missing; the build root must be pinned"]
     try:
-        document = yaml.safe_load(path.read_text())
-    except yaml.YAMLError as error:
-        return [f"config/buildroot.yaml: {error}"]
+        document = json.loads(path.read_text())
+    except json.JSONDecodeError as error:
+        return [f"config/buildroot.json: {error}"]
 
     if not isinstance(document, dict):
-        return ["config/buildroot.yaml: expected a mapping"]
+        return ["config/buildroot.json: expected an object"]
 
     problems = []
     for field in ("image", "digest"):
         if not document.get(field):
-            problems.append(f"config/buildroot.yaml: no {field}")
+            problems.append(f"config/buildroot.json: no {field}")
 
     digest = str(document.get("digest", ""))
     if digest and (not digest.startswith("sha256:") or len(digest) != 71):
         problems.append(
-            f"config/buildroot.yaml: digest {digest!r} is not a sha256. A tag "
+            f"config/buildroot.json: digest {digest!r} is not a sha256. A tag "
             "alone means the factory builds against whatever the tag resolved "
             "to, which is neither reproducible nor attestable."
         )
 
     # CRB ships disabled in c10s and several build roots for this stack live
-    # only there. A buildroot.yaml that forgets it produces a BuildRequires
+    # only there. A buildroot.json that forgets it produces a BuildRequires
     # failure naming meson, which does not say the repository was off.
     if "crb" not in (document.get("repositories") or []):
         problems.append(
-            "config/buildroot.yaml: repositories does not include crb. "
+            "config/buildroot.json: repositories does not include crb. "
             "meson, ninja-build, wayland-devel and gcc-g++ are CRB-only on EL10."
         )
 
     if not document.get("bootstrap"):
-        problems.append("config/buildroot.yaml: no bootstrap packages")
+        problems.append("config/buildroot.json: no bootstrap packages")
+    return problems
+
+
+def check_dependencies(root: Path) -> list[str]:
+    """No tool may import a third-party module.
+
+    Cheap to check, and the failure it prevents is expensive and confusing: a
+    ModuleNotFoundError names a module and nothing about the fact that CI never
+    installed it.
+    """
+    problems = []
+    for tool in sorted((root / "tools").glob("*.py")):
+        tree = ast.parse(tool.read_text(), filename=str(tool))
+        for node in ast.walk(tree):
+            names = []
+            if isinstance(node, ast.Import):
+                names = [alias.name.split(".")[0] for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                # A relative import (level > 0) is this factory's own package.
+                if node.level and node.level > 0:
+                    continue
+                if node.module:
+                    names = [node.module.split(".")[0]]
+            for name in names:
+                # `tools` is this factory's own package, reached via the
+                # sys.path entry every tool sets up.
+                if name in sys.stdlib_module_names or name == "tools":
+                    continue
+                problems.append(
+                    f"{tool.name}: imports {name!r}, which is not in the standard "
+                    "library. CI installs no Python packages, so this fails on "
+                    "the runner. Use the stdlib, as build_scripts/scripts/"
+                    "read-packages does."
+                )
     return problems
 
 
@@ -207,6 +240,7 @@ CHECKS = {
     "contract": check_contract,
     "specs": check_spec_sanity,
     "changelog": check_changelog_dates,
+    "dependencies": check_dependencies,
 }
 
 

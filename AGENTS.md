@@ -72,7 +72,7 @@ concerns that vendor content.
 - **A build never downloads a source.** Every recipe carries a SHA-512 lock in
   `factory/config/upstream-sources.json`. Adding a recipe without one, or
   pointing its primary URL at a Fedora lookaside, is a defect.
-- **The build root is pinned by digest** in `factory/config/buildroot.yaml`.
+- **The build root is pinned by digest** in `factory/config/buildroot.json`.
   Moving it changes the ABI every published RPM is attributable to, and needs
   a pull request.
 - **Packit is the SRPM gate only.** Adding a `jobs:` section to `.packit.yaml`

@@ -1,7 +1,7 @@
 # Build the factory's RPMs and publish them as an OCI repository image.
 #
 # This is the binary lane. It runs in our own workflow, against the c10s image
-# pinned in factory/config/buildroot.yaml, because that is the base the image
+# pinned in factory/config/buildroot.json, because that is the base the image
 # actually ships on. Packit and Copr cannot stand in for it: Copr has no
 # CentOS Stream 10 chroot, so anything built there would target a different ABI
 # than the image it feeds.

@@ -79,7 +79,7 @@ build root happens to serve.
 ```
 factory/
   config/
-    buildroot.yaml            the pinned c10s build root, its repositories, bootstrap
+    buildroot.json            the pinned c10s build root, its repositories, bootstrap
     factory-contract.json     projectbluefin/common, pinned by commit
     upstream-sources.json     generated; URL + SHA-512 per recipe
   packages/<name>/

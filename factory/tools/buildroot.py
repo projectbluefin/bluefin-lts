@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Prepare the buildroot image exactly once for a whole run.
 
-``config/buildroot.yaml`` names the image every RPM is built against, and is
+``config/buildroot.json`` names the image every RPM is built against, and is
 the single source of truth for it. The image is pulled once here, resolved to
 a digest, recorded, and saved as a single artifact every build job in the run
 loads from disk.
+
+JSON rather than YAML, and the standard library rather than PyYAML: this tool
+runs on CI runners that do not have third-party Python packages installed, and
+a tool that only works on the machine that wrote it is not a tool.
 
 Why not have each job pull the pin itself:
 
@@ -30,8 +34,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import yaml
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tools.inventory import factory_root, inventory
@@ -40,12 +42,15 @@ MIRROR_PREFIX = "ghcr.io/projectbluefin/bluefin-lts-buildroot"
 
 
 def buildroot_config(root: Path) -> dict:
-    path = root / "config" / "buildroot.yaml"
+    path = root / "config" / "buildroot.json"
     if not path.is_file():
         raise ValueError(f"{path} is missing; the build root must be pinned")
-    document = yaml.safe_load(path.read_text())
+    try:
+        document = json.loads(path.read_text())
+    except json.JSONDecodeError as error:
+        raise ValueError(f"{path}: {error}") from error
     if not isinstance(document, dict):
-        raise ValueError(f"{path}: expected a mapping")
+        raise ValueError(f"{path}: expected an object")
     for field in ("image", "digest"):
         if not document.get(field):
             raise ValueError(f"{path}: no {field}")
@@ -169,7 +174,7 @@ def main() -> int:
             args.output.write_text(json.dumps(result, indent=2) + "\n")
         if args.snapshot:
             snapshot(root, result["actual"] or result["expected"], args.snapshot)
-    except (ValueError, yaml.YAMLError) as error:
+    except ValueError as error:
         raise SystemExit(str(error)) from error
     except subprocess.CalledProcessError as error:
         raise SystemExit(str(error)) from error

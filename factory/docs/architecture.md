@@ -28,7 +28,7 @@ dependencies of the binary path.
 
 ## Build root
 
-`config/buildroot.yaml` pins `quay.io/centos-bootc/centos-bootc:c10s` by
+`config/buildroot.json` pins `quay.io/centos-bootc/centos-bootc:c10s` by
 digest. That is the image the released artifact is built on, so a package
 built here links against the same libraries the running system has.
 
@@ -58,7 +58,7 @@ Every build step enables it before resolving BuildRequires.
 
 Without that, the failure is `No matching package to install: meson`, which
 reads as a missing package rather than a disabled repository. The requirement
-is declared in `config/buildroot.yaml` and asserted by `validate.py`, so it is
+is declared in `config/buildroot.json` and asserted by `validate.py`, so it is
 stated next to the pin it applies to instead of living in three workflow files.
 
 ## Naming the spec explicitly

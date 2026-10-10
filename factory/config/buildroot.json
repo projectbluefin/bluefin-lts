@@ -1,0 +1,48 @@
+{
+  "_comment": [
+    "The factory's build root: the image every RPM is built against.",
+    "Single source of truth; every tool that needs it reads it from here.",
+    "",
+    "It is deliberately the same image the released artifact is built on.",
+    "Anything else is a different ABI target, and a package that links",
+    "against it does not link against the running system.",
+    "",
+    "JSON rather than YAML so the tools depend only on the standard library.",
+    "The repository's read-packages helper is stdlib-only for the same",
+    "reason, and a third-party import here fails on a CI runner that does",
+    "not happen to have it installed. The rationale lives in",
+    "factory/docs/architecture.md, sections 'Build root' and 'CRB'.",
+    "",
+    "Move this with a pull request. The digest is what every published RPM",
+    "is attributable to."
+  ],
+
+  "image": "quay.io/centos-bootc/centos-bootc:c10s",
+
+  "digest": "sha256:461475970a848fa4c819e458d6780e1f525be2a21b274436edfbb10440d5c850",
+
+  "_comment_digest": [
+    "A tag alone is not a pin: it means building against whatever the tag",
+    "resolved to, which is neither reproducible nor attestable."
+  ],
+
+  "_comment_registry_pull_per_job": [
+    "The build root is pulled once per run and passed between jobs as an",
+    "artifact, so every job provably uses the same bytes. On GitHub-hosted",
+    "runners the disk budget is 14 GB and seven c10s images is over it, so",
+    "this escape hatch exists. It is false by default, which makes using it",
+    "a visible choice rather than an accident."
+  ],
+  "registry_pull_per_job": false,
+
+  "_comment_repositories": [
+    "CRB ships disabled in c10s and several build roots for this stack live",
+    "only there: meson, ninja-build, wayland-devel, gcc-g++. Without it,",
+    "BuildRequires resolution fails with 'No matching package to install:",
+    "meson', which reads as a missing package rather than a disabled",
+    "repository. Asserted by tools/validate.py."
+  ],
+  "repositories": ["crb"],
+
+  "bootstrap": ["rpm-build", "dnf-plugins-core"]
+}
