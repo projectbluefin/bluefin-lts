@@ -81,7 +81,8 @@ def is_mirror(reference: str) -> bool:
 def resolve(pin: str, engine: str = "docker") -> dict:
     """Pull the build root and report what it resolved to."""
     reference, expected = split_pin(pin)
-    pull = subprocess.run([engine, "pull", pin], capture_output=True, text=True)
+    print(f"pulling immutable build root: {pin}", flush=True)
+    pull = subprocess.run([engine, "pull", pin], text=True, check=False)
     resolved = subprocess.run(
         [engine, "image", "inspect", pin, "--format", "{{index .RepoDigests 0}}"],
         capture_output=True,
@@ -103,7 +104,7 @@ def resolve(pin: str, engine: str = "docker") -> dict:
         raise SystemExit(
             f"build root {pin} is unavailable or does not match its pin.\n"
             f"  actual: {actual or '(not pulled)'}\n"
-            f"  {pull.stderr.strip()}"
+            "  see the registry pull output above"
         )
     return result
 

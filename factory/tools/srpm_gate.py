@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.inventory import factory_root, inventory
 from tools.source_pipeline import fetch_source, verify_staged
 
-PACKIT_IMAGE = "quay.io/packit/packit"
+PACKIT_IMAGE = "quay.io/packit/packit@sha256:b4667f390c25f4a871e458bddc62003db30c60fac64f17a925dfaaa9279a8af7"
 
 
 def command(package: str, record, output: Path, root: Path, image: str, engine: str = "docker") -> list[str]:
@@ -131,8 +131,8 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
         "--image",
-        default=f"{PACKIT_IMAGE}:latest",
-        help="Packit container image; pin by digest in CI",
+        default=PACKIT_IMAGE,
+        help="Packit container image (defaults to the CI-verified immutable digest)",
     )
     args = parser.parse_args()
     return build(args.package, args.output, args.root, args.image, args.engine)

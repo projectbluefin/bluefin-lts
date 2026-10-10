@@ -1,6 +1,6 @@
 # GNOME package factory
 
-Builds the GNOME 51 desktop stack as RPMs against **CentOS Stream 10**, and
+Builds the GNOME desktop stack (currently seeded from GNOME 50) as RPMs against **CentOS Stream 10**, and
 publishes them as an OCI image the image build copies in.
 
 This directory is the package factory. It is not consumed by anything except

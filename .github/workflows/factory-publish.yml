@@ -45,7 +45,7 @@ jobs:
   publish:
     runs-on: ubuntu-24.04
     outputs:
-      ref: ${{ steps.push.outputs.ref }}
+      ref: ${{ steps.promote.outputs.ref }}
       digest: ${{ steps.push.outputs.digest }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -167,13 +167,11 @@ jobs:
             --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \
             -t factory-repo:stage image
 
-      - name: Push and sign the immutable image before moving the stream tag
+      - name: Push and sign the immutable image
         if: steps.assemble.outputs.count != '0'
         id: push
         env:
           REPOSITORY_OWNER: ${{ github.repository_owner }}
-          REF_NAME: ${{ github.ref_name }}
-          REF: ${{ github.ref }}
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
@@ -186,15 +184,7 @@ jobs:
           digest=$(docker image inspect "$immutable" --format '{{index .RepoDigests 0}}' | sed 's/.*@//')
           [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
           cosign sign --yes "$image@$digest"
-          if [ "$REF" = refs/heads/main ]; then
-            tag=latest
-          else
-            tag=$(printf '%s' "$REF_NAME" | tr '/' '-' | tr -cd '[:alnum:]._- ' | tr -d ' ' | cut -c1-96)
-          fi
-          test -n "$tag"
-          docker tag factory-repo:stage "$image:$tag"
-          docker push "$image:$tag"
-          echo "ref=$image:$tag" >> "$GITHUB_OUTPUT"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
 
       - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
@@ -203,3 +193,22 @@ jobs:
           subject-name: ghcr.io/${{ github.repository_owner }}/bluefin-lts-packages
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
+
+      - name: Move the stream tag after signatures and provenance
+        if: steps.assemble.outputs.count != '0'
+        id: promote
+        env:
+          IMAGE: ${{ steps.push.outputs.image }}
+          REF_NAME: ${{ github.ref_name }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          if [ "$REF" = refs/heads/main ]; then
+            tag=latest
+          else
+            tag=$(printf '%s' "$REF_NAME" | tr '/' '-' | tr -cd '[:alnum:]._- ' | tr -d ' ' | cut -c1-96)
+          fi
+          test -n "$tag"
+          docker tag factory-repo:stage "$IMAGE:$tag"
+          docker push "$IMAGE:$tag"
+          echo "ref=$IMAGE:$tag" >> "$GITHUB_OUTPUT"

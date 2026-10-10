@@ -75,6 +75,7 @@ jobs:
           docker rm context-check
           docker build "${args[@]}" --target gnome_packages -t factory-empty-check .
           docker create --name empty-check factory-empty-check /unused
+          mkdir -p work/empty
           docker cp empty-check:/factory/. work/empty/
           test ! -f work/empty/repodata/repomd.xml
           docker rm empty-check

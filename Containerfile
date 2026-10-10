@@ -7,8 +7,8 @@ ARG BREW_IMAGE_REF
 # The GNOME stack this image installs, built by factory/ against this same
 # CentOS Stream base. Pinned by digest: a tag would let the repository change
 # under a rebuild, which would make the image unreproducible and the packages
-# in it unattributable. Empty by default so a build with no factory image
-# available still works -- it just falls back to the base image's GNOME.
+# in it unattributable. A local empty stage is the default until a factory
+# digest is available, preserving the existing GNOME installation path.
 ARG GNOME_PACKAGES_IMAGE_REF="gnome_packages_empty"
 # Upstream mounts akmods-zfs and akmods-nvidia-open; LTS defaults to CoreOS-stable kernel tags.
 # Keep this build recipe in sync with the testing promotion pipeline.
@@ -18,12 +18,12 @@ FROM ${COMMON_IMAGE_REF} AS common
 FROM ${BREW_IMAGE_REF} AS brew
 FROM scratch AS gnome_packages_empty
 COPY factory/empty/ /factory/
-FROM ${GNOME_PACKAGES_IMAGE_REF} AS gnome_packages
-FROM scratch AS ctx
 # The factory publishes a createrepo_c repository as the image's only
 # content. COPY --from of a scratch image carries that directory and nothing
 # else, so there is no shell or package manager to reason about in the source
 # stage.
+FROM ${GNOME_PACKAGES_IMAGE_REF} AS gnome_packages
+FROM scratch AS ctx
 COPY system_files /files
 COPY --from=brew /system_files /files
 COPY --from=common /system_files/shared /files

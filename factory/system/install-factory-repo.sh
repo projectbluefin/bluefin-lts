@@ -7,7 +7,7 @@
 # third-party package service sits between a source release and the shipped
 # image.
 #
-# Sourced rather than written inline, because the repository file has to exist
+# Run before package installation, because the repository file has to exist
 # before the first dnf call that might use it, and the versionlock set below is
 # read from the same manifest the package install uses.
 
