@@ -100,12 +100,16 @@ Run `just factory-check` before every commit that touches `factory/**` or
   backports already present upstream and rebase remaining patches. Glycin’s
   jpegxl-sys binding also sets a minimum for the private JPEG XL bundle; match
   that minimum instead of bypassing pkg-config checks. Match all
-  upstream version minima in BuildRequires, including Pango’s HarfBuzz minimum,
+  upstream version minima in BuildRequires, including Pango’s HarfBuzz minimum
+  GNOME Portal’s core portal minimum, and Control Center’s AccountsService
+  minimum,
   so the graph selects a factory prerequisite when CentOS is too old. Malcontent
   supplies Initial Setup’s enabled parental controls; lock all of its bundled
   subprojects and expose new pkgconfig capabilities before planning. Manual
   Meson setup calls must use `--wrap-mode=nodownload`; missing dependencies
-  must fail instead of fetching an unlocked fallback.
+  must fail instead of fetching an unlocked fallback. AccountsService derives its
+  project version from Git; when prep creates a Git tree, tag the locked release
+  before Meson setup so generated pkgconfig versions match the recipe.
 
 ## Build and publication verification
 

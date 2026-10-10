@@ -1,9 +1,9 @@
 %bcond cloudproviders %{undefined rhel}
 
-%global glib2_version 2.79.0
+%global glib2_version 2.89.0
 %global gnome_autoar_version 0.4.4
-%global gtk4_version 4.17.5
-%global libadwaita_version 1.6~beta
+%global gtk4_version 4.22.0
+%global libadwaita_version 1.8~alpha
 
 Name:           nautilus
 Version:        51.0.1
@@ -39,8 +39,8 @@ BuildRequires:  pkgconfig(libadwaita-1) >= %{libadwaita_version}
 %if %{with cloudproviders}
 BuildRequires:  pkgconfig(cloudproviders)
 %endif
-BuildRequires:  pkgconfig(libportal)
-BuildRequires:  pkgconfig(libportal-gtk4)
+BuildRequires:  pkgconfig(libportal) >= 0.7
+BuildRequires:  pkgconfig(libportal-gtk4) >= 0.5
 BuildRequires:  pkgconfig(libseccomp)
 BuildRequires:  pkgconfig(libselinux)
 BuildRequires:  pkgconfig(libxml-2.0)
@@ -49,8 +49,8 @@ BuildRequires:  pkgconfig(x11)
 BuildRequires:  /usr/bin/appstream-util
 # needed by test/automated/displayless
 BuildRequires:  localsearch
-BuildRequires:  pkgconfig(glycin-gtk4-2)
-BuildRequires:  pkgconfig(blueprint-compiler)
+BuildRequires:  pkgconfig(glycin-gtk4-2) >= 2
+BuildRequires:  blueprint-compiler >= 0.19.0
 
 Requires:       glib2%{_isa} >= %{glib2_version}
 Requires:       gnome-autoar%{_isa} >= %{gnome_autoar_version}

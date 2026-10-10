@@ -7,8 +7,8 @@
 %global pipewire_version 0.2.90
 
 Name:    xdg-desktop-portal
-Version: 1.21.0
-Release: %autorelease
+Version: 1.22.1
+Release: 1%{?dist}
 Summary: Portal frontend service to flatpak
 
 # doc/website is CC0-1.0 but it is not included in rpm
@@ -16,12 +16,14 @@ License: LGPL-2.1-or-later
 URL:     https://github.com/flatpak/xdg-desktop-portal/
 Source0: https://github.com/flatpak/xdg-desktop-portal/releases/download/%{version}/%{name}-%{version}.tar.xz
 
+BuildRequires: bubblewrap
 BuildRequires: gcc
 BuildRequires: gettext
 BuildRequires: meson
 BuildRequires: systemd-rpm-macros
 BuildRequires: pkgconfig(flatpak) >= %{flatpak_version}
-BuildRequires: pkgconfig(fuse3)
+BuildRequires: pkgconfig(fuse3) >= 3.10.0
+BuildRequires: pkgconfig(gudev-1.0)
 BuildRequires: pkgconfig(gdk-pixbuf-2.0)
 BuildRequires: pkgconfig(gio-unix-2.0) >= %{glib_version}
 BuildRequires: pkgconfig(gstreamer-pbutils-1.0)
@@ -47,6 +49,7 @@ BuildRequires: gstreamer1-plugins-good
 # for man-pages
 BuildRequires: /usr/bin/rst2man
 
+Requires:      bubblewrap
 Requires:      dbus
 Requires:      geoclue2 >= %{geoclue_version}
 Requires:      glib2%{?_isa} >= %{glib_version}
@@ -67,6 +70,7 @@ path (/org/freedesktop/portal/desktop). The portal interfaces include APIs for
 file access, opening URIs, printing and others.
 
 %package  devel
+Provides: pkgconfig(xdg-desktop-portal) = %{version}
 Summary:  Development files for %{name}
 Requires: %{name}%{?_isa} = %{version}-%{release}
 
@@ -150,4 +154,3 @@ install -dm 755 %{buildroot}/%{_datadir}/xdg-desktop-portal/portals
 
 
 %changelog
-%autochangelog

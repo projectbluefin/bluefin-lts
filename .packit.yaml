@@ -12,6 +12,12 @@ actions:
   create-archive:
     - bash -c 'python3 "$(git rev-parse --show-toplevel)/factory/tools/packit_source0.py"'
 packages:
+  accountsservice:
+    specfile_path: accountsservice.spec
+    upstream_package_name: accountsservice
+    downstream_package_name: accountsservice
+    paths:
+      - factory/packages/accountsservice
   appstream:
     specfile_path: appstream.spec
     upstream_package_name: appstream

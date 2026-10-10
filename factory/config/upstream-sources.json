@@ -2,6 +2,21 @@
   "schema": 1,
   "packages": [
     {
+      "name": "accountsservice",
+      "version": "26.27.3",
+      "sources": [
+        {
+          "url": "https://gitlab.freedesktop.org/accountsservice/accountsservice/-/archive/26.27.3/accountsservice-26.27.3.tar.bz2",
+          "filename": "accountsservice-26.27.3.tar.bz2",
+          "sha512": "443cb2f3e418ea028828a7ac53b101c9888ba4750d053e11a3d0678f7269dcba0f1d8f2426e772c0795ee15622953692893eaec92667f217c9caa57bbc4a0c8d",
+          "fallback_urls": [
+            "https://src.fedoraproject.org/repo/pkgs/rpms/accountsservice/accountsservice-26.27.3.tar.bz2/sha512/443cb2f3e418ea028828a7ac53b101c9888ba4750d053e11a3d0678f7269dcba0f1d8f2426e772c0795ee15622953692893eaec92667f217c9caa57bbc4a0c8d/accountsservice-26.27.3.tar.bz2"
+          ],
+          "checksum_type": "sha512"
+        }
+      ]
+    },
+    {
       "name": "appstream",
       "version": "1.0.2",
       "sources": [
@@ -655,7 +670,10 @@
           "url": "https://tecnocode.co.uk/downloads/malcontent/malcontent-0.14.0.tar.xz",
           "filename": "malcontent-0.14.0.tar.xz",
           "sha512": "e1b7d1d5895b37dce0662ac4e01d1a8dc726a32361c159ae41b4338e06c0920f6a5d14ad7df9a5d98e5ac6e648d06017ccbb2100896cbe11446733d5ba1e449d",
-          "checksum_type": "sha512"
+          "checksum_type": "sha512",
+          "fallback_urls": [
+            "https://src.fedoraproject.org/repo/pkgs/rpms/malcontent/malcontent-0.14.0.tar.xz/sha512/e1b7d1d5895b37dce0662ac4e01d1a8dc726a32361c159ae41b4338e06c0920f6a5d14ad7df9a5d98e5ac6e648d06017ccbb2100896cbe11446733d5ba1e449d/malcontent-0.14.0.tar.xz"
+          ]
         },
         {
           "url": "https://gitlab.gnome.org/pwithnall/libgsystemservice/-/archive/0.3.0/libgsystemservice-0.3.0.tar.bz2",
@@ -990,12 +1008,12 @@
     },
     {
       "name": "xdg-desktop-portal",
-      "version": "1.21.0",
+      "version": "1.22.1",
       "sources": [
         {
-          "url": "https://github.com/flatpak/xdg-desktop-portal/releases/download/1.21.0/xdg-desktop-portal-1.21.0.tar.xz",
-          "filename": "xdg-desktop-portal-1.21.0.tar.xz",
-          "sha512": "6b9657643c455046f8a31f7c69f69a8fa3f3470fa8086a4b6be0fb44dc719954416f63140acc9eec4f018e86153dbab6bedcdaf3360f4d71f173ed3fe1249c9d",
+          "url": "https://github.com/flatpak/xdg-desktop-portal/releases/download/1.22.1/xdg-desktop-portal-1.22.1.tar.xz",
+          "filename": "xdg-desktop-portal-1.22.1.tar.xz",
+          "sha512": "c37319e84d8830e19e1fe4dd21d909c2fd9d7a9deb2720d3f83d33bbe00bac4c22e49018c1c8be0d0c4c038a9a236748ba03c73d2f1351de7bf9ad4fbffee4c8",
           "checksum_type": "sha512"
         }
       ]

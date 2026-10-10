@@ -47,7 +47,7 @@ BuildRequires: pkgconfig(libwacom)
 BuildRequires: pkgconfig(xkbcommon)
 BuildRequires: pkgconfig(glesv2)
 BuildRequires: pkgconfig(graphene-gobject-1.0)
-BuildRequires: pkgconfig(libdisplay-info)
+BuildRequires: pkgconfig(libdisplay-info) >= 0.2
 BuildRequires: pkgconfig(libpipewire-0.3) >= %{pipewire_version}
 BuildRequires: pkgconfig(sysprof-capture-4)
 BuildRequires: pkgconfig(libsystemd)
@@ -65,7 +65,7 @@ BuildRequires: meson
 BuildRequires: pkgconfig(gbm)
 BuildRequires: pkgconfig(glycin-2)
 BuildRequires: pkgconfig(gnome-desktop-4)
-BuildRequires: pkgconfig(gudev-1.0)
+BuildRequires: pkgconfig(gudev-1.0) >= 238
 BuildRequires: pkgconfig(libdrm) >= %{libdrm_version}
 BuildRequires: pkgconfig(libei-1.0) >= %{libei_version}
 BuildRequires: pkgconfig(libeis-1.0) >= %{libei_version}

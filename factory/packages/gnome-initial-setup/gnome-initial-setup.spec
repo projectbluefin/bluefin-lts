@@ -26,7 +26,7 @@ Source0:        https://download.gnome.org/sources/gnome-initial-setup/51/gnome-
 BuildRequires:  desktop-file-utils
 BuildRequires:  gcc
 BuildRequires:  meson
-BuildRequires:  pkgconfig(accountsservice)
+BuildRequires:  pkgconfig(accountsservice) >= 26.12.8
 BuildRequires:  pkgconfig(fontconfig)
 BuildRequires:  pkgconfig(gdm)
 BuildRequires:  pkgconfig(geocode-glib-2.0)
@@ -51,8 +51,8 @@ BuildRequires:  pkgconfig(pango)
 BuildRequires:  pkgconfig(polkit-gobject-1)
 BuildRequires:  pkgconfig(pwquality)
 BuildRequires:  pkgconfig(rest-1.0)
-BuildRequires:  pkgconfig(malcontent-0)
-BuildRequires:  pkgconfig(malcontent-ui-1)
+BuildRequires:  pkgconfig(malcontent-0) >= 0.6.0
+BuildRequires:  pkgconfig(malcontent-ui-1) >= 0.11.0
 %if %{with webkitgtk}
 BuildRequires:  pkgconfig(webkitgtk-6.0)
 %endif
@@ -135,7 +135,7 @@ useradd -rM -d /run/gnome-initial-setup/ -s /sbin/nologin %{name} &>/dev/null ||
 %changelog
 * Mon Mar 30 2026 James Reilly <jreilly1821@gmail.com> - 50.0-5
 - Re-enable parental controls (-Dparental_controls=enabled)
-- Add BuildRequires: pkgconfig(malcontent-0), pkgconfig(malcontent-ui-1)
+- Add BuildRequires: pkgconfig(malcontent-0), pkgconfig(malcontent-ui-1) >= 0.11.0
 - flatpak-devel and appstream-devel now available from our COPR
 - malcontent 0.14.0 now built in COPR
 

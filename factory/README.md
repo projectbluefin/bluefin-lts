@@ -235,3 +235,11 @@ Glycin uses a recipe-scoped syscall profile for Bubblewrap namespace setup
 without adding container capabilities or privileged mode. Its copied test
 install is under `/usr/libexec`, which the sandbox binds read-only; cleanup
 removes only that temporary install. Keep sandbox tests enabled.
+
+The GNOME portal backend requires the core portal API from 1.21.1 or later.
+Control Center also requires AccountsService 26.27.3 or later.
+Declare these minima in their build and runtime requirements so the dependency
+preflight selects factory prerequisites when CentOS supplies an older API.
+Core portal builds retain Bubblewrap image/sound validation and USB support;
+their prerequisites belong in BuildRequires. Source-host fallbacks must verify
+against the primary source’s unchanged checksum.

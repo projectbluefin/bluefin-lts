@@ -78,6 +78,7 @@ reasons. There is no API or ABI guarantee, although we are doing our
 best to provide stability.
 
 %package -n gnome-desktop4-devel
+Provides: pkgconfig(gnome-desktop-4) = %{version}
 Provides: pkgconfig(gnome-qr-gtk-4) = %{version}
 Summary: Libraries and headers for gnome-desktop4
 License: LGPL-2.0-or-later

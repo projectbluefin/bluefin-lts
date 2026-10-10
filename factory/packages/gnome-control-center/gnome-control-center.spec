@@ -2,9 +2,9 @@
 %global gcr_version 4.1.0
 %global gnome_online_accounts_version 3.51.0
 %global glib2_version 2.76.6
-%global gnome_desktop_version 44.0-7
+%global gnome_desktop_version 51~alpha
 %global gsd_version 48~rc
-%global gsettings_desktop_schemas_version 48~alpha-2
+%global gsettings_desktop_schemas_version 51~beta
 %global upower_version 1.90.6
 %global gtk4_version 4.23.0
 %global gnome_bluetooth_version 42~alpha
@@ -31,7 +31,7 @@ BuildRequires:  docbook-style-xsl libxslt
 BuildRequires:  gcc
 BuildRequires:  gettext
 BuildRequires:  meson
-BuildRequires:  pkgconfig(accountsservice)
+BuildRequires:  pkgconfig(accountsservice) >= 26.27.3
 BuildRequires:  pkgconfig(colord)
 BuildRequires:  pkgconfig(colord-gtk4)
 BuildRequires:  pkgconfig(tecla)
@@ -93,7 +93,7 @@ Recommends: gnome-bluetooth%{?_isa} >= 1:%{gnome_bluetooth_version}
 
 Requires: %{name}-filesystem = %{version}-%{release}
 # For user accounts
-Requires: accountsservice
+Requires: accountsservice >= 26.27.3
 Requires: alsa-lib
 # For the thunderbolt panel
 Recommends: bolt
