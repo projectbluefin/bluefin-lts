@@ -345,7 +345,7 @@ jobs:
       seed_image: ${{ needs.prepare.outputs.seed_image }}
 
   build6:
-    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12, build13, build14, build15]
+    needs: [prepare, build0, build1, build2, build3, build4, build5]
     if: ${{ !cancelled() && needs.prepare.outputs.stage6 != '[]' }}
     strategy:
       fail-fast: false
