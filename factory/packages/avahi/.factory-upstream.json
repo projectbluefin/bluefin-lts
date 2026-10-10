@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:40:12+00:00",
+  "package": "avahi",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "1f5db3b6c18e7418a23711b48717ccf835cb628f6151a23156d0fb50764d5393",
+    "srpm_checksum_type": "sha256",
+    "tree": "262554ba0bc63ba5997b2fcd2c7ac60f7fbe5c44"
+  }
+}

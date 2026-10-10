@@ -5,6 +5,28 @@ output/
 __pycache__/
 *.pyc
 
+# GNOME package factory build output. Everything under factory/work/ is
+# produced by a tool run, never authored.
+factory/work/
+
+# Verified source archives staged beside a recipe by the source pipeline.
+# They are verified output, not recipe files: the recipe is the spec and its
+# patches, and the payload is fetched and checked on demand. Committing these
+# would duplicate every tarball in the tree and make the input digest -- which
+# is what decides whether a package rebuilds -- depend on whether someone
+# remembered to delete one.
+factory/packages/*/*.tar.*
+factory/packages/*/*.tar.gz
+factory/packages/*/*.tar.xz
+factory/packages/*/*.tar.bz2
+factory/packages/*/*.tar.zst
+factory/packages/*/*.src.rpm
+
+# Packit's create-archive placeholder for recipes with no upstream payload.
+# It is an empty gzip written to satisfy Packit's contract and consumed by
+# nothing; it is regenerated on demand.
+factory/packages/*/*.tar.gz
+
 # IDE
 .idea/
 .vscode/
@@ -17,3 +39,5 @@ __pycache__/
 .zed/
 _build_podman_scp.*
 _iso_build
+
+/work/

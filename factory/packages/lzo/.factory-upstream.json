@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:43:05+00:00",
+  "package": "lzo",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "84bbe999d4f111800df82beac79ea6e96c7002b0f9c996353caf24a36f0d0db4",
+    "srpm_checksum_type": "sha256",
+    "tree": "4c44218a60c76a57844fa9466fc92c4cd6f0714a"
+  }
+}

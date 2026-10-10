@@ -1,0 +1,3 @@
+[org.gnome.Ptyxis]
+enable-a11y=true
+interface-style='dark'

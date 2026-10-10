@@ -1,0 +1,44 @@
+From: Benjamin Berg <bberg@redhat.com>
+Subject: [PATCH] gdm: Work around failing fingerprint auth
+
+Preserve the existing EL10 workaround for a fingerprint PAM service that
+fails within one second. Rebase onto GNOME 51's AuthServicesLegacy class,
+where the verification start and conversation stop hooks now live.
+
+--- a/js/gdm/authServicesLegacy.js
++++ b/js/gdm/authServicesLegacy.js
+@@ -75,6 +75,7 @@
+         this.addCredentialManager(Vmware.SERVICE_NAME, Vmware.getVmwareCredentialsManager());
+ 
+         this._fingerprintReadyTimeoutId = 0;
++        this._fprintStartTime = -1;
+     }
+ 
+     _handleAnswerQuery(serviceName, answer) {
+@@ -282,6 +283,12 @@
+         return true;
+     }
+ 
++    async _startService(serviceName, cancellable) {
++        if (serviceName === FINGERPRINT_SERVICE_NAME)
++            this._fprintStartTime = GLib.get_monotonic_time();
++        return super._startService(serviceName, cancellable);
++    }
++
+     _handleOnConversationStopped(serviceName) {
+         if (serviceName !== this._selectedMechanism?.serviceName &&
+             serviceName !== FINGERPRINT_SERVICE_NAME)
+@@ -299,6 +306,13 @@
+ 
+         if (serviceName === FINGERPRINT_SERVICE_NAME) {
+             this._clearFingerprintSignalHandlers();
++            // Preserve the EL10 workaround for a broken fingerprint PAM stack.
++            if (this._fprintStartTime > GLib.get_monotonic_time() - GLib.USEC_PER_SEC) {
++                console.warn('Fingerprint service failed immediately; check the PAM configuration.');
++                this._unavailableServices.add(serviceName);
++                this._setFingerprintReady(false);
++                return;
++            }
+             if (this._unavailableServices.has(serviceName))
+                 this._setFingerprintReady(false);
+         }

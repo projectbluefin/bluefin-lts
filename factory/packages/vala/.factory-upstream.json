@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:45:08+00:00",
+  "package": "vala",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "60aba2607173f16f808c857074199653aa47ecb2855b0d6fb25699e64735df94",
+    "srpm_checksum_type": "sha256",
+    "tree": "a3494c784f4ca93a5eb4ceb778e975ab132f227e"
+  }
+}

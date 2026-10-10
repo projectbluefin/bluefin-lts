@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:40:56+00:00",
+  "package": "gi-docgen",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "58d256cc6df1065d2b983025393f34e4cb60f88fb9f62d10fda8646c629a9222",
+    "srpm_checksum_type": "sha256",
+    "tree": "4e4007e4496873d0c089f083ea715ba1bdcf9252"
+  }
+}

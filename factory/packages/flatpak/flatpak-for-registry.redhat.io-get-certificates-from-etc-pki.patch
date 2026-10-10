@@ -1,0 +1,123 @@
+From 9b5276b866e9eda60683c74381c44d748a7a6da2 Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Mon, 24 Mar 2025 15:07:35 -0400
+Subject: [PATCH] For registry.redhat.io get certificates from
+ /etc/pki/entitlement
+
+The Red Hat container registry at registry.redhat.io accepts RHEL
+entitlement (and consumer) certificates for authentication.
+Until subscription manager gets proper support for writing certificates into
+/etc/containers/certs.d, this implements a temporary workaround where
+if we recognize the host as being the Red Hat registry, we look for
+entitlement certificates in the subscription manager entitlement directory.
+---
+ common/flatpak-utils-http.c | 86 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 86 insertions(+)
+
+diff --git a/common/flatpak-utils-http.c b/common/flatpak-utils-http.c
+index ab707876..1f070f90 100644
+--- a/common/flatpak-utils-http.c
++++ b/common/flatpak-utils-http.c
+@@ -243,6 +243,89 @@ check_http_status (guint status_code,
+   return FALSE;
+ }
+ 
++#define SUBSCRIPTION_MANAGER_ENTITLEMENT_DIR "/etc/pki/entitlement"
++
++/**
++ * get_redhat_certificates:
++ * @certificates: A #FlatpakCertificates
++ * @host: The host to get certificates for
++ *
++ * The Red Hat container registry at registry.redhat.io accepts RHEL
++ * entitlement (and consumer) certificates for authentication.
++ * Until subscription manager gets proper support for writing certificates into
++ * /etc/containers/certs.d, this implements a temporary workaround where
++ * if we recognize the host as being the Red Hat registry, we look for
++ * entitlement certificates in the subscription manager entitlement directory.
++ *
++ * Returns: %TRUE if certificates were added, %FALSE otherwise
++ */
++static gboolean
++get_redhat_certificates (FlatpakCertificates *certificates,
++                         const char          *host)
++{
++  g_autoptr(GFile) entitlement_dir = NULL;
++  g_autoptr(GFileEnumerator) enumerator = NULL;
++  g_autoptr(GError) local_error = NULL;
++
++  if (!(strcmp (host, "flatpaks.registry.redhat.io") == 0 ||
++        strcmp (host, "flatpaks.registry.stage.redhat.io") == 0))
++    return FALSE;
++
++  g_info ("Looking for Red Hat entitlement certificates for %s in %s",
++           host, SUBSCRIPTION_MANAGER_ENTITLEMENT_DIR);
++
++  entitlement_dir = g_file_new_for_path (SUBSCRIPTION_MANAGER_ENTITLEMENT_DIR);
++  enumerator = g_file_enumerate_children (entitlement_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
++                                          G_FILE_QUERY_INFO_NONE,
++                                          NULL, &local_error);
++  if (enumerator == NULL)
++    {
++      g_info ("Failed to enumerate entitlement directory: %s", local_error->message);
++      g_clear_error (&local_error);
++
++      return FALSE;
++    }
++
++  while (TRUE)
++    {
++      GFile *child;
++      g_autofree char *basename = NULL;
++
++      if (!g_file_enumerator_iterate (enumerator, NULL, &child, NULL, &local_error))
++        {
++          g_info ("Failed to enumerate entitlement directory: %s", local_error->message);
++          g_clear_error (&local_error);
++          return FALSE;
++        }
++
++      if (child == NULL)
++        break;
++
++      basename = g_file_get_basename (child);
++      if (g_str_has_suffix (basename, ".pem") && !g_str_has_suffix (basename, "-key.pem"))
++        {
++          g_autofree char *without_ext = g_strndup (basename, strlen (basename) - 4);
++          g_autofree char *cert_basename = g_strconcat (without_ext, "-key.pem", NULL);
++          g_autoptr(GFile) key_file = g_file_get_child (entitlement_dir, cert_basename);
++          if (!g_file_query_exists (key_file, NULL))
++            {
++              g_info ("No key for %s, ignoring", basename);
++              continue;
++            }
++
++          g_info ("Using cert %s and key %s",
++                  flatpak_file_get_path_cached (child), flatpak_file_get_path_cached (key_file));
++          certificates->client_cert_file = g_file_get_path (child);
++          certificates->client_key_file = g_file_get_path (key_file);
++
++          return TRUE;
++        }
++    }
++
++    g_info ("No entitlement certificate found");
++    return FALSE;
++}
++
+ FlatpakCertificates*
+ flatpak_get_certificates_for_uri (const char  *uri,
+                                   GError     **error)
+@@ -369,6 +452,9 @@ flatpak_get_certificates_for_uri (const char  *uri,
+         }
+     }
+ 
++  if (certificates->client_cert_file == NULL)
++    get_redhat_certificates (certificates, g_uri_get_host (parsed_uri));
++
+   return g_steal_pointer (&certificates);
+ }
+ 
+-- 
+2.47.0
+

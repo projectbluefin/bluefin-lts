@@ -1,0 +1,214 @@
+# Assemble a candidate RPM repository and publish it as an OCI image.
+#
+# The image this produces contains nothing but createrepo_c output: a
+# repository directory, its repodata, and a signed repomd.xml. The image build
+# copies it in with COPY --from= pinned by digest and points dnf at a file://
+# URL. That is the whole seam -- no third-party package service in the path.
+#
+# Two rules make this safe to run incrementally:
+#
+#   A failed package keeps its previous build. The candidate is seeded from
+#   the previously published image and only the packages this run actually
+#   built are replaced, by source name, so a dropped subpackage leaves with
+#   its parent and a failure does not remove a working RPM.
+#
+#   The transaction gates the tag. The packages the image installs are
+#   resolved against the candidate plus the pinned c10s base. If that does not
+#   resolve -- a library moved its soname and a consumer was not rebuilt --
+#   the tag does not move, however many packages built.
+name: Factory publish
+
+on:
+  workflow_call:
+    inputs:
+      build_list:
+        description: JSON array of packages this run attempted.
+        required: true
+        type: string
+      seed_image:
+        description: Previously published image to seed from.
+        required: false
+        type: string
+      buildroot_digest:
+        description: Digest of the build root this run used.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+  packages: write
+  attestations: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    outputs:
+      ref: ${{ steps.promote.outputs.ref }}
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install host RPM and signing tools
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
+      - uses: sigstore/cosign-installer@c95fe1489396fe8a9fa6b4ca0b05dd4e0c2689de # v3.9.2
+        with:
+          cosign-release: v2.6.0
+
+      - name: Load the build root
+        uses: ./.github/actions/factory-load-buildroot
+
+      - name: Collect this run's RPMs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/newrpms work/dl
+          gh api --paginate "repos/$REPOSITORY/actions/runs/$RUN_ID/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.name | startswith("factory-rpm-s")).name' > artifact-names.txt
+          while read -r artifact; do
+            [ -n "$artifact" ] || continue
+            gh run download "$RUN_ID" --repo "$REPOSITORY" \
+              --name "$artifact" --dir "work/dl/$artifact"
+            find "work/dl/$artifact" -name '*.rpm' -not -name '*.src.rpm' \
+              -exec cp {} work/newrpms/ \;
+          done < artifact-names.txt
+
+      - name: Verify and seed the previous repository
+        env:
+          SEED_IMAGE: ${{ inputs.seed_image }}
+          GITHUB_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p work/candidate
+          echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          if [ -n "$SEED_IMAGE" ]; then
+            cosign verify --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              --certificate-identity-regexp "^https://github\.com/${REPOSITORY}/\.github/workflows/factory-(build|publish)\.yml@refs/heads/.*$" \
+              "$SEED_IMAGE" >/dev/null
+            docker pull "$SEED_IMAGE"
+            docker create --name factory-seed "$SEED_IMAGE" /unused
+            docker cp factory-seed:/factory/. work/candidate/
+            docker image inspect "$SEED_IMAGE" --format '{{json .Config.Labels}}' > work/seed-labels.json
+            docker rm factory-seed
+          else
+            echo '{}' > work/seed-labels.json
+          fi
+
+      - name: Replace successful builds and record their inputs
+        id: assemble
+        env:
+          BUILD_LIST: ${{ inputs.build_list }}
+        run: |
+          set -euo pipefail
+          python3 factory/tools/assemble_repo.py --seed work/candidate --built work/newrpms \
+            --build-list "$BUILD_LIST" --report work/replaced.json
+          count=$(jq length work/replaced.json)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from factory.tools.inventory import inventory, factory_root
+          from factory.tools.rebuild_plan import input_digest, LABEL
+          labels = json.loads(Path('work/seed-labels.json').read_text()) or {}
+          state = json.loads(labels.get(LABEL, '{}'))
+          replaced = set(json.loads(Path('work/replaced.json').read_text()))
+          root = factory_root()
+          for record in inventory(root):
+              if record.name in replaced:
+                  state[record.name] = input_digest(record, root)
+          Path('work/state.json').write_text(json.dumps(state, sort_keys=True))
+          PY
+
+      - name: Create repository metadata
+        if: steps.assemble.outputs.count != '0'
+        run: |
+          set -euo pipefail
+          docker run --rm --pull=never -v "$PWD/work/candidate:/repository:Z" \
+            factory-buildroot:run bash -exc 'dnf -y install createrepo_c; createrepo_c --update /repository'
+
+      - name: Resolve the consumer transaction against factory and CentOS
+        if: steps.assemble.outputs.count != '0'
+        run: |
+          set -euo pipefail
+          # --assumeno returns failure even after a successful solve. Download
+          # mode proves resolution without installing into the buildroot.
+          docker run --rm --pull=never \
+            -v "$PWD/work/candidate:/factory:ro,Z" -v "$PWD:/repo:ro,Z" \
+            factory-buildroot:run bash /repo/factory/tools/consumer_transaction.sh
+
+      - name: Sign repository metadata before assembling the image
+        if: steps.assemble.outputs.count != '0'
+        run: |
+          set -euo pipefail
+          cosign sign-blob --yes \
+            --output-signature work/candidate/repodata/repomd.xml.asc \
+            --output-certificate work/candidate/repodata/repomd.xml.pem \
+            work/candidate/repodata/repomd.xml
+
+      - name: Build the OCI repository image with its state and provenance
+        if: steps.assemble.outputs.count != '0'
+        env:
+          BUILDROOT_DIGEST: ${{ inputs.buildroot_digest }}
+        run: |
+          set -euo pipefail
+          mkdir -p image/repository/reports
+          cp -a work/candidate/. image/repository/
+          cp work/buildroot-provenance.json image/repository/reports/buildroot.json
+          printf 'FROM scratch\nCOPY repository /factory\n' > image/Containerfile
+          docker build -f image/Containerfile --label "org.projectbluefin.factory.state=$(cat work/state.json)" \
+            --label "org.projectbluefin.factory.buildroot=$BUILDROOT_DIGEST" \
+            --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \
+            -t factory-repo:stage image
+
+      - name: Push and sign the immutable image
+        if: steps.assemble.outputs.count != '0'
+        id: push
+        env:
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          owner=$(printf '%s' "$REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          image="ghcr.io/$owner/bluefin-lts-packages"
+          immutable="$image:run-$RUN_ID-$RUN_ATTEMPT"
+          docker tag factory-repo:stage "$immutable"
+          docker push "$immutable"
+          digest=$(docker image inspect "$immutable" --format '{{index .RepoDigests 0}}' | sed 's/.*@//')
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          cosign sign --yes "$image@$digest"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        if: steps.assemble.outputs.count != '0'
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/bluefin-lts-packages
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Move the stream tag after signatures and provenance
+        if: steps.assemble.outputs.count != '0'
+        id: promote
+        env:
+          IMAGE: ${{ steps.push.outputs.image }}
+          REF_NAME: ${{ github.ref_name }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          if [ "$REF" = refs/heads/main ]; then
+            tag=latest
+          else
+            tag=$(printf '%s' "$REF_NAME" | tr '/' '-' | tr -cd '[:alnum:]._- ' | tr -d ' ' | cut -c1-96)
+          fi
+          test -n "$tag"
+          docker tag factory-repo:stage "$IMAGE:$tag"
+          docker push "$IMAGE:$tag"
+          echo "ref=$IMAGE:$tag" >> "$GITHUB_OUTPUT"

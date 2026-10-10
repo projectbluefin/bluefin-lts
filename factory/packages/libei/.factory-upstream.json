@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:32+00:00",
+  "package": "libei",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "4102a52a1b9e386d0b20e9cc1e75140442c0694326c30456738f4470d23f7a1f",
+    "srpm_checksum_type": "sha256",
+    "tree": "aceefe0898110776bd24f3dd2b021780e39e2ccc"
+  }
+}

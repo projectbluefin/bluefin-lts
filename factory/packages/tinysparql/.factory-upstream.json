@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:45:01+00:00",
+  "package": "tinysparql",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "7cf75f656a1e2d97efc886fe1c29b1a4c02ff66c01dd0b65bb67e43f28d836b3",
+    "srpm_checksum_type": "sha256",
+    "tree": "cdb2fa95a6e6f9dd24695150ba7a00024447d428"
+  }
+}

@@ -1,0 +1,19 @@
+From: Bluefin factory maintainers
+Subject: [PATCH] Qualify workspace loader package IDs in integration tests
+
+The test feature graph also contains registry glycin-image-rs 2.2.0.
+Select the local workspace loaders explicitly instead of an ambiguous name.
+
+--- a/glycin-loaders/meson.build
++++ b/glycin-loaders/meson.build
+@@ -74,7 +74,9 @@
+
+ test_args = []
+ foreach loader : get_option('loaders')
+-  test_args += ['-p', loader]
++  loader_package = 'path+file://' + (
++    meson.project_source_root() / 'glycin-loaders' / loader)
++  test_args += ['-p', loader_package]
+
+   cargo_build = custom_target(
+     loader,

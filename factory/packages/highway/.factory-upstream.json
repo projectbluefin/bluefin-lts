@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:17+00:00",
+  "package": "highway",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "888b71e4c4b14ec60de296eb9a6303f86e3449c92ba63de87c0e598b73f92805",
+    "srpm_checksum_type": "sha256",
+    "tree": "6df4478d8f4b61705d9067e4206f4bc42ba224ee"
+  }
+}

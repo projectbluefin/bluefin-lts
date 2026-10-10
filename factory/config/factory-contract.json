@@ -1,0 +1,12 @@
+{
+  "repository": "projectbluefin/common",
+  "commit": "8ae7e279c742cae63261700c3f1b5258dc2740ed",
+  "pinned_at": "2026-10-10T02:40:55Z",
+  "contracts": {
+    "factory-onboarding": "docs/skills/factory-improvement/SKILL.md",
+    "agentic-model": "docs/factory/agentic-model.md",
+    "label-workflow": "docs/skills/label-workflow.md",
+    "skill-improvement": "docs/skills/skill-improvement.md",
+    "style-guide": "docs/contributing/style-guide.md"
+  }
+}

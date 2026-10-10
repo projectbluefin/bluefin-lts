@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:41:21+00:00",
+  "package": "gnome-initial-setup",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "f092884084c97a135e646257d715a6063e7c414a55f2bd7811d8a83145805a1c",
+    "srpm_checksum_type": "sha256",
+    "tree": "546e89a2bc80ff3131a2d50308cf016e687fadee"
+  }
+}

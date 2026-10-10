@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:43:13+00:00",
+  "package": "mod_dnssd",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "d66dc22f0bd09db2012d2adab83ba25ade4235c6dc2e583564388c9e5e57dd28",
+    "srpm_checksum_type": "sha256",
+    "tree": "e89f41a7d4c9f8fcdf53e9630babac0f2d6f1ced"
+  }
+}

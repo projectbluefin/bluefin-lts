@@ -1,0 +1,29 @@
+module gdm-userdb-connect 1.0;
+
+require {
+	type systemd_user_runtimedir_t;
+	type init_t;
+	type accountsd_t;
+	type setroubleshootd_t;
+	type systemd_userdbd_t;
+	type auditd_t;
+	type chkpwd_t;
+	type xdm_t;
+	type sshd_session_t;
+	class unix_stream_socket connectto;
+}
+
+# systemd-userdbd and friends need to connect to GDM's userdb Varlink socket
+# to resolve dynamic greeter users (gdm-greeter-N).
+# The socket lives in /run/systemd/userdb/org.gnome.DisplayManager (xdm_t context).
+
+allow systemd_userdbd_t xdm_t:unix_stream_socket connectto;
+allow chkpwd_t xdm_t:unix_stream_socket connectto;
+allow init_t xdm_t:unix_stream_socket connectto;
+allow accountsd_t xdm_t:unix_stream_socket connectto;
+allow systemd_user_runtimedir_t xdm_t:unix_stream_socket connectto;
+
+# These were observed in AVC denials during greeter startup; may be overly broad
+allow setroubleshootd_t xdm_t:unix_stream_socket connectto;
+allow sshd_session_t xdm_t:unix_stream_socket connectto;
+allow auditd_t xdm_t:unix_stream_socket connectto;
