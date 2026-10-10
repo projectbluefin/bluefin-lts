@@ -85,6 +85,7 @@ This package contains the libtinysparql library.
 
 
 %package        devel
+Provides:       pkgconfig(tinysparql-3.0) = %{version}
 Summary:        Development files for %{name}
 License:        LGPL-2.1-or-later
 Requires:       libtinysparql%{?_isa} = %{version}-%{release}

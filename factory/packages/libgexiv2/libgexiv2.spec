@@ -8,7 +8,6 @@ Summary:        Gexiv2 is a GObject-based wrapper around the Exiv2 library
 License:        GPL-2.0-or-later
 URL:            https://wiki.gnome.org/Projects/gexiv2
 Source0:        https://download.gnome.org/sources/gexiv2/0.16/gexiv2-0.16.2.tar.xz
-Patch: 0001-gexiv2-fix-package-name-in-gir-file-to-have-0.16-suf.patch
 
 BuildRequires:  pkgconfig(exiv2)
 BuildRequires:  gcc-c++
@@ -25,6 +24,7 @@ libgexiv2 is a GObject-based wrapper around the Exiv2 library.
 It makes the basic features of Exiv2 available to GNOME applications.
 
 %package        devel
+Provides:       pkgconfig(gexiv2-0.16) = %{version}
 Summary:        Development files for %{name}
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 

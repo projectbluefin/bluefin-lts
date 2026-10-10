@@ -175,8 +175,8 @@ ln -sf ../X11/xinit/Xsession %{buildroot}%{_sysconfdir}/gdm/
 %license COPYING
 %dir %{_sysconfdir}/gdm
 %config(noreplace) %{_sysconfdir}/gdm/custom.conf
-%config %{_sysconfdir}/pam.d/gdm-autologin
-%config %{_sysconfdir}/pam.d/gdm-password
+%{_prefix}/lib/pam.d/gdm-autologin
+%{_prefix}/lib/pam.d/gdm-password
 # not config files
 %if %{with x11}
 %{_sysconfdir}/gdm/Xsession
@@ -218,10 +218,11 @@ ln -sf ../X11/xinit/Xsession %{buildroot}%{_sysconfdir}/gdm/
 %ghost %dir %{_localstatedir}/log/gdm
 %ghost %dir %{_localstatedir}/lib/gdm
 %ghost %dir %{_rundir}/gdm
-%config %{_sysconfdir}/pam.d/gdm-smartcard
-%config %{_sysconfdir}/pam.d/gdm-fingerprint
-%config %{_sysconfdir}/pam.d/gdm-switchable-auth
-%{_sysconfdir}/pam.d/gdm-launch-environment
+%{_prefix}/lib/pam.d/gdm-smartcard
+%{_prefix}/lib/pam.d/gdm-fingerprint
+%{_prefix}/lib/pam.d/gdm-switchable-auth
+%{_prefix}/lib/pam.d/gdm-*-auth-substack
+%{_prefix}/lib/pam.d/gdm-launch-environment
 %{_unitdir}/gdm.service
 %{_unitdir}/gnome-headless-session@.service
 %dir %{_userunitdir}/gnome-session@gnome-login.target.d/

@@ -1,0 +1,35 @@
+* Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1.10.0-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Thu Feb 09 2023 Michael Catanzaro <mcatanzaro@redhat.com> - 1.10.0-6
+- Use libsoup 3 in ELN
+
+* Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1.10.0-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Mon Aug  8 2022 Daniel P. Berrangé <berrange@redhat.com> - 1.10.0-4
+- Pull in mingw sub-packages
+
+* Thu Jul 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1.10.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Tue Jul 19 2022 Daniel P. Berrangé <berrange@redhat.com> - 1.10.0-2
+- Switch from libsoup2 to libsoup3 (rhbz #2108589)
+
+* Mon Feb 14 2022 Victor Toso <victortoso@redhat.com> - 1.10.0-1
+- Update to 1.10.0 release
+
+* Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1.9.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Tue Jan 11 2022 Cole Robinson <crobinso@redhat.com> - 1.9.0-3
+- Fix build with glib 2.70
+
+* Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 1.9.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Wed Feb 03 2021 Fabiano Fidêncio <fidencio@redhat.com> - 1.9.0-1
+- Update to 1.9.0 release
+
+* Tue Jan 26 2021 Fedora Release Engineering <releng@fedoraproject.org> - 1.8.0-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild

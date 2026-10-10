@@ -23,7 +23,7 @@ Source0:        https://download.gnome.org/sources/orca/51/orca-51.0.tar.xz
 BuildArch:      noarch
 
 BuildRequires:  pkgconfig(atk-bridge-2.0)
-BuildRequires:  pkgconfig(atspi-2)
+BuildRequires:  pkgconfig(atspi-2) >= 2.58.6
 BuildRequires:  pkgconfig(gobject-introspection-1.0)
 BuildRequires:  pkgconfig(liblouis)
 BuildRequires:  pkgconfig(pygobject-3.0)

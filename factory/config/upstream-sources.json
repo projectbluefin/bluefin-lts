@@ -14,6 +14,18 @@
       ]
     },
     {
+      "name": "at-spi2-core",
+      "version": "2.60.1",
+      "sources": [
+        {
+          "url": "https://download.gnome.org/sources/at-spi2-core/2.60/at-spi2-core-2.60.1.tar.xz",
+          "filename": "at-spi2-core-2.60.1.tar.xz",
+          "sha512": "fc210768e5537ca285d7a6e9a2821471c4599d03822c81da4f8a047d9c20005e468a5009e9d7d2bd14e88747a296f69faf45cebdc8bd179c9a774c24c549c9af",
+          "checksum_type": "sha512"
+        }
+      ]
+    },
+    {
       "name": "autoconf",
       "version": "2.72",
       "sources": [
@@ -559,6 +571,18 @@
           "url": "https://download.gnome.org/sources/libnotify/0.8/libnotify-0.8.8.tar.xz",
           "filename": "libnotify-0.8.8.tar.xz",
           "sha512": "0fedd230d3c8b9bd3c783794e690752cf6388fc178854267effe3ba26aaa9248415cdf0ab994f596ace8bef59e0c1e41196f42a225221d7f0e1efc54683c310a",
+          "checksum_type": "sha512"
+        }
+      ]
+    },
+    {
+      "name": "libosinfo",
+      "version": "1.12.0",
+      "sources": [
+        {
+          "url": "https://releases.pagure.org/libosinfo/libosinfo-1.12.0.tar.xz",
+          "filename": "libosinfo-1.12.0.tar.xz",
+          "sha512": "13647b6df14443f7e39bc09bd47be93fcd9f367ecfd7b13f3dac15e2614ad8a812d6077e070b2dc0f49f68f022881ad2fa59bac92f7731032358658a522e6572",
           "checksum_type": "sha512"
         }
       ]

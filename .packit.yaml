@@ -18,6 +18,12 @@ packages:
     downstream_package_name: appstream
     paths:
       - factory/packages/appstream
+  at-spi2-core:
+    specfile_path: at-spi2-core.spec
+    upstream_package_name: at-spi2-core
+    downstream_package_name: at-spi2-core
+    paths:
+      - factory/packages/at-spi2-core
   autoconf:
     specfile_path: autoconf.spec
     upstream_package_name: autoconf
@@ -288,6 +294,12 @@ packages:
     downstream_package_name: libnotify
     paths:
       - factory/packages/libnotify
+  libosinfo:
+    specfile_path: libosinfo.spec
+    upstream_package_name: libosinfo
+    downstream_package_name: libosinfo
+    paths:
+      - factory/packages/libosinfo
   libsoup:
     specfile_path: libsoup.spec
     upstream_package_name: libsoup
