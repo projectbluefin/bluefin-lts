@@ -149,8 +149,9 @@ Stated plainly, because the list is short and each item is real:
 Dispatch `factory-stack.yml` on the candidate branch. It selects the GNOME 51 targets plus prerequisites whose exact requirements
 CentOS/CRB/EPEL cannot satisfy, then computes every wave from RPM dependencies, builds in fresh containers, and retains per-package
 logs, RPMs, buildroot provenance, and a JSON status report. It has no publication
-or signing permissions. The lane supports arbitrary graph depth; publication's
-older reusable workflow currently supports six waves.
+or signing permissions. Both CI and publication admit up to sixteen computed waves and fail explicitly
+if the graph exceeds that limit. Per-wave artifacts expose failures while later
+waves continue.
 
 Cycles can use a CentOS/CRB/EPEL provider only when the extractor records a
 provider for the exact versioned BuildRequires. The planner removes only cyclic

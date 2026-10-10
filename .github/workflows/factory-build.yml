@@ -67,6 +67,16 @@ jobs:
       stage3: ${{ steps.select.outputs.stage3 }}
       stage4: ${{ steps.select.outputs.stage4 }}
       stage5: ${{ steps.select.outputs.stage5 }}
+      stage6: ${{ steps.select.outputs.stage6 }}
+      stage7: ${{ steps.select.outputs.stage7 }}
+      stage8: ${{ steps.select.outputs.stage8 }}
+      stage9: ${{ steps.select.outputs.stage9 }}
+      stage10: ${{ steps.select.outputs.stage10 }}
+      stage11: ${{ steps.select.outputs.stage11 }}
+      stage12: ${{ steps.select.outputs.stage12 }}
+      stage13: ${{ steps.select.outputs.stage13 }}
+      stage14: ${{ steps.select.outputs.stage14 }}
+      stage15: ${{ steps.select.outputs.stage15 }}
       buildroot_digest: ${{ steps.buildroot.outputs.digest }}
       factory_image: ${{ steps.factory_image.outputs.image }}
       seed_image: ${{ steps.factory_image.outputs.seed }}
@@ -220,11 +230,11 @@ jobs:
           python3 factory/tools/build_graph.py plan --rows work/graph/rows \
             --packages "$build_list" --output work/graph/plan.json
           depth=$(jq '.waves | length' work/graph/plan.json)
-          if [ "$depth" -gt 6 ]; then
-            echo "::error::selected graph needs $depth waves; workflow supports six"
+          if [ "$depth" -gt 16 ]; then
+            echo "::error::selected graph needs $depth waves; workflow supports sixteen"
             exit 1
           fi
-          for stage in 0 1 2 3 4 5; do
+          for stage in {0..15}; do
             packages=$(python3 - "$stage" <<'PY'
           import json, sys
           plan = json.load(open("work/graph/plan.json"))
@@ -334,6 +344,136 @@ jobs:
       packages: ${{ matrix.chunk }}
       seed_image: ${{ needs.prepare.outputs.seed_image }}
 
+  build6:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12, build13, build14, build15]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage6 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage6) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '6'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build7:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage7 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage7) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '7'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build8:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage8 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage8) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '8'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build9:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage9 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage9) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '9'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build10:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage10 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage10) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '10'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build11:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage11 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage11) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '11'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build12:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage12 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage12) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '12'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build13:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage13 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage13) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '13'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build14:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12, build13]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage14 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage14) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '14'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build15:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12, build13, build14]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage15 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage15) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '15'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
   # Names every selected package that did not produce an RPM. Failures are
   # read from the run's own artifact list -- a build job uploads only for a
   # package that produced RPMs -- so this works whether or not publish ran.
@@ -347,7 +487,7 @@ jobs:
   # no verdict. Its waves stopped before uploading, so every selected package
   # would look failed and the report would name the entire build list.
   report:
-    needs: [prepare, build0, build1, build2, build3, build4, build5]
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12, build13, build14, build15]
     if: ${{ !cancelled() && needs.prepare.result == 'success' && needs.prepare.outputs.build_list != '[]' }}
     runs-on: ubuntu-24.04
     permissions:
@@ -380,7 +520,7 @@ jobs:
           done
 
   publish:
-    needs: [prepare, build0, build1, build2, build3, build4, build5]
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12, build13, build14, build15]
     if: ${{ !cancelled() && needs.prepare.result == 'success' && inputs.skip_publish != true && needs.prepare.outputs.build_list != '[]' }}
     uses: ./.github/workflows/factory-publish.yml
     with:

@@ -16,12 +16,15 @@ import subprocess
 from pathlib import Path
 
 
-def build_stack(plan: dict, repo: Path, image: str, engine: str, workers: int) -> int:
+def build_stack(plan: dict, repo: Path, image: str, engine: str, workers: int,
+                selected_wave: int | None = None) -> int:
     work = repo / "work"
     prior, logs = work / "prior", work / "stack-logs"
     prior.mkdir(parents=True, exist_ok=True)
     logs.mkdir(parents=True, exist_ok=True)
-    report = {"packages": {}, "bootstrap": plan.get("bootstrap", [])}
+    report_path = work / "stack-report.json"
+    report = (json.loads(report_path.read_text()) if selected_wave is not None and report_path.is_file()
+              else {"packages": {}, "bootstrap": plan.get("bootstrap", [])})
 
     def build(package):
         env = dict(os.environ, PACKAGE=package)
@@ -51,6 +54,8 @@ def build_stack(plan: dict, repo: Path, image: str, engine: str, workers: int) -
         return package, {"status": status, "rpms": [p.name for p in rpms] if not status else []}
 
     for stage, packages in enumerate(plan["waves"]):
+        if selected_wave is not None and stage != selected_wave:
+            continue
         print(f"Wave {stage}: {', '.join(packages)}", flush=True)
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
             for package, result in pool.map(build, packages):
@@ -59,14 +64,15 @@ def build_stack(plan: dict, repo: Path, image: str, engine: str, workers: int) -
             if not report["packages"][package]["status"]:
                 for rpm in (work / "rpms" / package).glob("*.rpm"):
                     shutil.copy2(rpm, prior / rpm.name)
-        (work / "stack-report.json").write_text(json.dumps(report, indent=2) + "\n")
+        report_path.write_text(json.dumps(report, indent=2) + "\n")
         # Save disk after each wave; RPMs and logs are retained as evidence.
         cleanup = subprocess.run(
             [engine, "run", "--rm", "--pull=never", "-v", f"{repo}:/repo:Z",
              image, "rm", "-rf", "/repo/work/rpmbuild"], check=False)
         if cleanup.returncode:
             raise RuntimeError("could not clean root-owned RPM build trees")
-    return int(any(result["status"] for result in report["packages"].values()))
+    return int(any(result["status"] for result in report["packages"].values()
+                   if selected_wave is None or result["wave"] == selected_wave))
 
 
 if __name__ == "__main__":
@@ -76,6 +82,7 @@ if __name__ == "__main__":
     parser.add_argument("--image", default="factory-buildroot:run")
     parser.add_argument("--engine", default="docker")
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--wave", type=int, help="build one wave, preserving the earlier report")
     args = parser.parse_args()
     raise SystemExit(build_stack(json.loads(args.plan.read_text()), args.repo.resolve(),
-                                 args.image, args.engine, args.workers))
+                                 args.image, args.engine, args.workers, args.wave))
