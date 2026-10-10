@@ -41,7 +41,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 factory/tools/extract_buildrequires.py --image factory-buildroot:run --output work/graph
-          python3 factory/tools/build_graph.py plan --rows work/graph/rows --output work/graph/plan.json
+          python3 factory/tools/build_graph.py plan --rows work/graph/rows \
+            --packages '["wayland-protocols"]' --output work/graph/plan.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:

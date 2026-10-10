@@ -40,11 +40,13 @@ for spec in /packages/*/*.spec; do
     cat "$outdir/$name.err" >&2
     failed=1
   fi
-  for query in names provides; do
+  for query in names provides br; do
     if [ "$query" = names ]; then
       args=(--qf "%{NAME}\n")
-    else
+    elif [ "$query" = provides ]; then
       args=(--provides)
+    else
+      args=(--buildrequires)
     fi
     if ! rpmspec -q "${args[@]}" --define "_sourcedir $(dirname "$spec")" \
         --define "dist .el10" "$spec" > "$outdir/$name.$query" 2>> "$outdir/$name.err"; then
@@ -64,10 +66,12 @@ from tools.build_graph import _requirement_names
 from tools.assemble_repo import source_name
 rows = Path(sys.argv[1])
 requirements = set()
-for spec in rows.glob("*.spec"):
-    for line in re.findall(r"^BuildRequires(?:[0-9]*)?:\s*(.+)$", spec.read_text(), re.MULTILINE):
+for br in rows.glob("*.br"):
+    for line in br.read_text().splitlines():
         requirements.update(_requirement_names(line))
 base = dnf.Base()
+base.conf.read()
+base.conf.substitutions.update_from_etc(base.conf.installroot, base.conf.varsdir)
 base.read_all_repos()
 base.fill_sack(load_system_repo=False)
 provided = {}

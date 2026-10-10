@@ -108,6 +108,8 @@ def waves(edges: dict[str, set[str]], packages: list[str]) -> list[list[str]]:
     successors: dict[str, set[str]] = {package: set() for package in packages}
     indegree: dict[str, int] = {package: 0 for package in packages}
     for package, predecessors in edges.items():
+        if package not in indegree:
+            continue
         for predecessor in predecessors:
             if predecessor not in successors or predecessor == package:
                 continue
@@ -181,7 +183,8 @@ def extract(root: Path | None, rows_dir: Path) -> dict[str, set[str]]:
     return {package: set(items) for package, items in collected.items()}
 
 
-def plan(root: Path | None = None, rows_dir: Path | None = None) -> dict:
+def plan(root: Path | None = None, rows_dir: Path | None = None,
+         selected: list[str] | None = None, graph_only: bool = False) -> dict:
     """Produce the full build plan: waves plus the graph behind them."""
     root = factory_root(root)
     if rows_dir is None:
@@ -192,9 +195,10 @@ def plan(root: Path | None = None, rows_dir: Path | None = None) -> dict:
         rows = {}
         for record in inventory(root):
             text = (rows_dir / f"{record.name}.spec").read_text()
-            rows[record.name] = set(re.findall(
-                r"^BuildRequires(?:[0-9]*)?:\s*(.+)$", text, re.MULTILINE
-            ))
+            queried = rows_dir / f"{record.name}.br"
+            rows[record.name] = (set(queried.read_text().splitlines()) if queried.is_file()
+                                 else set(re.findall(
+                                     r"^BuildRequires(?:[0-9]*)?:\s*(.+)$", text, re.MULTILINE)))
     names = [record.name for record in inventory(root)]
     provided: dict[str, set[str]] = defaultdict(set)
     if rows_dir is not None:
@@ -209,11 +213,17 @@ def plan(root: Path | None = None, rows_dir: Path | None = None) -> dict:
             for package, capabilities in json.loads(base.read_text()).items():
                 provided[package].update(capabilities)
     edges = resolve_edges(rows, set(names), provided)
-    return {
+    result = {
         "packages": sorted(names),
-        "waves": waves(edges, names),
         "edges": {package: sorted(values) for package, values in sorted(edges.items())},
     }
+    if not graph_only:
+        building = names if selected is None else selected
+        unknown = set(building) - set(names)
+        if unknown:
+            raise ValueError("unknown recipes: " + ", ".join(sorted(unknown)))
+        result["waves"] = waves(edges, building)
+    return result
 
 
 def main() -> int:
@@ -224,6 +234,8 @@ def main() -> int:
     plan_parser.add_argument("--root", type=Path, default=None)
     plan_parser.add_argument("--rows", type=Path, default=None)
     plan_parser.add_argument("--output", type=Path, default=None)
+    plan_parser.add_argument("--packages", help="JSON array of the selected build set")
+    plan_parser.add_argument("--graph-only", action="store_true")
 
     reverse_parser = subparsers.add_parser("reverse-deps")
     reverse_parser.add_argument("package")
@@ -233,13 +245,14 @@ def main() -> int:
     args = parser.parse_args()
     try:
         if args.command == "plan":
-            result = plan(args.root, args.rows)
+            selected = json.loads(args.packages) if args.packages is not None else None
+            result = plan(args.root, args.rows, selected, args.graph_only)
             rendered = json.dumps(result, indent=2)
             if args.output:
                 args.output.parent.mkdir(parents=True, exist_ok=True)
                 args.output.write_text(rendered + "\n")
-                depth = len(result["waves"])
-                print(f"{len(result['packages'])} packages in {depth} waves -> {args.output}")
+                depth = len(result.get("waves", []))
+                print(f"{len(result['packages'])} recipes; {depth} selected waves -> {args.output}")
             else:
                 print(rendered)
         elif args.command == "reverse-deps":

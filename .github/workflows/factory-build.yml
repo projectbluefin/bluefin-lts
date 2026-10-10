@@ -128,20 +128,8 @@ jobs:
             --output work/graph
           python3 factory/tools/build_graph.py plan \
             --root factory \
-            --rows work/graph/rows \
+            --rows work/graph/rows --graph-only \
             --output work/graph/plan.json
-          # The wave count is fixed by the workflow's static job graph, so a
-          # deeper plan must fail loudly here rather than dropping the
-          # packages that did not fit.
-          depth=$(python3 -c 'import json; print(len(json.load(open("work/graph/plan.json"))["waves"]))')
-          echo "plan depth: $depth waves"
-          test "$depth" -le 6
-
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: factory-build-graph
-          path: work/graph
-          retention-days: 7
 
       # The published image is the witness for what may be skipped, and it
       # lives in one place: the OCI image publish writes. Resolved once here
@@ -229,6 +217,13 @@ jobs:
           # build-stage.yml once per wave.
           build_list=$(jq -c '.build_list' work/selection.json)
           echo "build_list=$build_list" >> "$GITHUB_OUTPUT"
+          python3 factory/tools/build_graph.py plan --rows work/graph/rows \
+            --packages "$build_list" --output work/graph/plan.json
+          depth=$(jq '.waves | length' work/graph/plan.json)
+          if [ "$depth" -gt 6 ]; then
+            echo "::error::selected graph needs $depth waves; workflow supports six"
+            exit 1
+          fi
           for stage in 0 1 2 3 4 5; do
             packages=$(python3 - "$stage" <<'PY'
           import json, sys
@@ -244,6 +239,12 @@ jobs:
           echo "stage${stage}=${packages}" >> "$GITHUB_OUTPUT"
           echo "wave $stage: $(jq length <<<"$packages") packages"
           done
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: factory-build-graph
+          path: work/graph
+          retention-days: 7
 
       - name: Summarise the run
         run: |

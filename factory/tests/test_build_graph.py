@@ -72,6 +72,10 @@ class ResolveEdgesTests(unittest.TestCase):
 
 
 class WaveTests(unittest.TestCase):
+    def test_unselected_cycle_does_not_block_an_independent_build(self):
+        self.assertEqual(waves({'a': {'b'}, 'b': {'a', 'independent'}},
+                               ['independent']), [['independent']])
+
     def test_linear_chain_gets_one_package_per_wave(self):
         edges = {"c": {"b"}, "b": {"a"}}
         self.assertEqual(waves(edges, ["a", "b", "c"]), [["a"], ["b"], ["c"]])

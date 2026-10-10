@@ -98,6 +98,8 @@ Run `just factory-check` before every commit that touches `factory/**` or
 - Reuse the rows extracted in CentOS; the host planner must not rerun RPM.
   Map capabilities through binary subpackage names, explicit Provides, and
   CentOS repository metadata; `pkgconfig(glib-2.0)` is one capability.
+  DNF Python callers must load config and variable files before repos;
+  otherwise CentOS metalinks retain the literal `$stream` and return 404.
 - Pass JSON-encoded chunks to reusable build matrices, including a single package.
 - Keep dependency installation and compilation in one container. Resolve RPM
   exit code 11 from generated BuildRequires with a bounded install/retry loop.
