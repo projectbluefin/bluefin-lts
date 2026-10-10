@@ -37,7 +37,7 @@ concurrency:
 jobs:
   detect-changes:
     name: Detect changes
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     permissions:
       contents: read
