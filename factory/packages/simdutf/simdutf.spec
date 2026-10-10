@@ -31,6 +31,7 @@ Unicode (UTF8, UTF16, UTF32) validation and transcoding at billions of
 characters per second using SSE2, AVX2, NEON, AVX-512.
 
 %package devel
+Provides: pkgconfig(simdutf) = %{version}
 Summary: Development files for %{name}
 Requires:	%{name} = %{version}-%{release}
 

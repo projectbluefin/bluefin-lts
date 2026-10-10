@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # The GNOME transaction uses the candidate plus CentOS and EPEL, never COPR.
 set -euo pipefail
+# shellcheck source=factory/tools/dnf_retry.sh
+source /repo/factory/tools/dnf_retry.sh
 dnf -y install dnf-plugins-core
 dnf config-manager --set-enabled crb
 dnf -y install epel-release
@@ -16,7 +18,7 @@ mapfile -t excluded < <(python3 /repo/build_scripts/scripts/read-packages \
     /repo/build_scripts/packages/base.toml gnome_excluded)
 exclude_args=()
 for package in "${excluded[@]}"; do exclude_args+=(-x "$package"); done
-dnf -y --best install --downloadonly --downloaddir=/tmp/transaction \
+dnf_retry -y --best install --downloadonly --downloaddir=/tmp/transaction \
     "${exclude_args[@]}" "${packages[@]}" gnome50-el10-compat libgda \
     'gnome-shell >= 51.0' 'mutter >= 51.0' 'gdm >= 51.0' \
     'gnome-session >= 51.0' 'gnome-control-center >= 51.0' \

@@ -91,6 +91,7 @@ JavaScript. It is intended to be embedded in other applications
 that provide host environments for JavaScript.
 
 %package        devel
+Provides: pkgconfig(mozjs-140) = %{version}
 Summary:        Development files for %{name}
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 

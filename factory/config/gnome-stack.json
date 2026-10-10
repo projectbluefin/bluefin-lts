@@ -20,6 +20,7 @@
     "gsettings-desktop-schemas",
     "gtk4",
     "libadwaita",
+    "libgda",
     "libgexiv2",
     "localsearch",
     "mutter",

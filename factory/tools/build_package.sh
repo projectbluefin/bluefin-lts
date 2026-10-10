@@ -2,6 +2,8 @@
 # CentOS Stream container lane. Prior-wave RPMs and the seed are assembled
 # outside the container; dependencies and the build share this one root.
 set -euo pipefail
+# shellcheck source=factory/tools/dnf_retry.sh
+source /repo/factory/tools/dnf_retry.sh
 : "${PACKAGE:?}"
 specs=(/repo/factory/packages/"$PACKAGE"/*.spec)
 if [ "${#specs[@]}" -ne 1 ]; then
@@ -28,7 +30,7 @@ args=(--define "_topdir /repo/work/rpmbuild/$PACKAGE"
       --define "_sourcedir /repo/factory/packages/$PACKAGE"
       --define "_specdir /repo/factory/packages/$PACKAGE"
       --define "dist .el10")
-dnf -y builddep -D 'dist .el10' -D "_sourcedir /repo/factory/packages/$PACKAGE" "$spec"
+dnf_retry -y builddep -D 'dist .el10' -D "_sourcedir /repo/factory/packages/$PACKAGE" "$spec"
 # Adapted from utah-packages: exit 11 requests installation of generated
 # BuildRequires. Other failures must retain their original exit status.
 ready=false
@@ -41,7 +43,7 @@ for attempt in 1 2 3 4 5; do
     [ "$status" -eq 11 ] || exit "$status"
     generated=(/repo/work/rpmbuild/"$PACKAGE"/SRPMS/*.buildreqs.nosrc.rpm)
     test -f "${generated[0]}"
-    dnf -y builddep "${generated[0]}"
+    dnf_retry -y builddep "${generated[0]}"
 done
 if [ "$ready" != true ]; then
     echo 'generated BuildRequires did not converge after five attempts' >&2
