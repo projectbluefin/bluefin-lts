@@ -125,8 +125,15 @@ class ReportCommandTests(unittest.TestCase):
             output = root / "report.md"
             failed = root / "failed.json"
 
+            import contextlib
+            import io
             import sys as _sys
 
+            # The command reports each failure on stderr. Left to run, that
+            # prints "did not build: gtk4" into the middle of the test output,
+            # where it reads as a real failure and is easy to mistake for one
+            # further down the log.
+            captured = io.StringIO()
             argv = _sys.argv
             _sys.argv = [
                 "publish_gate", "report",
@@ -137,10 +144,12 @@ class ReportCommandTests(unittest.TestCase):
                 "--run-url", "https://example/run/2",
             ]
             try:
-                self.assertEqual(main(), 0)
+                with contextlib.redirect_stderr(captured):
+                    self.assertEqual(main(), 0)
             finally:
                 _sys.argv = argv
 
+            self.assertIn("gtk4", captured.getvalue())
             self.assertEqual(json.loads(failed.read_text()), ["gtk4"])
             self.assertEqual(marker(output.read_text()), '["gtk4"]')
 

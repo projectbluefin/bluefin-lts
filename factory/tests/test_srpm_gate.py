@@ -40,12 +40,18 @@ class MountPathTests(unittest.TestCase):
     def setUpClass(cls):
         # factory_root takes the factory directory, not a path inside it.
         cls.root = factory_root(Path(__file__).resolve().parent.parent)
-        cls.record = next(
-            record for record in inventory(cls.root) if record.name == "gnome-shell"
-        )
+        records = inventory(cls.root)
+        if not records:
+            raise unittest.SkipTest("no recipes to build a command from")
+        # Any recipe will do. Naming a specific one couples the test to the
+        # recipe inventory, so removing or renaming that package would fail
+        # here for a reason that has nothing to do with the mount paths.
+        cls.record = records[0]
 
     def _command(self, output: Path):
-        return command("gnome-shell", self.record, output, self.root, "packit:latest")
+        return command(
+            self.record.name, self.record, output, self.root, "packit:latest"
+        )
 
     def test_relative_output_still_yields_absolute_mounts(self):
         # The caller in the workflow passes --output work/srpm/<pkg>.src.rpm,
@@ -85,27 +91,43 @@ class MountPathTests(unittest.TestCase):
             self.assertIn("does not exist", str(caught.exception))
 
     def test_repository_mount_is_the_repository_not_the_factory(self):
+        # Packit runs with /repo as its working directory, and
+        # packit_source0.py resolves the spec against the repository root, so
+        # this must be the repository. Mounting only factory/ would leave
+        # .packit.yaml and build_scripts out of reach.
+        #
+        # Compared against the root computed from this file rather than a
+        # literal directory name: the checkout is named differently in CI than
+        # it is in a working copy, and hardcoding it makes the test fail for a
+        # reason that has nothing to do with the code under test.
         with tempfile.TemporaryDirectory() as scratch:
             argv = self._command(Path(scratch) / "out.src.rpm")
-        repo_mounts = [host for host in mounts(argv) if host.endswith("bluefin-lts-1")]
-        self.assertTrue(repo_mounts, "no mount for the repository root")
+
+        expected = str(self.root.parent.resolve())
+        hosts = mounts(argv)
+        self.assertIn(expected, hosts, f"repository root not mounted; got {hosts}")
+        self.assertNotIn(str(self.root.resolve()), hosts)
 
     def test_package_is_passed_through_the_environment(self):
         # packit_source0.py reads PACKAGE, so an entry that only passes -p
         # would produce a confusing failure inside the container.
         with tempfile.TemporaryDirectory() as scratch:
             argv = self._command(Path(scratch) / "out.src.rpm")
-        self.assertIn("PACKAGE=gnome-shell", argv)
+        self.assertIn(f"PACKAGE={self.record.name}", argv)
 
     def test_spec_path_is_repo_relative(self):
-        # packit_source0.py resolves the spec against the repository root.
+        # packit_source0.py resolves the spec against the repository root, so
+        # the path handed in must be repository-relative and name the recipe
+        # directory -- never an absolute host path, which the container cannot
+        # see.
         with tempfile.TemporaryDirectory() as scratch:
             argv = self._command(Path(scratch) / "out.src.rpm")
-        spec_env = next(item for item in argv if item.startswith("PACKIT_SPECFILE_PATH="))
-        self.assertTrue(
-            spec_env.split("=", 1)[1].startswith("factory/packages/gnome-shell/"),
-            spec_env,
+        spec_env = next(
+            item for item in argv if item.startswith("PACKIT_SPECFILE_PATH=")
         )
+        value = spec_env.split("=", 1)[1]
+        self.assertFalse(Path(value).is_absolute(), value)
+        self.assertTrue(value.startswith(f"factory/packages/{self.record.name}/"), value)
 
 
 if __name__ == "__main__":
