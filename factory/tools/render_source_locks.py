@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.buildroot import buildroot_config
 from tools.inventory import factory_root, inventory
 from tools.source_pipeline import source_filename
+from tools.source_pipeline import _fetch as _fetch_url  # noqa: E402
 
 SCHEMA = 1
 
@@ -94,16 +95,17 @@ done
 
 
 def fetch_digest(url: str, algorithm: str = "sha512", timeout: int = 300) -> str | None:
-    """Download a source once to compute its digest. None if unreachable."""
-    request = urllib.request.Request(url, headers={"User-Agent": "bluefin-factory/1"})
+    """Download a source once to compute its digest. None if unreachable.
+
+    Retries through the shared fetcher: rendering touches every unlocked source
+    in the factory, so one flaky host would otherwise abort a run that has
+    already done most of its work.
+    """
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            hasher = hashlib.new(algorithm)
-            for block in iter(lambda: response.read(1 << 20), b""):
-                hasher.update(block)
-            return hasher.hexdigest()
-    except (OSError, ValueError):
+        blob = _fetch_url(url, timeout=timeout)
+    except OSError:
         return None
+    return hashlib.new(algorithm, blob).hexdigest()
 
 
 def is_local(name: str) -> bool:

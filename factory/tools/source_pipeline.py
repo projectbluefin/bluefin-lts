@@ -15,6 +15,8 @@ import hashlib
 import json
 import subprocess
 import sys
+import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -28,9 +30,49 @@ ARCHIVE_SUFFIXES = (".tar.gz", ".tar.xz", ".tar.bz2", ".tar.zst", ".tar.lz", ".t
 
 
 def _fetch(url: str, timeout: int = 300) -> bytes:
-    request = urllib.request.Request(url, headers={"User-Agent": "bluefin-factory/1"})
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        return response.read()
+    """Download a URL, retrying a transient failure.
+
+    Some upstreams are intermittently unavailable. gitlab.freedesktop.org
+    serves `/-/archive/<tag>/` URLs and answers 500 on a fraction of requests
+    -- the fontconfig source was refused on one CI run and served the same
+    bytes moments later, with a digest that matched the lock exactly. Without
+    a retry that is a random red build on a healthy source.
+
+    Only transient answers are retried. A 404 is retried zero times: the URL is
+    wrong, and hammering a host that is certain to say no helps nobody. 429 and
+    5xx are retried, because those mean "not now".
+
+    Retries are announced rather than silent. A source that needed three
+    attempts is a signal about its host, and hiding that makes the gate look
+    more reliable than it is.
+    """
+    attempts = 4
+    delay = 2.0
+    last: OSError | None = None
+
+    for attempt in range(1, attempts + 1):
+        request = urllib.request.Request(url, headers={"User-Agent": "bluefin-factory/1"})
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return response.read()
+        except urllib.error.HTTPError as error:
+            if error.code < 500 and error.code != 429:
+                raise
+            last = error
+        except OSError as error:
+            last = error
+
+        if attempt == attempts:
+            break
+        print(
+            f"  attempt {attempt}/{attempts} failed for {url}: {last}; "
+            f"retrying in {delay:.0f}s",
+            file=sys.stderr,
+        )
+        time.sleep(delay)
+        delay *= 2
+
+    raise OSError(f"{url}: failed after {attempts} attempts: {last}")
 
 
 def _digest(blob: bytes, algorithm: str) -> str:

@@ -64,7 +64,10 @@ jobs:
             factory-buildroot:run \
             bash -exc '
               dnf -y install dnf-plugins-core rpm-build
-              # CRB is where several of this stack's build roots live.
+              # CRB is where several of the build roots for this stack live.
+              # No apostrophes in here: this whole block is a single-quoted
+              # argument to bash -exc, so one terminates the string early and
+              # the rest of the script is run as shell rather than as payload.
               dnf config-manager --set-enabled crb || true
               dnf -y builddep \
                 --define "_topdir /repo/work/builddep/$PACKAGE" \
