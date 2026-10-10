@@ -28,6 +28,7 @@
     "orca",
     "pango",
     "pipewire",
+    "selinux-policy",
     "tecla",
     "tinysparql",
     "vte291",

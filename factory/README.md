@@ -243,3 +243,8 @@ preflight selects factory prerequisites when CentOS supplies an older API.
 Core portal builds retain Bubblewrap image/sound validation and USB support;
 their prerequisites belong in BuildRequires. Source-host fallbacks must verify
 against the primary source’s unchanged checksum.
+
+Include the locked SELinux policy recipe in the verified stack: the compatibility
+RPM requires policy 43.1 or later, which the CentOS 42.1 baseline cannot supply.
+The final installation gate must satisfy runtime prerequisites as well as build
+requirements.

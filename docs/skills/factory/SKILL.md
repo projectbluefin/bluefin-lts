@@ -139,7 +139,9 @@ Run `just factory-check` before every commit that touches `factory/**` or
   with DNF download mode; `--assumeno` is not a successful solve signal. The
   stack workflow must also install the resolved RPMs without network repos,
   assert the installed core versions are 51, and run `gnome-shell --version`.
-  A source version or dependency solve alone does not verify the installed stack.
+  Include SELinux policy in the stack targets to satisfy the compatibility
+  RPM’s policy floor. A source version or dependency solve alone does not verify
+  the installed stack.
 - Sign metadata before copying it into the image, and sign the immutable OCI
   digest before moving a stream tag. Seed extraction uses `/factory`.
 - Verify `Factory CentOS smoke` in CI before trusting local fast gates.
