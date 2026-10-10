@@ -98,12 +98,25 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     steps:
+      # Full history, not the default shallow fetch. This job diffs against
+      # the pull request's base commit, and a depth-1 checkout does not have
+      # that object: `git diff <base.sha> HEAD` answers "fatal: bad object",
+      # which names a SHA and says nothing about the shallow clone being the
+      # cause.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
       - name: List changed recipes
         id: changed
         run: |
           set -euo pipefail
           base="${{ github.event.pull_request.base.sha }}"
+          # Name the cause rather than emitting git's "bad object" if the base
+          # is somehow still missing.
+          if ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+            echo "::error title=base commit unavailable::${base} is not in this clone. The checkout needs fetch-depth: 0 to diff against the pull request base."
+            exit 1
+          fi
           changed=$(git diff --name-only "$base" HEAD -- factory/packages \
             | awk -F/ '$1=="factory" && $2=="packages" {print $3}' | sort -u)
           printf '%s\n' "$changed" | jq -R . | jq -s . > changed.json
