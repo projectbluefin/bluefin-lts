@@ -78,6 +78,8 @@ Run `just factory-check` before every commit that touches `factory/**` or
 
 ## Traps worth knowing
 
+- **The spec filename can differ from its recipe name.** Discover the single
+  `*.spec`, as inventory does; gobject-introspection uses a bootstrap filename.
 - **`rpmbuild` must be given the spec path explicitly.** With no argument it
   globs the working directory, finds nothing in the build output directory,
   exits 0, and writes nothing. A green build with no RPMs.

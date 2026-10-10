@@ -78,6 +78,7 @@ reasons. There is no API or ABI guarantee, although we are doing our
 best to provide stability.
 
 %package -n gnome-desktop4-devel
+Provides: pkgconfig(gnome-qr-gtk-4) = %{version}
 Summary: Libraries and headers for gnome-desktop4
 License: LGPL-2.0-or-later
 Requires: gnome-desktop4%{?_isa} = %{version}-%{release}
@@ -143,7 +144,8 @@ DESTDIR=%{buildroot} ninja -C redhat-linux-build install
 # LGPL
 %{_libdir}/libgnome-bg-4.so.2{,.*}
 %{_libdir}/libgnome-desktop-4.so.2{,.*}
-%{_libdir}/libgnome-rr-4.so.2{,.*}
+%{_libdir}/libgnome-qr-4.so.0{,.*}
+%{_libdir}/libgnome-qr-gtk-4.so.0{,.*}
 %{_libdir}/girepository-1.0/Gnome*-4.0.typelib
 
 %files -n gnome-desktop4-devel

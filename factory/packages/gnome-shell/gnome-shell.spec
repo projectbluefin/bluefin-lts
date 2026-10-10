@@ -185,7 +185,6 @@ BuildArch: noarch
 
 %build
 meson setup --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
-  -Dextensions_app=false \
 %if %{portal_helper}
   -Dportal_helper=true \
 %else

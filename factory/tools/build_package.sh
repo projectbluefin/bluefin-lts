@@ -3,8 +3,15 @@
 # outside the container; dependencies and the build share this one root.
 set -euo pipefail
 : "${PACKAGE:?}"
-spec="/repo/factory/packages/$PACKAGE/$PACKAGE.spec"
+specs=(/repo/factory/packages/"$PACKAGE"/*.spec)
+if [ "${#specs[@]}" -ne 1 ]; then
+    echo "$PACKAGE: expected exactly one spec" >&2
+    exit 1
+fi
+spec="${specs[0]}"
 test -f "$spec"
+# Rust dependencies must come from the preverified vendor source.
+export CARGO_NET_OFFLINE=true
 dnf -y install rpm-build dnf-plugins-core createrepo_c redhat-rpm-config
 # CRB is required, so an enablement failure must not be ignored.
 dnf config-manager --set-enabled crb

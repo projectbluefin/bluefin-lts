@@ -43,6 +43,7 @@ BuildRequires:  pkgconfig(gdk-pixbuf-2.0)
 BuildRequires:  pkgconfig(gdk-wayland-3.0)
 %endif
 BuildRequires:  pkgconfig(gio-2.0) >= %{glib2_version}
+BuildRequires:  pkgconfig(gnome-qr-gtk-4)
 BuildRequires:  pkgconfig(gnome-desktop-4) >= %{gnome_desktop_version}
 BuildRequires:  pkgconfig(gnome-settings-daemon) >= %{gsd_version}
 BuildRequires:  pkgconfig(goa-1.0) >= %{gnome_online_accounts_version}

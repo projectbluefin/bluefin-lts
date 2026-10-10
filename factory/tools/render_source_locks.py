@@ -42,7 +42,7 @@ SCHEMA = 1
 
 
 def buildroot_image(root: Path) -> str:
-    """The build root image reference without its digest."""
+    """The immutable buildroot reference used for RPM macro expansion."""
     return read_pin(root)
 
 
@@ -130,9 +130,7 @@ def main() -> int:
     root = factory_root(args.root)
     image = args.image
     if image is None:
-        # The image reference without its digest: a container runtime cannot
-        # pull a `name@sha256:` reference. The digest is enforced by
-        # tools/buildroot.py at build time, not by this resolver.
+        # Resolve macros against the same immutable image as binary builds.
         image = buildroot_image(root)
 
     print(f"resolving sources in {image} ...", file=sys.stderr)
