@@ -225,6 +225,15 @@ jobs:
             work/stack-report.json
           if-no-files-found: error
           retention-days: 7
+      - name: Require the complete stack and solve the GNOME 51 consumer transaction
+        if: ${{ !cancelled() && steps.plan.conclusion == 'success' }}
+        run: |
+          set -euo pipefail
+          python3 factory/tools/build_stack.py --plan work/graph/plan.json --check
+          docker run --rm --pull=never -v "$PWD:/repo:ro" -v "$PWD/work/prior:/factory" \
+            factory-buildroot:run bash -c \
+            'set -e; dnf -y install createrepo_c; createrepo_c /factory; bash /repo/factory/tools/consumer_transaction.sh' \
+            2>&1 | tee work/consumer-transaction.log
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
@@ -233,6 +242,7 @@ jobs:
             work/graph
             work/stack-logs
             work/stack-report.json
+            work/consumer-transaction.log
             work/buildroot-provenance.json
           if-no-files-found: error
           retention-days: 7

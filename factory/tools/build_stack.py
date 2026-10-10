@@ -75,6 +75,19 @@ def build_stack(plan: dict, repo: Path, image: str, engine: str, workers: int,
                    if selected_wave is None or result["wave"] == selected_wave))
 
 
+def check_report(plan: dict, repo: Path) -> int:
+    report = json.loads((repo / "work" / "stack-report.json").read_text())
+    expected = {package for wave in plan["waves"] for package in wave}
+    failed = [package for package in sorted(expected)
+              if report["packages"].get(package, {}).get("status", 1)
+              or not report["packages"].get(package, {}).get("rpms")]
+    if failed:
+        print("Failed or missing builds: " + ", ".join(failed))
+        return 1
+    print(f"All {len(expected)} required recipes produced RPMs")
+    return 0
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--plan", type=Path, required=True)
@@ -83,6 +96,10 @@ if __name__ == "__main__":
     parser.add_argument("--engine", default="docker")
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--wave", type=int, help="build one wave, preserving the earlier report")
+    parser.add_argument("--check", action="store_true", help="require successful outputs for the entire plan")
     args = parser.parse_args()
-    raise SystemExit(build_stack(json.loads(args.plan.read_text()), args.repo.resolve(),
+    plan = json.loads(args.plan.read_text())
+    if args.check:
+        raise SystemExit(check_report(plan, args.repo.resolve()))
+    raise SystemExit(build_stack(plan, args.repo.resolve(),
                                  args.image, args.engine, args.workers, args.wave))
