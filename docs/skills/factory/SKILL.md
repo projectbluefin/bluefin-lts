@@ -90,8 +90,9 @@ Run `just factory-check` before every commit that touches `factory/**` or
 - **Imported specs carry upstream typos.** `docbook-style-xsl` had a
   malformed `%2F{%version}` that produced a 404 URL. The digest check is what
   surfaced it.
-- **Recipes are the GNOME 50 set.** Moving to 51 is a version bump across the
-  stack. Nothing in the tooling assumes 50.
+- **GNOME 51 changes API and dependencies.** Keep Mutter's API version,
+  Wayland minima, and source locks aligned with upstream meson.build. Remove
+  backports already present upstream and rebase remaining patches.
 
 ## Build and publication verification
 
@@ -113,8 +114,9 @@ Run `just factory-check` before every commit that touches `factory/**` or
 - Verify `Factory CentOS smoke` in CI before trusting local fast gates.
 
 These mechanisms are adapted from `projectbluefin/utah-packages`; its
-Hummingbird repositories, exclusions, disttags, and bootstrap rules do not
-apply to this CentOS buildroot.
+Hummingbird repositories, exclusions, and disttags do not apply to CentOS.
+Bootstrap edges require exact CentOS RPM version witnesses; declared Utah
+stages cannot substitute for a successful dependency transaction.
 
 ## Red Flags
 
@@ -122,3 +124,11 @@ apply to this CentOS buildroot.
 - A hand-assigned build stage
 - A `jobs:` section added to `.packit.yaml`
 - The build root referenced by tag rather than digest
+
+## Full-stack verification
+
+Run `factory-stack.yml` on the candidate branch to build all eligible recipes
+without a fixed wave-depth limit. Inspect `factory-stack-evidence` for every
+package status and bootstrap witness; a partial RPM artifact is not a successful
+stack. Generated cargo bundles come from the upstream Cargo.lock, verify each
+crate, and carry their own SHA-512 lock. Do not run cargo downloads in rpmbuild.

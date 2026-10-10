@@ -8,13 +8,13 @@
 %global freetype_version 2.1.5
 
 Name:    pango
-Version: 1.57.0
-Release: %autorelease
+Version: 1.58.2
+Release: 1%{?dist}
 Summary: System for layout and rendering of internationalized text
 
 License: LGPL-2.0-or-later
 URL:     https://pango.gnome.org/
-Source0: https://download.gnome.org/sources/%{name}/1.57/%{name}-%{version}.tar.xz
+Source0: https://download.gnome.org/sources/pango/1.58/pango-1.58.2.tar.xz
 
 BuildRequires: pkgconfig(cairo) >= %{cairo_version}
 BuildRequires: pkgconfig(cairo-gobject) >= %{cairo_version}

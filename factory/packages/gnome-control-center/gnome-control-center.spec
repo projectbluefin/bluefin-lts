@@ -17,13 +17,13 @@
 %bcond malcontent %[!0%{?rhel}]
 
 Name:           gnome-control-center
-Version:        50.0
-Release:        4%{?dist}
+Version:        51.0
+Release:        1%{?dist}
 Summary:        Utilities to configure the GNOME desktop
 
 License:        GPL-2.0-or-later AND CC0-1.0
 URL:            https://gitlab.gnome.org/GNOME/gnome-control-center/
-Source0:        https://download.gnome.org/sources/%{name}/50/%{name}-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/gnome-control-center/51/gnome-control-center-51.0.tar.xz
 
 BuildRequires:  blueprint-compiler >= %{blueprint_compiler_version}
 BuildRequires:  desktop-file-utils

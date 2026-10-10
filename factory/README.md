@@ -1,6 +1,6 @@
 # GNOME package factory
 
-Builds the GNOME desktop stack (currently seeded from GNOME 50) as RPMs against **CentOS Stream 10**, and
+Builds the GNOME desktop stack (targeting GNOME 51) as RPMs against **CentOS Stream 10**, and
 publishes them as an OCI image the image build copies in.
 
 This directory is the package factory. It is not consumed by anything except
@@ -134,12 +134,32 @@ python3 factory/tools/srpm_gate.py gnome-shell --output /tmp/gnome-shell.src.rpm
 
 Stated plainly, because the list is short and each item is real:
 
-- **GNOME 51 itself.** The recipes are the GNOME 50 set. Moving to 51 is a
-  version bump across the stack, and `config/upstream-sources.json` is
-  regenerated as each one lands. Nothing in the tooling assumes 50.
+- **Complete desktop validation.** GNOME 51 sources are SHA-512 locked;
+  `Factory GNOME stack` builds the eligible stack in the pinned CentOS root.
+  RPM success does not establish image composition or desktop/boot behavior.
 - **arm64.** The build root and every recipe are amd64.
 - **Hermetic builds.** Builds run in the pinned container, which provides the
   correct ABI but is not a build root in the sense `mock` means — no build user,
   no isolation, no reset between packages. See `docs/architecture.md`.
 - **No digest for some sources yet.** Any recipe whose lock has no `sha512`
   does not build. `validate.py` names them.
+
+## GNOME 51 build verification
+
+Dispatch `factory-stack.yml` on the candidate branch. It computes every wave
+from CentOS RPM dependencies, builds fresh containers, and retains per-package
+logs, RPMs, buildroot provenance, and a JSON status report. It has no publication
+or signing permissions. The lane supports arbitrary graph depth; publication's
+older reusable workflow currently supports six waves.
+
+Cycles can use a CentOS/CRB/EPEL provider only when the extractor records a
+provider for the exact versioned BuildRequires. The planner removes only cyclic
+edges and records those witnesses; it leaves the full graph intact for rebuild
+selection. DNF must still solve the complete build transaction. Tests are not
+disabled to bootstrap a cycle.
+
+Rust vendor bundles are generated before compilation from the verified archive's
+Cargo.lock. Every crate is verified against its upstream SHA-256, and normalized
+tar metadata makes the bundle reproducible. Its SHA-512 is independently locked
+as a generated source, then checked again inside the build container. Git-based
+crate sources are refused.

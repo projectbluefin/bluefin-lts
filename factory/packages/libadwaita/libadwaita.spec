@@ -5,14 +5,14 @@
 %global tarball_version %%(echo %{version} | tr '~' '.')
 
 Name:           libadwaita
-Version:        1.9.0
-Release:        2%{?dist}
+Version:        1.10.0
+Release:        1%{?dist}
 Summary:        Building blocks for modern GNOME applications
 
 # part of src/adw-spring-animation.c is MIT
 License:        LGPL-2.1-or-later AND MIT
 URL:            https://gitlab.gnome.org/GNOME/libadwaita
-Source0:        https://download.gnome.org/sources/%{name}/1.9/%{name}-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/libadwaita/1.10/libadwaita-1.10.0.tar.xz
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gcc

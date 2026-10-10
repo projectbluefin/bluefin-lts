@@ -35,14 +35,14 @@
 %global tarball_version %%(echo %{version} | tr '~' '.')
 
 Name:           localsearch
-Version:        3.11~rc
+Version:        3.12.0
 Release:        1%{?dist}
 Summary:        Localsearch and metadata extractors
 
 # The indexer is a mix of GPLv2 and LGPLv2+ code
 License:        GPL-2.0-or-later AND LGPL-2.1-or-later
 URL:            https://gnome.pages.gitlab.gnome.org/localsearch/
-Source0:        https://download.gnome.org/sources/%{name}/3.11/%{name}-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/localsearch/3.12/localsearch-3.12.0.tar.xz
 
 # asciidoc pulls in source-highlight which requires libboost_regex.so.1.83.0 on EL10
 %if !0%{?rhel}

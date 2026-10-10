@@ -456,6 +456,12 @@ packages:
     downstream_package_name: vte291
     paths:
       - factory/packages/vte291
+  wayland:
+    specfile_path: wayland.spec
+    upstream_package_name: wayland
+    downstream_package_name: wayland
+    paths:
+      - factory/packages/wayland
   wayland-protocols:
     specfile_path: wayland-protocols.spec
     upstream_package_name: wayland-protocols

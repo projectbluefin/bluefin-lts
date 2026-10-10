@@ -12,13 +12,13 @@
 %global major_version %%(echo %%{tarball_version} | cut -d "." -f 1)
 
 Name:           orca
-Version:        50.0.9
-Release:        %autorelease
+Version:        51.0
+Release:        1%{?dist}
 Summary:        Assistive technology for people with visual impairments
 
 License:        LGPL-2.1-or-later AND CC-BY-SA-3.0
 URL:            https://wiki.gnome.org/Projects/Orca
-Source0:        https://download.gnome.org/sources/%{name}/%{major_version}/%{name}-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/orca/51/orca-51.0.tar.xz
 
 BuildArch:      noarch
 

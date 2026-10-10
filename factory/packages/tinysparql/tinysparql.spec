@@ -11,13 +11,13 @@
 %endif
 
 Name:           tinysparql
-Version:        3.11~rc
-Release:        2%{?dist}
+Version:        3.12.0
+Release:        1%{?dist}
 Summary:        Desktop-neutral metadata database and search tool
 
 License:        GPL-2.0-or-later
 URL:            https://gnome.pages.gitlab.gnome.org/tinysparql/
-Source0:        https://download.gnome.org/sources/tinysparql/3.11/tinysparql-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/tinysparql/3.12/tinysparql-3.12.0.tar.xz
 
 # asciidoc pulls in source-highlight which requires libboost_regex.so.1.83.0 on EL10
 # (boost ABI changed and source-highlight hasn't been rebuilt); skip on RHEL

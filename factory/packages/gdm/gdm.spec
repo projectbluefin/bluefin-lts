@@ -15,13 +15,13 @@
 
 Name:           gdm
 Epoch:          1
-Version:        50.0
-Release:        3%{?dist}
+Version:        51.0
+Release:        1%{?dist}
 Summary:        The GNOME Display Manager
 
 License:        GPL-2.0-or-later
 URL:            https://wiki.gnome.org/Projects/GDM
-Source0:        https://download.gnome.org/sources/gdm/%{major_version}/gdm-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/gdm/51/gdm-51.0.tar.xz
 Source1:        org.gnome.login-screen.gschema.override
 Source2:        gdm.sysusers
 

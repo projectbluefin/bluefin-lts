@@ -3,14 +3,14 @@
 %global tarball_version %%(echo %{version} | tr '~' '.')
 
 Name:           gsettings-desktop-schemas
-Version:        50.0
-Release:        2%{?dist}
+Version:        51.0
+Release:        1%{?dist}
 Summary:        A collection of GSettings schemas
 
 License:        LGPL-2.1-or-later
 # no homepage exists for this component
 URL:            https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas
-Source0:        https://download.gnome.org/sources/%{name}/50/%{name}-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/gsettings-desktop-schemas/51/gsettings-desktop-schemas-51.0.tar.xz
 Source1:        org.gnome.desktop.interface.rhel.gschema.override
 
 BuildRequires:  gcc

@@ -1,11 +1,11 @@
 Name:           glib2
-Version:        2.88.0
-Release:        4%{?dist}
+Version:        2.90.1
+Release:        1%{?dist}
 Summary:        A library of handy utility functions
 
 License:        LGPL-2.1-or-later
 URL:            https://www.gtk.org
-Source0:        https://download.gnome.org/sources/glib/2.88/glib-%{version}.tar.xz
+Source0:        https://download.gnome.org/sources/glib/2.90/glib-2.90.1.tar.xz
 
 Patch0:         gnutls-hmac.patch
 Patch1:         default-terminal.patch

@@ -9,13 +9,13 @@
 %global tarball_version %%(echo %{version} | tr '~' '.')
 
 Name:    gnome-desktop3
-Version: 44.5
-Release: %autorelease
+Version: 51.0
+Release: 1%{?dist}
 Summary: Library with common API for various GNOME modules
 
 License: GPL-2.0-or-later AND LGPL-2.0-or-later AND GFDL-1.1-or-later
 URL:     https://gitlab.gnome.org/GNOME/gnome-desktop
-Source:  https://download.gnome.org/sources/gnome-desktop/44/gnome-desktop-%{tarball_version}.tar.xz
+Source:  https://download.gnome.org/sources/gnome-desktop/51/gnome-desktop-51.0.tar.xz
 
 BuildRequires: gcc
 BuildRequires: gettext

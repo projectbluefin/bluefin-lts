@@ -120,3 +120,30 @@ class FactoryRepairs(unittest.TestCase):
         before = input_digest(record, self.root)
         (directory / 'demo.tar.xz.asc').write_bytes(b'signature')
         self.assertEqual(input_digest(record, self.root), before)
+
+class CentOSBootstrapTests(unittest.TestCase):
+    def test_only_version_satisfied_cycle_edges_are_removed(self):
+        from tools.build_graph import bootstrap_edges, waves
+        names = {'meson', 'glib2'}
+        rows = {'meson': {'glib2-devel >= 2.90'}, 'glib2': {'meson >= 1.5'}}
+        provided = {'glib2': {'glib2-devel'}}
+        edges = {'meson': {'glib2'}, 'glib2': {'meson'}}
+        effective, witnesses = bootstrap_edges(
+            edges, rows, names, provided,
+            {'glib2': {'meson >= 1.5': ['meson-1.5.1-1.el10.noarch']}})
+        self.assertEqual(waves(effective, sorted(names)), [['glib2'], ['meson']])
+        self.assertEqual(witnesses[0]['consumer'], 'glib2')
+        self.assertEqual(edges['glib2'], {'meson'})
+        effective, witnesses = bootstrap_edges(edges, rows, names, provided, {})
+        with self.assertRaisesRegex(ValueError, 'cycle'):
+            waves(effective, sorted(names))
+        self.assertEqual(witnesses, [])
+
+    def test_base_provider_does_not_remove_noncyclic_factory_edge(self):
+        from tools.build_graph import bootstrap_edges
+        effective, witnesses = bootstrap_edges(
+            {'glib2': {'meson'}}, {'glib2': {'meson >= 1.5'}, 'meson': set()},
+            {'glib2', 'meson'}, {},
+            {'glib2': {'meson >= 1.5': ['meson-1.5.1-1.el10.noarch']}})
+        self.assertEqual(effective['glib2'], {'meson'})
+        self.assertEqual(witnesses, [])

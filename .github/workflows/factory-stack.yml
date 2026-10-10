@@ -1,0 +1,50 @@
+# Full-stack binary verification, with no registry publication or signing.
+name: Factory GNOME stack
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: factory-stack-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Validate recipes and load the pinned CentOS root
+        run: |
+          set -euo pipefail
+          python3 factory/tools/validate.py
+          python3 factory/tools/render_packit_config.py --check
+          python3 factory/tools/buildroot.py --output work/buildroot-resolved.json \
+            --snapshot work/buildroot-provenance.json
+          docker tag "$(python3 factory/tools/buildroot.py --digest-only)" factory-buildroot:run
+      - name: Extract exact dependencies and solve the complete eligible stack
+        run: |
+          set -euo pipefail
+          python3 factory/tools/extract_buildrequires.py --image factory-buildroot:run --output work/graph
+          packages=$(python3 factory/tools/packit_workflow.py packages)
+          python3 factory/tools/build_graph.py plan --rows work/graph/rows \
+            --packages "$packages" --output work/graph/plan.json
+      - name: Build every computed wave in CentOS
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: factory-stack-evidence
+          path: |
+            work/graph
+            work/stack-logs
+            work/stack-report.json
+            work/buildroot-provenance.json
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: factory-stack-rpms
+          path: work/rpms
+          if-no-files-found: error
+          retention-days: 7

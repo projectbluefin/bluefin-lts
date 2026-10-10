@@ -33,7 +33,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from tools.buildroot import buildroot_config
+from tools.buildroot import read_pin
 from tools.inventory import factory_root, inventory
 from tools.source_pipeline import source_filename
 from tools.source_pipeline import _fetch as _fetch_url  # noqa: E402
@@ -43,7 +43,7 @@ SCHEMA = 1
 
 def buildroot_image(root: Path) -> str:
     """The build root image reference without its digest."""
-    return str(buildroot_config(root)["image"])
+    return read_pin(root)
 
 
 def resolved_sources(root: Path, image: str, engine: str) -> dict[str, list[str]]:
@@ -176,10 +176,13 @@ def main() -> int:
         # rather than silently locked to nothing -- a recipe that passes
         # validation and then fails in rpmbuild names the missing archive and
         # not the lock that failed to provide it.
+        generated = [source for source in previous.values()
+                     if source.get("generated") and source.get("filename") in all_sources]
         absent = [
             item
             for item in all_sources
             if is_local(item) and not (record.directory / item).is_file()
+            and item not in {source["filename"] for source in generated}
         ]
 
         if not remote:
@@ -219,6 +222,7 @@ def main() -> int:
             entry["checksum_type"] = "sha512"
             locked.append(entry)
 
+        locked.extend(generated)
         entry = {
             "name": record.name,
             "version": version_of(record),

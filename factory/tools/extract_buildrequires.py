@@ -32,6 +32,7 @@ outdir="$1"
 mkdir -p "$outdir"
 dnf -y install rpm-build dnf-plugins-core redhat-rpm-config
 dnf config-manager --set-enabled crb
+dnf -y install epel-release
 failed=0
 for spec in /packages/*/*.spec; do
   name=$(basename "$(dirname "$spec")")
@@ -60,6 +61,7 @@ test "$failed" -eq 0
 # This bootstraps pkgconfig/soname edges before a factory repo exists.
 python3 - "$outdir" <<'PY'
 import dnf, json, re, sys
+from dnf.subject import Subject
 from pathlib import Path
 sys.path.insert(0, "/repo/factory")
 from tools.build_graph import _requirement_names
@@ -81,6 +83,20 @@ for capability in sorted(requirements):
             name = source_name(package.sourcerpm)
             provided.setdefault(name, set()).add(capability)
 (rows / "base-providers.json").write_text(json.dumps({name: sorted(caps) for name, caps in provided.items()}))
+# Keep exact version constraints, not just capability names. These witnesses
+# may break bootstrap cycles only; the final DNF builddep still solves the
+# entire transaction before compiling a recipe.
+satisfied = {}
+for br in rows.glob("*.br"):
+    witnesses = {}
+    for requirement in br.read_text().splitlines():
+        if requirement.startswith("("):
+            continue  # Rich dependencies need a transaction, not a name query.
+        matches = Subject(requirement).get_best_query(base.sack).available()
+        if matches:
+            witnesses[requirement] = sorted(str(package) for package in matches)
+    satisfied[br.stem] = witnesses
+(rows / "base-satisfied.json").write_text(json.dumps(satisfied, indent=2))
 PY
 """
 

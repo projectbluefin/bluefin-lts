@@ -8,6 +8,7 @@ test -f "$spec"
 dnf -y install rpm-build dnf-plugins-core createrepo_c redhat-rpm-config
 # CRB is required, so an enablement failure must not be ignored.
 dnf config-manager --set-enabled crb
+dnf -y install epel-release
 if find /prior -name '*.rpm' -print -quit | read -r _; then
     createrepo_c /prior
     printf '[factory]\nname=factory\nbaseurl=file:///prior\nenabled=1\ngpgcheck=0\npriority=1\n' > /etc/yum.repos.d/factory.repo

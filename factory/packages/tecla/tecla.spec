@@ -1,13 +1,13 @@
 %global tarball_version %%(echo %{version} | tr '~' '.')
 
 Name:           tecla
-Version:        50~rc
-Release:        100%{?dist}
+Version:        51.0
+Release:        1%{?dist}
 Summary:        Keyboard layout viewer
 
 License:        GPL-2.0-or-later
 URL:            https://gitlab.gnome.org/GNOME/tecla
-Source:         https://download.gnome.org/sources/tecla/50/tecla-%{tarball_version}.tar.xz
+Source:         https://download.gnome.org/sources/tecla/51/tecla-51.0.tar.xz
 
 BuildRequires:  gcc
 BuildRequires:  gettext

@@ -10,8 +10,8 @@
 %global jxl_private_dir %{_libexecdir}/glycin-loaders/2+/private
 
 Name:           glycin
-Version:        2.0.8
-Release:        116%{?dist}
+Version:        2.2.2
+Release:        1%{?dist}
 Summary:        Sandboxed image rendering
 
 SourceLicense:  MPL-2.0 OR LGPL-2.1-or-later
@@ -54,8 +54,8 @@ License:        %{shrink:
 # LICENSE.dependencies contains a full license breakdown
 
 URL:            https://gitlab.gnome.org/GNOME/glycin
-Source0:        https://download.gnome.org/sources/%{name}/2.0/%{name}-%{tarball_version}.tar.xz
-Source1:        glycin-2.0.8-vendor.tar.xz
+Source0:        https://download.gnome.org/sources/glycin/2.2/glycin-2.2.2.tar.xz
+Source1:        glycin-%{version}-vendor.tar.xz
 # Bundled libjxl 0.11.1 (private copy to avoid conflict with EPEL libjxl-0.10)
 Source2:        https://github.com/libjxl/libjxl/archive/refs/tags/v0.11.1.tar.gz#/libjxl-0.11.1.tar.gz
 
@@ -70,10 +70,11 @@ Source2:        https://github.com/libjxl/libjxl/archive/refs/tags/v0.11.1.tar.g
 # fixup for issue that makes "cargo tree" fail to parse tests/Cargo.toml
 Patch:          0001-fix-invalid-crate-manifest-for-tests-workspace-membe.patch
 # partial revert of https://gitlab.gnome.org/GNOME/glycin/-/commit/f637a7e
-Patch:          0002-Replace-serde_yaml_ng-with-equivalent-serde_yaml-dep.patch
+
 
 %if 0%{?rhel}
 BuildRequires:  rust-toolset
+BuildRequires:  cargo-rpm-macros
 %else
 BuildRequires:  cargo-rpm-macros
 %endif
@@ -180,7 +181,7 @@ This package contains files for developing against libglycin-gtk4.
 
 
 %prep
-%autosetup -n glycin-2.0.8 -p1 -a1
+%autosetup -n glycin-%{version} -p1 -a1
 # Disable tests directory in workspace to avoid missing serde_yaml
 sed -i '/"tests",/d' Cargo.toml
 mkdir -p .cargo
@@ -196,7 +197,7 @@ EOF
 # Extract libjxl source for private bundled build
 %setup -T -b 2 -n libjxl-0.11.1
 # Reset buildsubdir back to glycin so %%doc/%%license macros find the right files
-%setup -T -D -n glycin-2.0.8
+%setup -T -D -n glycin-%{version}
 %endif
 
 %build
@@ -258,7 +259,7 @@ export PKG_CONFIG_PATH="%{_builddir}/jxl-private/lib/pkgconfig:%{_builddir}/jxl-
 %endif
 
 # Return to glycin source dir (%setup -T -b 2 in %prep leaves CWD at libjxl dir)
-cd %{_builddir}/glycin-2.0.8
+cd %{_builddir}/glycin-%{version}
 
 meson setup --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
     -Dloaders=%{?with_heif:glycin-heif,}glycin-image-rs,%{?with_jpegxl:glycin-jxl,}glycin-svg \
@@ -275,7 +276,7 @@ meson compile -C build
 
 
 %install
-cd %{_builddir}/glycin-2.0.8
+cd %{_builddir}/glycin-%{version}
 %if %{with jpegxl} && %{with bundled_jxl}
 # %build already compiled jxl; re-export so meson install doesn't rebuild
 export PKG_CONFIG_PATH="%{_builddir}/jxl-private/lib/pkgconfig:%{_builddir}/jxl-private/lib64/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
@@ -309,9 +310,9 @@ EOF
 
 %if %{with check}
 %check
-cd %{_builddir}/glycin-2.0.8
+cd %{_builddir}/glycin-%{version}
 # tests fail with "UnsupportedFileType" (missing nonfree plugins for libheif?)
-%meson_test || :
+%meson_test
 %endif
 
 

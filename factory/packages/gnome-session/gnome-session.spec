@@ -3,13 +3,13 @@
 %define po_package gnome-session
 
 Name:           gnome-session
-Version:        50.0
-Release:        3%{?dist}
+Version:        51.0
+Release:        1%{?dist}
 Summary:        GNOME session manager
 
 License:        GPL-2.0-or-later
 URL:            https://gitlab.gnome.org/GNOME/gnome-session
-Source:         https://download.gnome.org/sources/gnome-session/%{major_version}/%{name}-%{tarball_version}.tar.xz
+Source:         https://download.gnome.org/sources/gnome-session/51/gnome-session-51.0.tar.xz
 
 # For https://fedoraproject.org/w/index.php?title=Changes/HiddenGrubMenu
 # This should go upstream once systemd has a generic interface for this

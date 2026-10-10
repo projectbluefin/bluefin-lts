@@ -137,6 +137,22 @@ def fetch_source(record: Record, root: Path, allow_missing: bool = False) -> lis
         )
 
         filename = source.get("filename") or source_filename(url)
+        path = record.directory / filename
+        if path.is_file() and _digest(path.read_bytes(), algorithm) == expected:
+            staged.append(path)
+            continue
+
+        if url.startswith("generated:cargo-vendor/"):
+            from tools.generate_vendor import generate
+            archive = record.directory / source["generated"]["archive"]
+            if archive not in staged:
+                raise ValueError(f"{record.name}: vendor input must be verified first")
+            generate(archive, path)
+            if _digest(path.read_bytes(), algorithm) != expected:
+                path.unlink()
+                raise ValueError(f"{record.name}: generated vendor digest mismatch")
+            staged.append(path)
+            continue
         # .sig and .asc are detached signatures, not payload. They still have
         # to be staged -- the spec verifies against them -- so they are a
         # legitimate source file even though they are not an archive.

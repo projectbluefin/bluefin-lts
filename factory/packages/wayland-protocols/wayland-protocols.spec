@@ -2,8 +2,8 @@
 %global debug_package %{nil}
 
 Name:           wayland-protocols
-Version:        1.47
-Release:        2%{?dist}
+Version:        1.49
+Release:        1%{?dist}
 Summary:        Wayland protocols that adds functionality not available in the core protocol
 
 License:        MIT

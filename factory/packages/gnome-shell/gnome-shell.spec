@@ -1,5 +1,5 @@
-%global tarball_version 50.0
-%global major_version 50
+%global tarball_version 51.0
+%global major_version 51
 
 %if 0%{?rhel}
 %global portal_helper 0
@@ -8,13 +8,13 @@
 %endif
 
 Name:           gnome-shell
-Version:        50.0
-Release:        3%{?dist}
+Version:        51.0
+Release:        1%{?dist}
 Summary:        Window management and application launching for GNOME
 
 License:        GPL-2.0-or-later
 URL:            https://wiki.gnome.org/Projects/GnomeShell
-Source0:        https://download.gnome.org/sources/gnome-shell/%{major_version}/%{name}-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/gnome-shell/51/gnome-shell-51.0.tar.xz
 
 # Replace Epiphany with Firefox in the default favourite apps list
 Patch: gnome-shell-favourite-apps-firefox.patch
@@ -30,7 +30,7 @@ Patch: 0001-gdm-Work-around-failing-fingerprint-auth.patch
 %define gjs_version 1.85.90
 %define gtk4_version 4.0.0
 %define adwaita_version 1.5.0
-%define mutter_version 50.0
+%define mutter_version 51.0
 %define polkit_version 0.100
 %define gsettings_desktop_schemas_version 50~alpha
 %define ibus_version 1.5.2

@@ -1,13 +1,13 @@
 %global major_version %%(echo %{version} | cut -d. -f1,2)
 
 Name:           libgexiv2
-Version:        0.16.0
-Release:        100%{?dist}
+Version:        0.16.2
+Release:        1%{?dist}
 Summary:        Gexiv2 is a GObject-based wrapper around the Exiv2 library
 
 License:        GPL-2.0-or-later
 URL:            https://wiki.gnome.org/Projects/gexiv2
-Source0:        https://download.gnome.org/sources/gexiv2/%{major_version}/gexiv2-%{version}.tar.xz
+Source0:        https://download.gnome.org/sources/gexiv2/0.16/gexiv2-0.16.2.tar.xz
 Patch: 0001-gexiv2-fix-package-name-in-gir-file-to-have-0.16-suf.patch
 
 BuildRequires:  pkgconfig(exiv2)

@@ -26,7 +26,7 @@
 %endif
 
 Name:           gtk4
-Version:        4.22.1
+Version:        4.24.1
 Release:        1%{?dist}
 Summary:        GTK graphical user interface library
 
@@ -71,8 +71,7 @@ Summary:        GTK graphical user interface library
 # The license was last checked for GTK 4.19.3.
 License:        LGPL-2.0-or-later AND LGPL-2.1-or-later AND Apache-2.0 AND CC0-1.0 AND MIT AND MIT-open-group AND HPND-sell-variant AND GPL-2.0-or-later AND GPL-3.0-or-later AND OFL-1.1
 URL:            https://www.gtk.org
-Source0:        https://download.gnome.org/sources/gtk/4.22/gtk-%{version}.tar.xz
-Patch: 0001-gtkapplication-wayland-null-check.patch
+Source0:        https://download.gnome.org/sources/gtk/4.24/gtk-4.24.1.tar.xz
 
 BuildRequires:  cups-devel
 BuildRequires:  desktop-file-utils

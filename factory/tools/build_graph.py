@@ -142,6 +142,42 @@ def waves(edges: dict[str, set[str]], packages: list[str]) -> list[list[str]]:
     return result
 
 
+def bootstrap_edges(edges, rows, names, provided, satisfied):
+    """Break only cyclic edges whose exact requirements have base witnesses.
+
+    Adapted from Utah's cycle detection, with CentOS RPM version constraints
+    replacing declared stages. Preserve the full graph for rebuild selection.
+    """
+    scheduling = {name: set(edges.get(name, set())) & names for name in names}
+    witnesses = []
+
+    def reachable(start, target):
+        pending, visited = [start], set()
+        while pending:
+            node = pending.pop()
+            if node == target:
+                return True
+            if node not in visited:
+                visited.add(node)
+                pending.extend(scheduling.get(node, set()) - visited)
+        return False
+
+    for consumer in sorted(names):
+        for provider in sorted(scheduling[consumer]):
+            if not reachable(provider, consumer):
+                continue
+            requirements = [requirement for requirement in rows[consumer]
+                            if provider in resolve_edges(
+                                {consumer: {requirement}}, names, provided).get(consumer, set())]
+            available = satisfied.get(consumer, {})
+            if requirements and all(available.get(req) for req in requirements):
+                scheduling[consumer].remove(provider)
+                witnesses.append({"consumer": consumer, "provider": provider,
+                                  "requirements": {req: available[req]
+                                                   for req in sorted(requirements)}})
+    return scheduling, witnesses
+
+
 def reverse_dependencies(edges: dict[str, set[str]], packages: list[str]) -> dict[str, set[str]]:
     """Invert the graph: package -> everything that BuildRequires it.
 
@@ -222,7 +258,12 @@ def plan(root: Path | None = None, rows_dir: Path | None = None,
         unknown = set(building) - set(names)
         if unknown:
             raise ValueError("unknown recipes: " + ", ".join(sorted(unknown)))
-        result["waves"] = waves(edges, building)
+        satisfied_path = rows_dir / "base-satisfied.json" if rows_dir is not None else None
+        satisfied = (json.loads(satisfied_path.read_text())
+                     if satisfied_path is not None and satisfied_path.is_file() else {})
+        scheduling, witnesses = bootstrap_edges(edges, rows, set(building), provided, satisfied)
+        result["bootstrap"] = witnesses
+        result["waves"] = waves(scheduling, building)
     return result
 
 

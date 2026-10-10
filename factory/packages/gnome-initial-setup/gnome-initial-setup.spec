@@ -15,13 +15,13 @@
 %endif
 
 Name:           gnome-initial-setup
-Version:        50.0
-Release:        5%{?dist}
+Version:        51.0
+Release:        1%{?dist}
 Summary:        Bootstrapping your OS
 
 License:        GPL-2.0-or-later
 URL:            https://wiki.gnome.org/Design/OS/InitialSetup
-Source0:        https://download.gnome.org/sources/%{name}/%{major_version}/%{name}-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/gnome-initial-setup/51/gnome-initial-setup-51.0.tar.xz
 
 BuildRequires:  desktop-file-utils
 BuildRequires:  gcc

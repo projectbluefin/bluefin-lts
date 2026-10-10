@@ -2,30 +2,30 @@
 %global gobject_introspection_version 1.41.4
 %global gtk3_version 3.19.8
 %global gtk4_version 4.14.0
-%global gsettings_desktop_schemas_version 47~beta
+%global gsettings_desktop_schemas_version 51~rc
 %global libdrm_version 2.4.118
-%global libinput_version 1.27.0
+%global libinput_version 1.31.0
 %global pixman_version 0.42
-%global pipewire_version 1.2.7
+%global pipewire_version 1.6.0
 %global lcms2_version 2.6
 %global colord_version 1.4.5
 %global libei_version 1.3.901
-%global mutter_api_version 18
-%global wayland_protocols_version 1.45
-%global wayland_server_version 1.24
+%global mutter_api_version 51
+%global wayland_protocols_version 1.48
+%global wayland_server_version 1.26
 
 %global major_version %%(echo %{version} | cut -d '.' -f1 | cut -d '~' -f 1)
 %global tarball_version %%(echo %{version} | tr '~' '.')
 
 Name:          mutter
-Version:       50.0
-Release:       4%{?dist}
+Version:       51.0
+Release:       1%{?dist}
 Summary:       Window and compositing manager based on Clutter
 
 # Automatically converted from old format: GPLv2+ - review is highly recommended.
 License:       GPL-2.0-or-later
 URL:           http://www.gnome.org
-Source0:        https://download.gnome.org/sources/%{name}/%{major_version}/%{name}-%{tarball_version}.tar.xz
+Source0:        https://download.gnome.org/sources/mutter/51/mutter-51.0.tar.xz
 
 BuildRequires: gcc
 BuildRequires: gcc-c++
