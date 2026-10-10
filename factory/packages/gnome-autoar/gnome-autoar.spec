@@ -34,9 +34,8 @@ developing applications that use %{name}.
 
 
 %build
-%meson -Dgtk=false \
-       -Dvapi=false \
-       -Dgtk_doc=false \
+%meson -Dvapi=false \
+       -Ddocs=false \
        -Dtests=false \
         %{nil}
 %meson_build

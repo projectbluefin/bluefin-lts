@@ -139,8 +139,9 @@ Stated plainly, because the list is short and each item is real:
   RPM success does not establish image composition or desktop/boot behavior.
 - **arm64.** The build root and every recipe are amd64.
 - **Hermetic builds.** Builds run in the pinned container, which provides the
-  correct ABI but is not a build root in the sense `mock` means — no build user,
-  no isolation, no reset between packages. See `docs/architecture.md`.
+  correct ABI and a fresh root per recipe. They still use a root build user
+  and networked dependency resolution rather than `mock` isolation. See
+  `docs/architecture.md`.
 - **No digest for some sources yet.** Any recipe whose lock has no `sha512`
   does not build. `validate.py` names them.
 

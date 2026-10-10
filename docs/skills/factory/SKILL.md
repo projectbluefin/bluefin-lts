@@ -78,6 +78,8 @@ Run `just factory-check` before every commit that touches `factory/**` or
 
 ## Traps worth knowing
 
+- **RPM source URL fragments rename the local archive.** `#/name.tar.gz`
+  must match the lock filename; it does not select an archive subdirectory.
 - **The spec filename can differ from its recipe name.** Discover the single
   `*.spec`, as inventory does; gobject-introspection uses a bootstrap filename.
 - **`rpmbuild` must be given the spec path explicitly.** With no argument it

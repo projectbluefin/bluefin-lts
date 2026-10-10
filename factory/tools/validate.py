@@ -26,6 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tools.inventory import factory_root, inventory
+from tools.source_pipeline import source_filename
 
 
 
@@ -95,6 +96,8 @@ def check_locks(root: Path) -> list[str]:
             filename = source.get("filename", "")
             if not filename:
                 problems.append(f"{record.name}: {label} has no filename")
+            elif url and url.startswith("https://") and filename != source_filename(url):
+                problems.append(f"{record.name}: {label} filename differs from RPM URL name")
             elif filename in seen:
                 # Two Sources writing the same local file means the second
                 # silently overwrites the first, and which payload is used

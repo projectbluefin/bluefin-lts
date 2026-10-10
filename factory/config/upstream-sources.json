@@ -79,7 +79,7 @@
       "sources": [
         {
           "url": "https://github.com/hughsie/colord-gtk/archive/refs/tags/0.3.1.tar.gz#/colord-gtk-0.3.1.tar.gz",
-          "filename": "0.3.1.tar.gz",
+          "filename": "colord-gtk-0.3.1.tar.gz",
           "sha512": "772ecb4a88e47975458814304dcaf76484b6054ba132bcf1da6f08ab87e3f00b7589a5b4d34109d594f394028661e10d4151840e1baefa98c8aa364be764c742",
           "checksum_type": "sha512"
         }
@@ -226,7 +226,7 @@
         },
         {
           "url": "https://github.com/libjxl/libjxl/archive/refs/tags/v0.11.1.tar.gz#/libjxl-0.11.1.tar.gz",
-          "filename": "v0.11.1.tar.gz",
+          "filename": "libjxl-0.11.1.tar.gz",
           "sha512": "0cfd81d9d3b783f96bd04f244d73ffbc12186c89993d46064a2751bef0a446a5e86be05add5c10f60d4482d39333d9bf3f9a866d6eb84f8fa0d4e8b5828fd74c",
           "checksum_type": "sha512"
         }
@@ -473,7 +473,7 @@
       "sources": [
         {
           "url": "https://github.com/jiixyj/libebur128/archive/v1.2.6.tar.gz#/libebur128-1.2.6.tar.gz",
-          "filename": "v1.2.6.tar.gz",
+          "filename": "libebur128-1.2.6.tar.gz",
           "sha512": "ab188c6d32cd14613119258313a8a3fb1167b55501c9f5b6d3ba738d674bc58f24ac3034c23d9730ed8dc3e95a23619bfb81719e4c79807a9a16c1a5b3423582",
           "checksum_type": "sha512"
         }

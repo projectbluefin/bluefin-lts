@@ -6,9 +6,8 @@ libjxl tarball as Source2, malcontent carries libgsystemservice, and both fail
 was missing when that happened: the lock carries every source, and every one
 of them is fetched and verified.
 
-They also cover the URL fragment, which is easy to get wrong: rpm names a
-fragmented source after the URL path with the fragment stripped, so leaving
-`#...` in the filename stages a file rpmbuild will not find.
+They also cover RPM’s URL-fragment syntax, which selects a local archive
+filename rather than the basename of the remote URL.
 """
 
 from __future__ import annotations
@@ -29,25 +28,22 @@ class SourceFilenameTests(unittest.TestCase):
             source_filename("https://example.org/a/b/foo-1.0.tar.xz"), "foo-1.0.tar.xz"
         )
 
-    def test_fragment_is_stripped(self):
-        # rpm names the file after the URL path, not including `#...`.
+    def test_fragment_selects_rpm_filename(self):
+        # This is the SOURCE2 name reported by rpmspec in CentOS.
         self.assertEqual(
             source_filename(
                 "https://github.com/libjxl/libjxl/archive/refs/tags/v0.11.1.tar.gz"
                 "#/libjxl-0.11.1.tar.gz"
             ),
-            "v0.11.1.tar.gz",
+            "libjxl-0.11.1.tar.gz",
         )
 
     def test_trailing_slash_does_not_yield_an_empty_name(self):
         self.assertEqual(source_filename("https://example.org/a/b/"), "b")
 
-    def test_query_string_is_not_part_of_the_basename_here(self):
-        # Documented behaviour: only the fragment is stripped. A query string
-        # in a Source URL would need the same treatment, and no EL10 spec uses
-        # one, so this pins what happens rather than leaving it undefined.
+    def test_query_string_is_not_part_of_the_filename(self):
         self.assertEqual(
-            source_filename("https://example.org/a/foo-1.0.tar.gz?v=2"), "foo-1.0.tar.gz?v=2"
+            source_filename("https://example.org/a/foo-1.0.tar.gz?v=2"), "foo-1.0.tar.gz"
         )
 
 

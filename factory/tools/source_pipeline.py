@@ -82,12 +82,12 @@ def _digest(blob: bytes, algorithm: str) -> str:
 def source_filename(url: str) -> str:
     """The local filename rpmbuild gives a downloaded source.
 
-    A URL fragment selects a subdirectory inside the archive
-    (``...tar.gz#/libjxl-0.11.1``), and rpm names the file after the URL *path*
-    with the fragment removed. Leaving the fragment in the name stages a file
-    rpmbuild will not find.
+    RPM's ``#/filename`` syntax renames the downloaded archive locally. It
+    does not select a directory inside that archive.
     """
-    return url.partition("#")[0].rstrip("/").rsplit("/", 1)[-1]
+    from urllib.parse import urlsplit
+    parsed = urlsplit(url)
+    return (parsed.fragment or parsed.path).rstrip("/").rsplit("/", 1)[-1]
 
 
 def fetch_source(record: Record, root: Path, allow_missing: bool = False) -> list[Path] | None:
