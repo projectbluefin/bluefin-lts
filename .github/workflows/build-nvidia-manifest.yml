@@ -33,7 +33,11 @@ permissions:
   packages: write
   id-token: write
   attestations: write
-  actions: read
+  # write, not read: the last step dispatches post-testing-e2e-nvidia.yml with
+  # `gh workflow run`, which needs actions:write. With read the dispatch fails
+  # (HTTP 403 Resource not accessible by integration) and the promotion gate
+  # never sees the run it waits for.
+  actions: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.workflow_run.head_sha }}
@@ -185,6 +189,20 @@ jobs:
         with:
           image: ghcr.io/projectbluefin/bluefin-lts-nvidia
           digest: ${{ steps.manifest.outputs.digest }}
-          generate-sbom: 'false'
+          generate-sbom: 'true'
           push-attestation: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dispatch post-testing E2E for NVIDIA
+        if: steps.find-runs.outputs.ready == 'true'
+        env:
+          TESTING_DIGEST: ${{ steps.manifest.outputs.digest }}
+        run: |
+          set -euo pipefail
+          gh workflow run post-testing-e2e-nvidia.yml \
+            --repo "${{ github.repository }}" \
+            --ref testing \
+            -f image="ghcr.io/projectbluefin/bluefin-lts-nvidia:testing" \
+            -f expected-digest="${TESTING_DIGEST}" \
+            -f suites="smoke"
+          echo "Dispatched post-testing-e2e-nvidia for bluefin-lts-nvidia:testing (${TESTING_DIGEST})"
