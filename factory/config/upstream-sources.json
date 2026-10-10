@@ -671,7 +671,7 @@
         },
         {
           "url": "https://deb.debian.org/debian/pool/main/t/tinycdb/tinycdb_0.81.orig.tar.gz",
-          "filename": "tinycdb-0.81.tar.gz",
+          "filename": "tinycdb_0.81.orig.tar.gz",
           "sha512": "56d0422700835d7b0460c32c41e6d5f30b8b833cefea775eb7f2b5592d744942c1109eac1501421b02f196d15e551111bb2accc71f2fd32ef4b8d658c635340e",
           "checksum_type": "sha512"
         }

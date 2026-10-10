@@ -25,6 +25,7 @@ BuildRequires:  pkgconfig(gobject-introspection-1.0)
 BuildRequires:  docbook-xsl-ns
 BuildRequires:  gi-docgen
 BuildRequires:  meson
+BuildRequires:  gcc
 BuildRequires:  xmlto
 BuildRequires:  /usr/bin/xsltproc
 
