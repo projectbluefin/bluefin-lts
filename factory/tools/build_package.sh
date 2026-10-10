@@ -12,7 +12,7 @@ if find /prior -name '*.rpm' -print -quit | read -r _; then
     createrepo_c /prior
     printf '[factory]\nname=factory\nbaseurl=file:///prior\nenabled=1\ngpgcheck=0\npriority=1\n' > /etc/yum.repos.d/factory.repo
 fi
-python3 /repo/factory/tools/source_pipeline.py verify-staged --package "$PACKAGE"
+python3 /repo/factory/tools/source_pipeline.py verify-staged --root /repo/factory --package "$PACKAGE"
 args=(--define "_topdir /repo/work/rpmbuild/$PACKAGE"
       --define "_sourcedir /repo/factory/packages/$PACKAGE"
       --define "_specdir /repo/factory/packages/$PACKAGE"
