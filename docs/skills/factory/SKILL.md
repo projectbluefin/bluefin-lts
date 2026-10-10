@@ -154,4 +154,7 @@ stack. Generated cargo bundles come from the upstream Cargo.lock, verify each
 crate, and carry their own SHA-512 lock. An explicit relative `lockfile` may
 select a nested Cargo.lock from the verified archive. Orca 51 uses this for
 MathCAT and builds a native RPM with a tested Python extension; preserve its
-speech and braille support. Do not run cargo downloads in rpmbuild.
+speech and braille support. Capture `%{cargo_license}` inside a shell group
+with redirection after the closing brace, then require a nonempty summary.
+A bare parametric macro can consume shell redirection as a macro argument.
+Do not run cargo downloads in rpmbuild.

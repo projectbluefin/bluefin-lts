@@ -90,7 +90,10 @@ EOF
 %meson -Dmathcat=true
 %meson_build
 pushd subprojects/mathcat-py
-%cargo_license > LICENSE.dependencies
+{
+%{cargo_license}
+} > LICENSE.dependencies
+test -s LICENSE.dependencies
 %cargo_vendor_manifest
 popd
 

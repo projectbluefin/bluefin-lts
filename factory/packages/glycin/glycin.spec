@@ -268,7 +268,10 @@ meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype
 meson compile -C build
 
 %{cargo_license_summary}
-%{cargo_license} > LICENSE.dependencies
+{
+%{cargo_license}
+} > LICENSE.dependencies
+test -s LICENSE.dependencies
 %if %{with bundled_rust_deps}
 %cargo_vendor_manifest
 %endif
