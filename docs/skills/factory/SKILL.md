@@ -96,7 +96,9 @@ Run `just factory-check` before every commit that touches `factory/**` or
   surfaced it.
 - **GNOME 51 changes API and dependencies.** Keep Mutter's API version,
   Wayland minima, and source locks aligned with upstream meson.build. Remove
-  backports already present upstream and rebase remaining patches. Match all
+  backports already present upstream and rebase remaining patches. Glycin’s
+  jpegxl-sys binding also sets a minimum for the private JPEG XL bundle; match
+  that minimum instead of bypassing pkg-config checks. Match all
   upstream version minima in BuildRequires, including Pango’s HarfBuzz minimum,
   so the graph selects a factory prerequisite when CentOS is too old. Malcontent
   supplies Initial Setup’s enabled parental controls; lock all of its bundled
