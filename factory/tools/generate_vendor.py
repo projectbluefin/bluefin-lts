@@ -12,7 +12,7 @@ import hashlib
 import io
 import json
 import tarfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 CRATES_IO_INDEX = "registry+https://github.com/rust-lang/crates.io-index"
 CRATE_URL = "https://static.crates.io/crates/{name}/{name}-{version}.crate"
@@ -61,6 +61,8 @@ def _vendored_crate_members(crate: dict, payload: bytes, prefix: str, mtime: int
             if not member.name.startswith(top + "/"):
                 raise RuntimeError(f"crate {top} has a member outside its directory: {member.name}")
             relative = member.name[len(top) + 1:]
+            if PurePosixPath(relative).is_absolute() or ".." in PurePosixPath(relative).parts:
+                raise RuntimeError(f"crate {top} has an unsafe path: {member.name}")
             if relative == ".cargo-checksum.json":  # regenerated below
                 continue
             contents[relative] = source.extractfile(member).read()
