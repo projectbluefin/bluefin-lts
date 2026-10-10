@@ -42,7 +42,7 @@ def build_stack(plan: dict, repo: Path, image: str, engine: str, workers: int,
                            image, "bash", "/repo/factory/tools/build_package.sh"]
                 if package == "umockdev":
                     command[2:2] = ["--security-opt",
-                                    f"seccomp={repo}/factory/config/seccomp/umockdev.json"]
+                                    f"seccomp={repo}/factory/packages/umockdev/umockdev-seccomp.json"]
                 status = subprocess.run(command, env=env, stdout=log,
                                         stderr=subprocess.STDOUT, check=False).returncode
         rpms = sorted(output.glob("*.rpm"))

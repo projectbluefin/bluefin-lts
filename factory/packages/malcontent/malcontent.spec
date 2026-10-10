@@ -19,6 +19,7 @@ BuildRequires:  gcc
 BuildRequires:  itstool
 BuildRequires:  desktop-file-utils
 BuildRequires:  libappstream-glib
+BuildRequires:  pkgconfig(glib-2.0) >= 2.84
 BuildRequires:  pkgconfig(gobject-introspection-1.0)
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(polkit-gobject-1)

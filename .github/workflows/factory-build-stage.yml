@@ -101,7 +101,7 @@ jobs:
           mkdir -p "work/rpms/$PACKAGE"
           security_args=()
           if [ "$PACKAGE" = umockdev ]; then
-            security_args=(--security-opt "seccomp=$PWD/factory/config/seccomp/umockdev.json")
+            security_args=(--security-opt "seccomp=$PWD/factory/packages/umockdev/umockdev-seccomp.json")
           fi
           docker run --rm --pull=never "${security_args[@]}" -e PACKAGE \
             -v "$PWD:/repo:Z" -v "$PWD/work/prior:/prior:Z" \

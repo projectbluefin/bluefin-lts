@@ -170,7 +170,7 @@ tar metadata makes the bundle reproducible. Its SHA-512 is independently locked
 as a generated source, then checked again inside the build container. Git-based
 crate sources are refused.
 
-Umockdev builds use the narrow `config/seccomp/umockdev.json` profile to allow
+Umockdev builds use the narrow `packages/umockdev/umockdev-seccomp.json` profile to allow
 `open_tree` while preserving the default syscall restrictions and capabilities.
 Its SELinux tests detect active SELinux, rather than the existence of the
 `selinuxenabled` program; keep the full test suite enabled.
@@ -178,3 +178,10 @@ Its SELinux tests detect active SELinux, rather than the existence of the
 GTK 4.24 requires `pkgconfig(libdrm)` on Linux for `drm_fourcc.h`.
 Localsearch 3.12 test helpers include `<stdint.h>` explicitly for fixed-width
 integer types; functional tests remain enabled.
+
+Malcontent 0.14 requires GLib 2.84 headers for `g_steal_handle_id`. Declare
+that exact build minimum so DNF upgrades the installed CentOS GLib headers
+instead of accepting the older base version.
+
+The umockdev seccomp profile lives with its recipe and participates in the input
+digest, so a profile change selects a rebuild.

@@ -8,7 +8,7 @@ from pathlib import Path
 class UmockdevProfile(unittest.TestCase):
     def test_only_open_tree_is_added_to_pinned_default(self):
         root = Path(__file__).resolve().parents[1]
-        profile = json.loads((root / 'config/seccomp/umockdev.json').read_text())
+        profile = json.loads((root / 'packages/umockdev/umockdev-seccomp.json').read_text())
         extra = profile['syscalls'].pop()
         self.assertEqual(extra['names'], ['open_tree'])
         self.assertEqual(extra['action'], 'SCMP_ACT_ALLOW')

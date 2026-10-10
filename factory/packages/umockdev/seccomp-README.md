@@ -7,4 +7,6 @@ permissions. The kernel still checks capabilities for mount cloning. No
 capabilities, device access, or privileged mode are added.
 
 The unmodified profile's canonical JSON SHA-256 is `2ebf3bdba229d3d972cfc3721001306de96cc5113a14b29cb510c2edd91ca84a`.
-The upstream Apache-2.0 license is included in LICENSE.
+The upstream Apache-2.0 license is included in seccomp-LICENSE.
+
+The profile lives with the recipe so changes invalidate its published input digest.
