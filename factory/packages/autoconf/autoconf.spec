@@ -66,7 +66,7 @@ Patch:      0001-Port-C11-test-to-C.patch
 
 %if "%{name}" != "autoconf"
 # Set this to the sub-package base name, for "autoconf-latest"
-%global autoconf %(echo autoconf%{version} | tr -d .)
+%global autoconf %{lua:print("autoconf" .. rpm.expand("%{version}"):gsub("%.", ""))}
 # Enforce use of system provided emacs support
 %global autoconf_enables_emacs 0
 
@@ -85,7 +85,7 @@ Summary:    Meta package to include latest version of autoconf
 %global autoconf %{name}
 Summary:    A GNU tool for automatically configuring source code
 Provides:   autoconf-latest = %{version}-%{release}
-Provides:   %(echo autoconf%{version} | tr -d .) = %{version}-%{release}
+Provides:   %{lua:print("autoconf" .. rpm.expand("%{version}"):gsub("%.", ""))} = %{version}-%{release}
 %endif
 
 BuildArch:  noarch

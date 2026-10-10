@@ -46,8 +46,6 @@ jobs:
           mkdir -p work/srpm
           python3 factory/tools/srpm_gate.py "$PACKAGE" \
             --output "work/srpm/$PACKAGE.src.rpm"
-          rpm -qp --qf "%{NAME}-%{VERSION}-%{RELEASE}\n" \
-            "work/srpm/$PACKAGE.src.rpm"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:

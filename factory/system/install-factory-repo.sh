@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Install the GNOME stack from the factory repository.
 #
 # The factory publishes a signed OCI image whose only content is a
@@ -12,7 +13,7 @@
 
 set -euo pipefail
 
-FACTORY_REPO_DIR=/run/factory-packages
+FACTORY_REPO_DIR=/run/gnome-packages
 
 # The factory repository outranks the base image for the names it provides.
 # Without this, dnf may satisfy a name from AppStream/CRB and leave the

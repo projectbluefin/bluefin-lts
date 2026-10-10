@@ -19,18 +19,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
 ARTIFACT_PREFIX = "factory-rpm-s"
 
 
-def artifact_for(package: str) -> str:
-    return f"{ARTIFACT_PREFIX}{package}"
+def artifact_for(package: str, stage: int = 0) -> str:
+    return f"{ARTIFACT_PREFIX}{stage}-{package}"
 
 
 def did_build(built: set[str], package: str) -> bool:
-    return artifact_for(package) in built
+    return any(re.fullmatch(r"factory-rpm-s\d+-" + re.escape(package), name) for name in built)
 
 
 def failed_packages(build_list: list[str], artifacts: set[str]) -> list[str]:

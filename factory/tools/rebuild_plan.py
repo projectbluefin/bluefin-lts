@@ -97,6 +97,10 @@ def select(
         if record.blocked
     }
     buildable = [name for name in names if name not in blocked]
+    if only:
+        unknown = set(only) - set(names)
+        if unknown:
+            raise ValueError("unknown recipes: " + ", ".join(sorted(unknown)))
 
     reasons: dict[str, str] = {}
     for record in records:
@@ -106,7 +110,7 @@ def select(
         if only and name not in only:
             continue
         previous = witness.get(name)
-        if full or previous is None:
+        if only or full or previous is None:
             reasons[name] = "no published build" if previous is None else "full build requested"
         elif previous != digests[name]:
             reasons[name] = "inputs changed since the last published build"
@@ -123,7 +127,7 @@ def select(
         while changed:
             current = changed.pop()
             for dependent in sorted(reverse.get(current, set())):
-                if dependent in reasons:
+                if dependent in reasons or dependent in blocked:
                     continue
                 reasons[dependent] = f"BuildRequires {current}, which is being rebuilt"
                 dependents_added.append(dependent)

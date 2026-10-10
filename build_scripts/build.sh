@@ -54,9 +54,9 @@ mkdir -p /var/roothome
 # resolution time. Enabling it afterwards would mean those three come from the
 # base image while GNOME comes from the factory -- the exact skew the
 # versionlock set in 10-packages-image-base.sh exists to prevent.
-if [ -d /run/gnome-packages ]; then
+if [ -f /run/gnome-packages/repodata/repomd.xml ]; then
 	printf "::group:: ===gnome-factory-repo===\n"
-	"${CONTEXT_PATH}/factory/system/install-factory-repo.sh"
+	bash "${CONTEXT_PATH}/factory/system/install-factory-repo.sh"
 	printf "::endgroup::\n"
 fi
 

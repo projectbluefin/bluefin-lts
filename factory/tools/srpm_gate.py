@@ -29,7 +29,7 @@ from tools.source_pipeline import fetch_source, verify_staged
 PACKIT_IMAGE = "quay.io/packit/packit"
 
 
-def command(package: str, record, output: Path, root: Path, image: str) -> list[str]:
+def command(package: str, record, output: Path, root: Path, image: str, engine: str = "docker") -> list[str]:
     """Build the docker invocation. Separated so the paths can be tested.
 
     Every host path in a ``-v`` must be absolute. Docker reads a relative one
@@ -48,8 +48,9 @@ def command(package: str, record, output: Path, root: Path, image: str) -> list[
         raise ValueError(f"output directory does not exist: {out_dir}")
 
     return [
-        "docker", "run", "--rm",
+        engine, "run", "--rm",
         "-e", f"PACKAGE={package}",
+        "-e", f"OUTPUT_NAME={output.name}",
         "-e", "PACKIT_SPECFILE_PATH=" + str(record.spec.relative_to(root.parent)),
         "-v", f"{repo_dir}:/repo:Z",
         "-v", f"{out_dir}:/out:Z",
@@ -58,13 +59,13 @@ def command(package: str, record, output: Path, root: Path, image: str) -> list[
         "bash", "-exc",
         (
             'git config --global --add safe.directory "*"; '
-            'packit srpm --preserve-spec --output "/out/$PACKAGE.src.rpm" -p "$PACKAGE"; '
-            'rpm -qp --qf "%{NAME}-%{VERSION}-%{RELEASE}\\n" "/out/$PACKAGE.src.rpm"'
+            'packit srpm --preserve-spec --output "/out/$OUTPUT_NAME" -p "$PACKAGE"; '
+            'rpm -qp --qf "%{NAME}-%{VERSION}-%{RELEASE}\\n" "/out/$OUTPUT_NAME"'
         ),
     ]
 
 
-def build(package: str, output: Path, root: Path | None, image: str) -> int:
+def build(package: str, output: Path, root: Path | None, image: str, engine: str = "docker") -> int:
     root = factory_root(root)
     matches = [record for record in inventory(root) if record.name == package]
     if not matches:
@@ -102,17 +103,18 @@ def build(package: str, output: Path, root: Path | None, image: str) -> int:
         return 1
 
     try:
-        argv = command(package, record, output, root, image)
+        argv = command(package, record, output, root, image, engine)
     except ValueError as error:
         print(f"{package}: {error}", file=sys.stderr)
         return 1
 
+    output.unlink(missing_ok=True)
     result = subprocess.run(argv, check=False)
     if result.returncode != 0:
         print(f"{package}: packit srpm failed", file=sys.stderr)
         return result.returncode
 
-    produced = output.parent / f"{package}.src.rpm"
+    produced = output
     # An upload with no matching file cannot be trusted to fail the job on
     # its own, so the presence of the artifact is checked explicitly.
     if not produced.is_file() or produced.stat().st_size == 0:
@@ -125,6 +127,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("package")
     parser.add_argument("--root", type=Path, default=None)
+    parser.add_argument("--engine", choices=("docker", "podman"), default="docker")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
         "--image",
@@ -132,7 +135,7 @@ def main() -> int:
         help="Packit container image; pin by digest in CI",
     )
     args = parser.parse_args()
-    return build(args.package, args.output, args.root, args.image)
+    return build(args.package, args.output, args.root, args.image, args.engine)
 
 
 if __name__ == "__main__":

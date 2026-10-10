@@ -32,7 +32,7 @@ setup() {
   # The Containerfile stages the repository from the factory image. That
   # image has no digest until the factory publishes, so the copy is optional
   # and the build must still work without it -- using the base image's GNOME.
-  run grep -n 'if \[ -d /run/gnome-packages \]' "${BUILD_SH}"
+  run grep -n 'if \[ -f /run/gnome-packages/repodata/repomd.xml \]' "${BUILD_SH}"
   [ "$status" -eq 0 ]
 }
 
@@ -61,9 +61,9 @@ setup() {
 
 @test "the Containerfile declares the factory image ref as an optional build arg" {
   local containerfile="${REPO_ROOT}/Containerfile"
-  # Defaulted to empty so a build with no factory image published still
-  # works. A required arg would break every build until the first publish.
-  run grep -q 'ARG GNOME_PACKAGES_IMAGE_REF=""' "${containerfile}"
+  # Defaulted to a local empty stage so an unpublished factory still
+  # builds. A required arg would break every build until the first publish.
+  run grep -q 'ARG GNOME_PACKAGES_IMAGE_REF="gnome_packages_empty"' "${containerfile}"
   [ "$status" -eq 0 ]
 }
 

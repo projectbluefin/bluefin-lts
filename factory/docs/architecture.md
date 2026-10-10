@@ -222,3 +222,18 @@ Each of these is a real gap, not a rounding error:
   build, but nothing merges that into a required status check. The SRPM gate is
   the only merge-blocking factory check, and it is not required in the
   ruleset.
+
+## Verification at the factory seam
+
+`factory-smoke.yml` exercises the recorded CentOS digest, parses every recipe
+with CentOS RPM macros, and builds wayland-protocols through the real reusable
+binary lane. It does not publish. Host-only tests cannot prove this seam.
+
+The buildroot loader pulls the immutable reference and fails if it is missing
+or mismatched. It never substitutes a newer tag for an unavailable digest.
+Dependency repositories remain live, so the container lane is not hermetic.
+
+Publication replaces only successful source builds and updates only their
+input witnesses. The metadata signature is included in the image; the OCI
+digest is signed before its stream tag moves. A failed consumer transaction
+fails the publication job and leaves the stream tag untouched.

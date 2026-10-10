@@ -48,6 +48,8 @@ metadata:
 | Promotion | `.github/workflows/promote-testing-to-main.yml` |
 | Stable publication | `.github/workflows/execute-release.yml` |
 | End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml`, `post-testing-e2e.yml` |
+| CentOS factory smoke | `.github/workflows/factory-smoke.yml` |
+| GNOME factory build/publication | `.github/workflows/factory-build.yml`, `factory-build-stage.yml`, `factory-publish.yml` |
 | Syntax and repository checks | `.github/workflows/pr-testsuite.yml`, `unit-tests.yml` |
 | Lab PR Check Run | `.github/workflows/lab-check.yml` |
 | Dependency updates | `renovate.json`, Renovate workflows |

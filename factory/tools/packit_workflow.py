@@ -23,7 +23,7 @@ MATRIX_CHUNK = 200
 
 
 def package_names(root: Path | None = None) -> list[str]:
-    return [record.name for record in inventory(root)]
+    return [record.name for record in inventory(root) if not record.blocked]
 
 
 def package_chunks(names: list[str], size: int = MATRIX_CHUNK) -> list[str]:

@@ -93,6 +93,25 @@ Run `just factory-check` before every commit that touches `factory/**` or
 - **Recipes are the GNOME 50 set.** Moving to 51 is a version bump across the
   stack. Nothing in the tooling assumes 50.
 
+## Build and publication verification
+
+- Reuse the rows extracted in CentOS; the host planner must not rerun RPM.
+- Pass JSON-encoded chunks to reusable build matrices, including a single package.
+- Keep dependency installation and compilation in one container. Resolve RPM
+  exit code 11 from generated BuildRequires with a bounded install/retry loop.
+- Admit artifacts only from strictly earlier waves; never same-wave siblings.
+- Replace seed RPMs by the successful binaries' full source name, splitting
+  the NEVR from the right. Failed recipes keep their old binaries and state.
+- Resolve the consumer transaction using CentOS/CRB/EPEL and the candidate,
+  with DNF download mode; `--assumeno` is not a successful solve signal.
+- Sign metadata before copying it into the image, and sign the immutable OCI
+  digest before moving a stream tag. Seed extraction uses `/factory`.
+- Verify `Factory CentOS smoke` in CI before trusting local fast gates.
+
+These mechanisms are adapted from `projectbluefin/utah-packages`; its
+Hummingbird repositories, exclusions, disttags, and bootstrap rules do not
+apply to this CentOS buildroot.
+
 ## Red Flags
 
 - A recipe with no lock entry, or a lock with no `sha512`

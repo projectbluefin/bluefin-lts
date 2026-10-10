@@ -28,17 +28,17 @@ from tools.publish_gate import (
 
 class ArtifactTests(unittest.TestCase):
     def test_artifact_name_carries_the_stage_prefix(self):
-        self.assertEqual(artifact_for("gtk4"), "factory-rpm-sgtk4")
+        self.assertEqual(artifact_for("gtk4"), "factory-rpm-s0-gtk4")
 
     def test_did_build_reads_the_artifact_set(self):
-        self.assertTrue(did_build({"factory-rpm-sgtk4"}, "gtk4"))
-        self.assertFalse(did_build({"factory-rpm-smutter"}, "gtk4"))
+        self.assertTrue(did_build({"factory-rpm-s0-gtk4"}, "gtk4"))
+        self.assertFalse(did_build({"factory-rpm-s1-mutter"}, "gtk4"))
         self.assertFalse(did_build(set(), "gtk4"))
 
     def test_prefix_is_not_matched_loosely(self):
         # gtk4 and gtk4-devel are different packages; a substring match would
         # credit one with the other's artifact.
-        self.assertFalse(did_build({"factory-rpm-sgtk4-devel"}, "gtk4"))
+        self.assertFalse(did_build({"factory-rpm-s0-gtk4-devel"}, "gtk4"))
 
 
 class FailedPackagesTests(unittest.TestCase):

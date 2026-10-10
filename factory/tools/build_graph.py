@@ -175,8 +175,17 @@ def extract(root: Path | None, rows_dir: Path) -> dict[str, set[str]]:
 def plan(root: Path | None = None, rows_dir: Path | None = None) -> dict:
     """Produce the full build plan: waves plus the graph behind them."""
     root = factory_root(root)
-    rows_dir = rows_dir or (root / "work" / "graph" / "rows")
-    rows = extract(root, rows_dir)
+    if rows_dir is None:
+        rows = extract(root, root / "work" / "graph" / "rows")
+    else:
+        # The workflow already parsed these specs with the EL10 macros.
+        # Re-parsing on the host discards that result and requires host RPM.
+        rows = {}
+        for record in inventory(root):
+            text = (rows_dir / f"{record.name}.spec").read_text()
+            rows[record.name] = set(re.findall(
+                r"^BuildRequires(?:[0-9]*)?:\s*(.+)$", text, re.MULTILINE
+            ))
     names = [record.name for record in inventory(root)]
     edges = resolve_edges(rows, set(names))
     return {

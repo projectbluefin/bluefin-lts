@@ -90,7 +90,9 @@ jobs:
         id: buildroot
         run: |
           set -euo pipefail
-          python3 factory/tools/buildroot.py --output work/buildroot-resolved.json
+          sudo apt-get update && sudo apt-get install -y zstd
+          python3 factory/tools/buildroot.py --output work/buildroot-resolved.json \
+            --snapshot work/buildroot-provenance.json
           digest="$(python3 -c 'import json; print(json.load(open("work/buildroot-resolved.json"))["actual"])')"
           test -n "$digest"
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
@@ -102,14 +104,13 @@ jobs:
           docker save factory-buildroot:run | zstd -T0 -3 -o buildroot.tar.zst
           ls -l buildroot.tar.zst
 
-          # Provenance: what built the image, and what went into it.
-          python3 factory/tools/buildroot.py \
-            --snapshot work/buildroot-provenance.json
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: factory-buildroot-image
-          path: buildroot.tar.zst
+          path: |
+            buildroot.tar.zst
+            work/buildroot-provenance.json
           if-no-files-found: error
           retention-days: 1
 
@@ -234,7 +235,9 @@ jobs:
           selection = set(json.load(open("work/selection.json"))["build_list"])
           waves = plan["waves"]
           index = int(sys.argv[1])
-          print(json.dumps(sorted(set(waves[index]) & selection) if index < len(waves) else []))
+          from factory.tools.packit_workflow import package_chunks
+          names = sorted(set(waves[index]) & selection) if index < len(waves) else []
+          print(json.dumps(package_chunks(names)))
           PY
           )
           echo "stage${stage}=${packages}" >> "$GITHUB_OUTPUT"
@@ -262,6 +265,7 @@ jobs:
     with:
       stage: '0'
       packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
 
   build1:
     needs: [prepare, build0]
@@ -274,6 +278,7 @@ jobs:
     with:
       stage: '1'
       packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
 
   build2:
     needs: [prepare, build0, build1]
@@ -286,6 +291,7 @@ jobs:
     with:
       stage: '2'
       packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
 
   build3:
     needs: [prepare, build0, build1, build2]
@@ -298,6 +304,7 @@ jobs:
     with:
       stage: '3'
       packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
 
   build4:
     needs: [prepare, build0, build1, build2, build3]
@@ -310,6 +317,7 @@ jobs:
     with:
       stage: '4'
       packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
 
   build5:
     needs: [prepare, build0, build1, build2, build3, build4]
@@ -322,6 +330,7 @@ jobs:
     with:
       stage: '5'
       packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
 
   # Names every selected package that did not produce an RPM. Failures are
   # read from the run's own artifact list -- a build job uploads only for a
@@ -359,6 +368,7 @@ jobs:
           python3 factory/tools/publish_gate.py report \
             --build-list "$BUILD_LIST" \
             --artifacts artifacts.json \
+            --run-url "$RUN_URL" \
             --output report.md \
             --failed-output failed.json > /dev/null
           cat report.md >> "$GITHUB_STEP_SUMMARY"

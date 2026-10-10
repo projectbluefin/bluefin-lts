@@ -557,7 +557,7 @@ factory-plan full="false":
     set -euo pipefail
     args=(--root factory)
     [[ "{{ full }}" == "true" ]] && args+=(--full)
-    python3 factory/tools/rebuild_plan.py "$${args[@]}"
+    python3 factory/tools/rebuild_plan.py "${args[@]}"
 
 # The resolved upstream source for every recipe, and which are still unlocked.
 [group('Factory')]
@@ -585,4 +585,4 @@ factory-srpm package engine="docker":
     set -euo pipefail
     mkdir -p factory/work/srpm
     python3 factory/tools/srpm_gate.py "{{ package }}" \
-        --output "factory/work/srpm/{{ package }}.src.rpm"
+        --engine "{{ engine }}" --output "factory/work/srpm/{{ package }}.src.rpm"

@@ -1,0 +1,55 @@
+# Exercise the real CentOS root, graph extraction and binary build on PRs.
+# This deliberately has no publication or signing permissions.
+name: Factory CentOS smoke
+on:
+  pull_request:
+    paths:
+      - 'factory/**'
+      - '.github/workflows/factory-*.yml'
+      - '.github/actions/factory-load-buildroot/**'
+      - 'Containerfile'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: factory-smoke-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Pull and save the pinned CentOS buildroot
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y zstd
+          python3 factory/tools/buildroot.py --output work/buildroot-resolved.json \
+            --snapshot work/buildroot-provenance.json
+          docker tag "$(python3 factory/tools/buildroot.py --digest-only)" factory-buildroot:run
+          docker save factory-buildroot:run | zstd -T0 -3 -o buildroot.tar.zst
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: factory-buildroot-image
+          path: |
+            buildroot.tar.zst
+            work/buildroot-provenance.json
+          if-no-files-found: error
+          retention-days: 3
+      - name: Parse the recipes in CentOS and solve the graph on the host
+        run: |
+          set -euo pipefail
+          python3 factory/tools/extract_buildrequires.py --image factory-buildroot:run --output work/graph
+          python3 factory/tools/build_graph.py plan --rows work/graph/rows --output work/graph/plan.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: factory-smoke-graph
+          path: work/graph
+          retention-days: 3
+  build:
+    needs: prepare
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '0'
+      packages: '["wayland-protocols"]'

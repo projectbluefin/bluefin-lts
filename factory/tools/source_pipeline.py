@@ -181,7 +181,8 @@ def stage(package: str, root: Path | None, output: Path | None = None) -> int:
     staged = fetch_source(matches[0], root)
     if output is not None and staged is not None:
         output.mkdir(parents=True, exist_ok=True)
-        (output / staged.name).write_bytes(staged.read_bytes())
+        for path in staged:
+            (output / path.name).write_bytes(path.read_bytes())
     if staged is None:
         print(f"{package}: no upstream source by policy")
     else:

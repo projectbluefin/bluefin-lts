@@ -30,10 +30,12 @@ SCRIPT = r"""#!/bin/bash
 set -euo pipefail
 outdir="$1"
 mkdir -p "$outdir"
+dnf -y install rpm-build dnf-plugins-core redhat-rpm-config
+dnf config-manager --set-enabled crb
 failed=0
 for spec in /packages/*/*.spec; do
   name=$(basename "$(dirname "$spec")")
-  if ! rpmspec --parse "$spec" > "$outdir/$name.spec" 2> "$outdir/$name.err"; then
+  if ! rpmspec --define "_sourcedir $(dirname "$spec")" --define "dist .el10" --parse "$spec" > "$outdir/$name.spec" 2> "$outdir/$name.err"; then
     echo "rpmspec failed for $name" >&2
     cat "$outdir/$name.err" >&2
     failed=1
@@ -46,6 +48,7 @@ exit "$failed"
 
 def run(root: Path, image: str, output: Path, engine: str) -> None:
     """Execute the extractor inside the build root and collect the output."""
+    output = output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     rows = output / "rows"
     shutil.rmtree(rows, ignore_errors=True)

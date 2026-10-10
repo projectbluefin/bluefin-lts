@@ -15,6 +15,10 @@ on:
         description: Wave number, used in artifact names.
         required: true
         type: string
+      seed_image:
+        description: Immutable previously published repository image.
+        required: false
+        type: string
       packages:
         description: JSON array of package names to build.
         required: true
@@ -22,6 +26,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   build:
@@ -54,87 +59,49 @@ jobs:
           python3 factory/tools/source_pipeline.py stage "$PACKAGE"
           python3 factory/tools/source_pipeline.py verify-staged --package "$PACKAGE"
 
-      - name: Resolve BuildRequires against this wave's build root
-        id: buildrequires
+      - name: Assemble the seed and strictly earlier waves
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGE: ${{ inputs.stage }}
+          SEED_IMAGE: ${{ inputs.seed_image }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
-          docker run --rm \
-            -v "$PWD:/repo:Z" \
-            -w /repo \
-            factory-buildroot:run \
-            bash -exc '
-              dnf -y install dnf-plugins-core rpm-build
-              # CRB is where several of the build roots for this stack live.
-              # No apostrophes in here: this whole block is a single-quoted
-              # argument to bash -exc, so one terminates the string early and
-              # the rest of the script is run as shell rather than as payload.
-              dnf config-manager --set-enabled crb || true
-              dnf -y builddep \
-                --define "_topdir /repo/work/builddep/$PACKAGE" \
-                --define "_sourcedir /repo/factory/packages/$PACKAGE" \
-                --define "_specdir /repo/factory/packages/$PACKAGE" \
-                "/repo/factory/packages/$PACKAGE/$PACKAGE.spec"
-            '
+          sudo apt-get update && sudo apt-get install -y rpm
+          mkdir -p work/prior work/newrpms work/dl
+          if [ -n "$SEED_IMAGE" ]; then
+            docker pull "$SEED_IMAGE"
+            docker create --name factory-seed "$SEED_IMAGE" /unused
+            docker cp factory-seed:/factory/. work/prior/
+            docker rm factory-seed
+          fi
+          # Adapted from utah-packages: never admit same-wave siblings,
+          # regardless of which parallel job finishes first.
+          gh api --paginate "repos/$REPOSITORY/actions/runs/$RUN_ID/artifacts?per_page=100" \
+            --jq '.artifacts[].name' > work/artifacts.txt
+          while read -r artifact; do
+            if [[ "$artifact" =~ ^factory-rpm-s([0-9]+)- ]] && \
+                [ "${BASH_REMATCH[1]}" -lt "$STAGE" ]; then
+              gh run download "$RUN_ID" --repo "$REPOSITORY" \
+                --name "$artifact" --dir "work/dl/$artifact"
+              find "work/dl/$artifact" -name '*.rpm' -exec cp {} work/newrpms/ \;
+            fi
+          done < work/artifacts.txt
+          packages=$(python3 factory/tools/packit_workflow.py packages)
+          python3 factory/tools/assemble_repo.py --seed work/prior --built work/newrpms \
+            --build-list "$packages" --report work/prior-built.json
 
-      - name: Build the package
+      - name: Build the package with its dependencies in one container
         id: build
         env:
           PACKAGE: ${{ matrix.package }}
-          STAGE: ${{ inputs.stage }}
         run: |
           set -euo pipefail
           mkdir -p "work/rpms/$PACKAGE"
-
-          # A container is not a build root in the sense mock means: it lacks
-          # the buildsys group, the build user, and the isolation a build
-          # expects. What it does provide is the exact c10s package set this
-          # factory is pinned to, which is what makes the ABI right. The
-          # tradeoff is stated in docs/architecture.md rather than hidden:
-          # builds here are not hermetic.
-          docker run --rm \
-            -e PACKAGE -e STAGE \
-            -v "$PWD:/repo:Z" \
-            factory-buildroot:run \
-            bash -exc '
-              dnf -y install rpm-build dnf-plugins-core
-
-              # CRB ships with CRB disabled in c10s, and several build roots
-              # for this stack live only there: meson, ninja-build,
-              # wayland-devel, gcc-g++. Without this the BuildRequires
-              # resolution fails on "No matching package to install: meson",
-              # which says nothing about the repository being off.
-              dnf config-manager --set-enabled crb || true
-
-              # The spec is named explicitly. Invoked with no spec argument,
-              # rpmbuild globs the working directory, finds nothing (the
-              # directory is a build output root, not the recipe directory),
-              # exits 0 and writes no output at all. That is the worst
-              # possible failure for a build: green, silent, no RPMs. The
-              # artifact guard below catches it, but naming the file means it
-              # never happens.
-              spec="/repo/factory/packages/$PACKAGE/$PACKAGE.spec"
-              test -f "$spec"
-
-              # -br resolves generated BuildRequires. A spec whose BuildRequires
-              # come from meson introspection is unresolvable without it, and
-              # skipping straight to -ba fails with "No such file or directory"
-              # from make, which says nothing about the real cause.
-              rpmbuild -br "$spec" \
-                --define "_topdir /repo/work/rpmbuild/$PACKAGE" \
-                --define "_sourcedir /repo/factory/packages/$PACKAGE" \
-                --define "_specdir /repo/factory/packages/$PACKAGE" \
-                --define "dist .el10"
-
-              rpmbuild -ba "$spec" \
-                --define "_topdir /repo/work/rpmbuild/$PACKAGE" \
-                --define "_sourcedir /repo/factory/packages/$PACKAGE" \
-                --define "_specdir /repo/factory/packages/$PACKAGE" \
-                --define "dist .el10"
-
-              mkdir -p "/repo/work/rpms/$PACKAGE"
-              find "/repo/work/rpmbuild/$PACKAGE/RPMS" -name "*.rpm" \
-                -exec cp -v {} "/repo/work/rpms/$PACKAGE/" \;
-            '
+          docker run --rm --pull=never -e PACKAGE \
+            -v "$PWD:/repo:Z" -v "$PWD/work/prior:/prior:Z" \
+            factory-buildroot:run bash /repo/factory/tools/build_package.sh
 
           count=$(find "work/rpms/$PACKAGE" -name '*.rpm' | wc -l)
           # A build that produced nothing must fail here rather than at the

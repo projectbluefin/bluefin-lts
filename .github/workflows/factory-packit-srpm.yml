@@ -20,12 +20,14 @@ on:
       - "factory/config/**"
       - "factory/tools/**"
       - ".packit.yaml"
+      - ".github/workflows/factory-packit-srpm*.yml"
   pull_request:
     paths:
       - "factory/packages/**"
       - "factory/config/**"
       - "factory/tools/**"
       - ".packit.yaml"
+      - ".github/workflows/factory-packit-srpm*.yml"
   workflow_dispatch:
     inputs:
       package:
@@ -119,7 +121,16 @@ jobs:
           fi
           changed=$(git diff --name-only "$base" HEAD -- factory/packages \
             | awk -F/ '$1=="factory" && $2=="packages" {print $3}' | sort -u)
-          printf '%s\n' "$changed" | jq -R . | jq -s . > changed.json
+          printf '%s\n' "$changed" | jq -R 'select(length > 0)' | jq -s . > changed.json
+          # Removed or explicitly blocked recipes cannot produce an SRPM.
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from factory.tools.packit_workflow import package_names
+          path = Path('changed.json')
+          eligible = set(package_names())
+          path.write_text(json.dumps([name for name in json.loads(path.read_text()) if name in eligible]))
+          PY
           count=$(jq length changed.json)
           echo "$count changed recipes"
           cat changed.json

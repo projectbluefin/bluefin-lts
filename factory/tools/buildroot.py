@@ -81,9 +81,9 @@ def is_mirror(reference: str) -> bool:
 def resolve(pin: str, engine: str = "docker") -> dict:
     """Pull the build root and report what it resolved to."""
     reference, expected = split_pin(pin)
-    pull = subprocess.run([engine, "pull", reference], capture_output=True, text=True)
+    pull = subprocess.run([engine, "pull", pin], capture_output=True, text=True)
     resolved = subprocess.run(
-        [engine, "image", "inspect", reference, "--format", "{{index .RepoDigests 0}}"],
+        [engine, "image", "inspect", pin, "--format", "{{index .RepoDigests 0}}"],
         capture_output=True,
         text=True,
         check=False,
@@ -99,28 +99,12 @@ def resolve(pin: str, engine: str = "docker") -> dict:
         "matches": actual == expected,
     }
 
-    if result["mirrored"]:
-        # A mirror is never pruned, so a missing digest cannot be explained by
-        # expiry and must fail the run rather than be reported and continued.
-        if not result["pulled"] or not result["matches"]:
-            raise SystemExit(
-                f"build root mirror {reference} does not resolve to the pinned digest.\n"
-                f"  expected: {expected}\n"
-                f"  actual:   {actual or '(not pulled)'}\n"
-                "A mirror digest cannot rot, so this is a real problem."
-            )
-    else:
-        if not result["pulled"]:
-            raise SystemExit(f"could not pull {reference}")
-        if not result["matches"]:
-            # The upstream tag moved. Reported, not fatal: failing on it
-            # recreates the outage the artifact hand-off exists to prevent.
-            print(
-                f"::warning title=build root moved::{reference} now resolves to "
-                f"{actual or '(unknown)'}, not the recorded {expected}. Continuing "
-                "on what it resolved to.",
-                file=sys.stderr,
-            )
+    if not result["pulled"] or not result["matches"]:
+        raise SystemExit(
+            f"build root {pin} is unavailable or does not match its pin.\n"
+            f"  actual: {actual or '(not pulled)'}\n"
+            f"  {pull.stderr.strip()}"
+        )
     return result
 
 
@@ -151,7 +135,7 @@ def main() -> int:
     parser.add_argument(
         "--digest-only",
         action="store_true",
-        help="print just the image reference without its digest",
+        help="print the immutable image reference",
     )
     parser.add_argument(
         "--snapshot",
@@ -165,7 +149,7 @@ def main() -> int:
     try:
         pin = read_pin(root)
         if args.digest_only:
-            print(split_pin(pin)[0])
+            print(pin)
             return 0
         result = resolve(pin, args.engine)
         print(json.dumps(result, indent=2))
