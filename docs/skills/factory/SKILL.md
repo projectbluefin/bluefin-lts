@@ -170,4 +170,5 @@ recipes cannot use `%meson_test` without overriding its default directory.
 Recipe-scoped syscall profiles retain Moby default restrictions and kernel
 capability checks. Glycin permits nested Bubblewrap namespace setup without
 extra capabilities; keep sandbox tests enabled and stage private test libraries
-under the read-only `/usr` bind in the ephemeral container.
+under the read-only `/usr` bind in the ephemeral container. Retarget private
+RPATHs only in the test copies; preserve packaged installation paths.

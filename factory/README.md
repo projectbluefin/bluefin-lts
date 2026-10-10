@@ -193,7 +193,9 @@ Glycin uses a manual `build/` Meson directory; its strict test command must
 address that directory rather than the RPM macro default.
 
 Glycin tests copy the packaged loaders into a separate test install and use the
-upstream config rewrite helper. The RPM buildroot remains unchanged.
+upstream config rewrite helper. Retarget private JPEG XL RPATHs only in those
+test copies so the sandbox resolves the staged libraries. The RPM buildroot
+remains unchanged.
 
 GTK 4.24 removed `gtk4-encode-symbolic-svg`; do not retain its executable or
 manual-page entries in the RPM file list.

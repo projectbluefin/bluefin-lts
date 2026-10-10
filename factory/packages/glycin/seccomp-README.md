@@ -5,6 +5,10 @@ The kernel still checks capabilities and namespace ownership. This applies only
 inside Glycin build containers; no capabilities, devices, or privileged mode
 are added. Sandbox tests remain enabled.
 
+Integration tests use a separate install tree under `/usr`, which the sandbox
+binds read-only. Only the test copies of the JPEG XL loader and library have
+their absolute RPATH adjusted to that tree; packaged RPATHs remain unchanged.
+
 The canonical JSON SHA-256 of the unmodified upstream profile is
 `2ebf3bdba229d3d972cfc3721001306de96cc5113a14b29cb510c2edd91ca84a`.
 The upstream Apache-2.0 license is in seccomp-LICENSE.

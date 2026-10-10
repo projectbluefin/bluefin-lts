@@ -321,6 +321,13 @@ trap 'rm -rf "$testroot"' EXIT
 mkdir -p "$testroot%{_datadir}" "$testroot%{_libexecdir}"
 cp -a %{buildroot}%{_datadir}/glycin-loaders "$testroot%{_datadir}/"
 cp -a %{buildroot}%{_libexecdir}/glycin-loaders "$testroot%{_libexecdir}/"
+%if %{with jpegxl} && %{with bundled_jxl}
+# Retarget only the test copies; the packaged absolute RPATH stays unchanged.
+patchelf --force-rpath --set-rpath "$testroot%{jxl_private_dir}" \
+    "$testroot%{jxl_private_dir}/libjxl.so.0.11.2"
+patchelf --force-rpath --set-rpath "$testroot%{jxl_private_dir}" \
+    "$testroot%{_libexecdir}/glycin-loaders/2+/glycin-jxl"
+%endif
 for conf in "$testroot%{_datadir}/glycin-loaders/2+/conf.d/"*.conf; do
     DESTDIR="$testroot" CONFIG_FILE="${conf#"$testroot"}" \
         python3 build-aux/setup-integration-test.py
