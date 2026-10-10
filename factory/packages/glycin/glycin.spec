@@ -313,8 +313,25 @@ EOF
 %if %{with check}
 %check
 cd %{_builddir}/glycin-%{version}
-# tests fail with "UnsupportedFileType" (missing nonfree plugins for libheif?)
-%meson_test
+# Exercise the packaged loader layout in a separate install tree.
+# The sandbox binds /usr read-only, so the staged private libraries belong there.
+testroot=$(mktemp -d /usr/libexec/glycin-rpm-test.XXXXXX)
+chmod 755 "$testroot"
+trap 'rm -rf "$testroot"' EXIT
+mkdir -p "$testroot%{_datadir}" "$testroot%{_libexecdir}"
+cp -a %{buildroot}%{_datadir}/glycin-loaders "$testroot%{_datadir}/"
+cp -a %{buildroot}%{_libexecdir}/glycin-loaders "$testroot%{_libexecdir}/"
+for conf in "$testroot%{_datadir}/glycin-loaders/2+/conf.d/"*.conf; do
+    DESTDIR="$testroot" CONFIG_FILE="${conf#"$testroot"}" \
+        python3 build-aux/setup-integration-test.py
+done
+export GLYCIN_DATA_DIR="$testroot%{_datadir}"
+%if %{with jpegxl} && %{with bundled_jxl}
+export PKG_CONFIG_PATH="%{_builddir}/jxl-private/lib64/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+export LD_LIBRARY_PATH="%{_builddir}/jxl-private/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+%endif
+# This recipe uses a manual Meson build directory, not the RPM macro default.
+meson test -C build --num-processes %{_smp_build_ncpus} --print-errorlogs
 %endif
 
 

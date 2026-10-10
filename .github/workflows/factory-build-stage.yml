@@ -100,8 +100,9 @@ jobs:
           set -euo pipefail
           mkdir -p "work/rpms/$PACKAGE"
           security_args=()
-          if [ "$PACKAGE" = umockdev ]; then
-            security_args=(--security-opt "seccomp=$PWD/factory/packages/umockdev/umockdev-seccomp.json")
+          profile="$PWD/factory/packages/$PACKAGE/$PACKAGE-seccomp.json"
+          if [ -f "$profile" ]; then
+            security_args=(--security-opt "seccomp=$profile")
           fi
           docker run --rm --pull=never "${security_args[@]}" -e PACKAGE \
             -v "$PWD:/repo:Z" -v "$PWD/work/prior:/prior:Z" \

@@ -188,3 +188,17 @@ digest, so a profile change selects a rebuild.
 
 AppStream staging uses the HTTPS release endpoint with the existing source
 checksum; the HTTP endpoint can fail before checksum verification.
+
+Glycin uses a manual `build/` Meson directory; its strict test command must
+address that directory rather than the RPM macro default.
+
+Glycin tests copy the packaged loaders into a separate test install and use the
+upstream config rewrite helper. The RPM buildroot remains unchanged.
+
+GTK 4.24 removed `gtk4-encode-symbolic-svg`; do not retain its executable or
+manual-page entries in the RPM file list.
+
+Glycin uses a recipe-scoped syscall profile for Bubblewrap namespace setup
+without adding container capabilities or privileged mode. Its copied test
+install is under `/usr/libexec`, which the sandbox binds read-only; cleanup
+removes only that temporary install. Keep sandbox tests enabled.

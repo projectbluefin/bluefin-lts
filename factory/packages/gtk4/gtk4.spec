@@ -258,7 +258,6 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/*.desktop
 %{_includedir}/*
 %{_libdir}/pkgconfig/*
 %{_bindir}/gtk4-builder-tool
-%{_bindir}/gtk4-encode-symbolic-svg
 %{_bindir}/gtk4-path-tool
 %{_bindir}/gtk4-query-settings
 %{_datadir}/bash-completion/completions/gtk4-builder-tool
@@ -267,7 +266,6 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/*.desktop
 %{_datadir}/gtk-4.0/gtk4builder.rng
 %{_datadir}/gtk-4.0/valgrind/
 %{_mandir}/man1/gtk4-builder-tool.1*
-%{_mandir}/man1/gtk4-encode-symbolic-svg.1*
 %{_mandir}/man1/gtk4-path-tool.1*
 %{_mandir}/man1/gtk4-query-settings.1*
 
