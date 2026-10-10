@@ -52,10 +52,6 @@ def build_stack(plan: dict, repo: Path, image: str, engine: str, workers: int) -
 
     for stage, packages in enumerate(plan["waves"]):
         print(f"Wave {stage}: {', '.join(packages)}", flush=True)
-        # Build scripts run createrepo on /prior. Serial builds avoid metadata
-        # writers racing; parallelism is available only with per-build copies.
-        if workers != 1:
-            raise ValueError("shared dependency repository requires --workers=1")
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
             for package, result in pool.map(build, packages):
                 report["packages"][package] = dict(result, wave=stage)
@@ -75,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     parser.add_argument("--image", default="factory-buildroot:run")
     parser.add_argument("--engine", default="docker")
-    parser.add_argument("--workers", type=int, default=1)
+    parser.add_argument("--workers", type=int, default=2)
     args = parser.parse_args()
     raise SystemExit(build_stack(json.loads(args.plan.read_text()), args.repo.resolve(),
                                  args.image, args.engine, args.workers))

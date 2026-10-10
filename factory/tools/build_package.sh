@@ -10,8 +10,11 @@ dnf -y install rpm-build dnf-plugins-core createrepo_c redhat-rpm-config
 dnf config-manager --set-enabled crb
 dnf -y install epel-release
 if find /prior -name '*.rpm' -print -quit | read -r _; then
-    createrepo_c /prior
-    printf '[factory]\nname=factory\nbaseurl=file:///prior\nenabled=1\ngpgcheck=0\npriority=1\n' > /etc/yum.repos.d/factory.repo
+    # Each container owns its metadata, even when a wave builds in parallel.
+    mkdir -p /tmp/factory-repo
+    find /prior -name '*.rpm' -exec ln -s {} /tmp/factory-repo/ \;
+    createrepo_c /tmp/factory-repo
+    printf '[factory]\nname=factory\nbaseurl=file:///tmp/factory-repo\nenabled=1\ngpgcheck=0\npriority=1\n' > /etc/yum.repos.d/factory.repo
 fi
 python3 /repo/factory/tools/source_pipeline.py verify-staged --root /repo/factory --package "$PACKAGE"
 args=(--define "_topdir /repo/work/rpmbuild/$PACKAGE"

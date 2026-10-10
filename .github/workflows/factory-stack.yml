@@ -1,6 +1,10 @@
 # Full-stack binary verification, with no registry publication or signing.
 name: Factory GNOME stack
 on:
+  pull_request:
+    paths:
+      - 'factory/**'
+      - '.github/workflows/factory-stack.yml'
   workflow_dispatch:
 permissions:
   contents: read
