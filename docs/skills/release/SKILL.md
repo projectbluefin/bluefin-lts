@@ -37,11 +37,11 @@ testing → main → :stable
 
 ## Production release flow
 
-1. `promote-testing-to-main.yml` fires on push to `testing`, **daily at 04:00 UTC**, and on manual dispatch.
+1. `promote-testing-to-main.yml` fires when **Post-Testing E2E** completes on `testing`, **daily at 04:00 UTC**, and on manual dispatch.
    It calls `reusable-promote-squash.yml@v1` with explicit `source_branch: testing` and `target_branch: main`, and enables `use_merge_queue: true`.
    When trees differ it rebuilds the squash branch and upserts the `auto/promote-testing-to-main` PR.
 2. The PR enters the merge queue (ruleset 17070416 on `main` requires squash + merge queue).
-   Required check: `Lint & syntax`. No approvals needed.
+   Required check: `validate`. At least 2 approvals are required.
 3. On merge, `execute-release.yml` fires on `push: main`, detects the commit message
    `"^chore: promote testing to main"`, skopeo-copies `:testing → :stable` for both image variants,
    and creates a GitHub release with changelog via `reusable-release.yml@v1`.
@@ -59,13 +59,13 @@ gh pr merge <pr-number> --repo projectbluefin/bluefin-lts --squash --admin
 
 ## Branch protection
 
-`main` requires a PR with merge queue entry. Gate check: `Lint & syntax`. 0 approvals required.
+`main` requires a PR with merge queue entry. Gate check: `validate`. At least 2 approvals are required.
 `.github/workflows/` is CODEOWNERS-protected — PRs touching workflow files require `--admin` bypass.
 
 ## Daily cadence
 
-- Fully automated: **daily 04:00 UTC** — cron fires, promote workflow updates the PR, merge queue processes it, execute-release publishes `:stable`
-- No human approval required — `Lint & syntax` is the only gate
+- Fully automated after review: **daily 04:00 UTC** — cron fires, promote workflow updates and enqueues the PR, then the merge queue processes it once the required approvals and `validate` check pass
+- Human review is required — at least 2 approvals plus `validate` are the merge gates
 - `workflow_dispatch` is the supported manual release path
 
 ## Image verification — always check digests
