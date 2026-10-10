@@ -25,6 +25,7 @@ This is useful for writing tests for software which talks to
 hardware devices.
 
 %package devel
+Provides:       pkgconfig(umockdev-1.0) = %{version}
 Summary: Development packages for %{name}
 Requires: %{name}%{?_isa} = %{version}-%{release}
 

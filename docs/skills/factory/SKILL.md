@@ -106,7 +106,10 @@ Run `just factory-check` before every commit that touches `factory/**` or
 
 - Reuse the rows extracted in CentOS; the host planner must not rerun RPM.
   Map capabilities through binary subpackage names, explicit Provides, and
-  CentOS repository metadata; `pkgconfig(glib-2.0)` is one capability.
+  CentOS repository metadata; `pkgconfig(glib-2.0)` is one capability. Add
+  explicit versioned Provides to devel subpackages for capabilities absent
+  from CentOS metadata, including GTK variants; otherwise missing libraries
+  cannot participate in the graph before their first build.
   DNF Python callers must load config and variable files before repos;
   otherwise CentOS metalinks retain the literal `$stream` and return 404.
 - Pass JSON-encoded chunks to reusable build matrices, including a single package.

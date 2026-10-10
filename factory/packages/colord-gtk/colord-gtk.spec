@@ -27,6 +27,7 @@ Summary:        GTK4 support library for colord
 GTK4 widgets for color device management via colord.
 
 %package -n     colord-gtk4-devel
+Provides:       pkgconfig(colord-gtk4) = %{version}
 Summary:        Development files for colord-gtk4
 Requires:       colord-gtk4%{?_isa} = %{version}-%{release}
 # Explicitly NOT requiring colord-gtk-devel (gtk3-based package)

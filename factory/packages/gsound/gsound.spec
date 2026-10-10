@@ -19,6 +19,7 @@ It's designed to be used via GObject Introspection,
 and is a thin wrapper around the libcanberra C library
 
 %package        devel
+Provides:       pkgconfig(gsound) = %{version}
 Summary:        Development files for %{name}
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 

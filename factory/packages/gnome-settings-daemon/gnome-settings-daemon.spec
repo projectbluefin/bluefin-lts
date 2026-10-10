@@ -83,6 +83,7 @@ A daemon to share settings from GNOME to other applications. It also
 handles global keybindings, as well as a number of desktop-wide settings.
 
 %package        devel
+Provides:       pkgconfig(gnome-settings-daemon) = %{version}
 Summary:        Development files for %{name}
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 

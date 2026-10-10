@@ -170,6 +170,7 @@ Sandboxed and extendable image decoding.
 This package contains files for developing against libglycin.
 
 %package        gtk4-devel
+Provides:       pkgconfig(glycin-gtk4-2) = %{version}
 Summary:        Sandboxed image rendering (GTK4 development files)
 Requires:       glycin-devel%{_isa} = %{version}-%{release}
 Requires:       glycin-gtk4-libs%{_isa} = %{version}-%{release}
