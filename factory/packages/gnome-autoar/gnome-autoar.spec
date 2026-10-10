@@ -9,7 +9,7 @@ Source0:        https://download.gnome.org/sources/gnome-autoar/0.5/gnome-autoar
 
 
 BuildRequires:  gcc
-BuildRequires:  meson
+BuildRequires:  meson >= 1.8.0
 BuildRequires:  pkgconfig(gio-2.0)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gobject-2.0)

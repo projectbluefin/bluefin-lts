@@ -24,6 +24,7 @@ Source:         https://github.com/mesonbuild/meson/releases/download/%{version_
 BuildArch:      noarch
 
 BuildRequires:  python3-devel
+BuildRequires:  pyproject-rpm-macros
 Requires:       ninja-build
 
 %if %{with check}

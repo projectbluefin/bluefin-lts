@@ -1,4 +1,4 @@
-%global glib2_version 2.80
+%global glib2_version 2.88
 %global fribidi_version 1.0.6
 %global libthai_version 0.1.9
 %global harfbuzz_version 8.4.0

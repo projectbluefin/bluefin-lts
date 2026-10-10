@@ -73,8 +73,7 @@ Patch:          0001-fix-invalid-crate-manifest-for-tests-workspace-membe.patch
 
 
 %if 0%{?rhel}
-BuildRequires:  rust-toolset
-BuildRequires:  cargo-rpm-macros
+BuildRequires:  rust-toolset >= 1.93
 %else
 BuildRequires:  cargo-rpm-macros
 %endif
