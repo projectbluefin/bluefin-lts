@@ -275,10 +275,14 @@ export PKG_CONFIG_PATH="%{_builddir}/jxl-private/lib/pkgconfig:%{_builddir}/jxl-
 # Return to glycin source dir (%setup -T -b 2 in %prep leaves CWD at libjxl dir)
 cd %{_builddir}/glycin-%{version}
 
+# Filter only formats whose optional loaders are not compiled in this build.
+test_skip_ext="%{!?with_heif:avif,heic,heif,}%{!?with_jpegxl:jxl,}"
+test_skip_ext=${test_skip_ext%,}
 meson setup --wrap-mode=nodownload --prefix=/usr --libdir=/usr/lib64 --buildtype=plain build \
     -Dloaders=%{?with_heif:glycin-heif,}glycin-image-rs,%{?with_jpegxl:glycin-jxl,}glycin-svg \
     -Dtest_skip_install=true \
     -Dtest_log_level=debug \
+    -Dtest_skip_ext="$test_skip_ext" \
     %{nil}
 
 meson compile -C build

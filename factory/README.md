@@ -90,6 +90,9 @@ before wave zero as well; a passing graph cannot prove host sandbox support.
 On AppArmor hosts it also loads a recipe-specific Moby-based profile retaining
 the default restrictions except the mount/pivot operations Bubblewrap needs
 inside its private user namespace. The engine's capabilities remain unchanged.
+Glycin's fixture exclusions follow disabled optional loaders: EL10's existing
+HEIF omission excludes HEIF/AVIF fixtures, while the enabled private JPEG XL
+loader remains tested.
 
 ### Why nothing downloads during a build
 

@@ -192,3 +192,5 @@ On AppArmor hosts, load and select the recipe's `glycin.apparmor` profile throug
 permits mount/pivot operations in Bubblewrap's private user namespace with the
 engine's existing capabilities. Use the same policy in preflight and both build
 paths; never fall back to an unconfined profile or disable tests.
+Derive Glycin's fixture extension exclusions from disabled optional loaders:
+EL10 omits HEIF/AVIF; JPEG XL stays tested when its loader is enabled.
