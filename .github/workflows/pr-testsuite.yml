@@ -29,7 +29,7 @@ jobs:
           if grep -r "copr enable\|copr_install_isolated\|dnf5 copr" build_scripts/ 2>/dev/null | grep -v "^Binary"; then
             echo ""
             echo "ERROR: Found COPR usage in build scripts."
-            echo "bluefin-lts is built on CentOS Stream 10 where COPR does not exist."
+            echo "uranium is built on CentOS Stream 10 where COPR does not exist."
             echo "Use EPEL or CentOS Stream repos instead."
             echo "See docs/skills/centos-vs-fedora/SKILL.md for details."
             exit 1

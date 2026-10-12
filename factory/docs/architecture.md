@@ -125,10 +125,16 @@ overflow: the alternative is a plan that quietly omits packages.
 
 ## Incremental rebuilds
 
-`prepare` reads the `org.projectbluefin.factory.state` label on the published
+`prepare` reads the `org.thallium-suite.factory.state` label on the published
 image, which records the input digest of every build it contains. A package is
 selected when its digest differs from the recorded one, or when the label has
 never seen it.
+
+The label was `org.projectbluefin.factory.state` before the org migration. It is
+a published OCI label, so the rename means `prepare` cannot resume state from an
+image published under the old key and treats every package as never seen. That
+costs one full rebuild; it is not a correctness problem, because the migration
+also publishes to a new registry path, so there is no old image to resume from.
 
 Not a git diff: once two runs queue, the second push's diff says nothing about
 what the first run built.

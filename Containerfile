@@ -27,6 +27,11 @@ FROM scratch AS ctx
 COPY system_files /files
 COPY --from=brew /system_files /files
 COPY --from=common /system_files/shared /files
+# Bluefin-branded desktop payload (wallpapers, dconf, zsh/fish, just recipes,
+# the custom-command-list extension, icons). Owned by projectbluefin/common.
+# Removing this line breaks the build: 26-packages-post.sh and the nvidia
+# overrides sed -i /usr/share/ublue-os/fastfetch.jsonc and
+# .../zz0-bluefin-modifications.gschema.override, which exist only here.
 COPY --from=common /system_files/bluefin /files
 COPY system_files_overrides /overrides
 COPY build_scripts /build_scripts
@@ -40,7 +45,7 @@ ARG ENABLE_DX="${ENABLE_DX:-0}"
 ARG ENABLE_NVIDIA="${ENABLE_NVIDIA:-0}"
 ARG FEDORA_AKMODS_VERSION="${FEDORA_AKMODS_VERSION:-43}"
 ARG GNOME_VERSION="${GNOME_VERSION:-50}"
-ARG IMAGE_NAME="${IMAGE_NAME:-bluefin}"
+ARG IMAGE_NAME="${IMAGE_NAME:-uranium}"
 ARG IMAGE_VENDOR="${IMAGE_VENDOR:-ublue-os}"
 ARG MAJOR_VERSION="${MAJOR_VERSION:-lts}"
 ARG SHA_HEAD_SHORT="${SHA_HEAD_SHORT:-deadbeef}"

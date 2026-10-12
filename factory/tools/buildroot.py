@@ -38,7 +38,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tools.inventory import factory_root, inventory
 
-MIRROR_PREFIX = "ghcr.io/projectbluefin/bluefin-lts-buildroot"
+MIRROR_PREFIX = "ghcr.io/thallium-suite/uranium-buildroot"
 
 
 def buildroot_config(root: Path) -> dict:

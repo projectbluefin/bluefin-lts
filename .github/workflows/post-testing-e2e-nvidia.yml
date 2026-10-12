@@ -2,7 +2,7 @@ name: Post-Testing E2E (nvidia)
 
 # Runs e2e smoke tests after the NVIDIA testing image manifest is assembled
 # so promote-testing-to-main can gate on an existing verified run for both
-# bluefin-lts and bluefin-lts-nvidia.
+# uranium and uranium-nvidia.
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
       image:
         description: Full image reference to test
         required: false
-        default: ghcr.io/projectbluefin/bluefin-lts-nvidia:testing
+        default: ghcr.io/thallium-suite/uranium-nvidia:testing
         type: string
       suites:
         description: Comma-separated list of test suites to run
@@ -41,7 +41,7 @@ jobs:
       - name: Resolve image reference
         id: resolve
         env:
-          IMAGE_REF: ${{ inputs.image || 'ghcr.io/projectbluefin/bluefin-lts-nvidia:testing' }}
+          IMAGE_REF: ${{ inputs.image || 'ghcr.io/thallium-suite/uranium-nvidia:testing' }}
         run: echo "image=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
 
       - name: Verify testing image is reachable and multi-arch

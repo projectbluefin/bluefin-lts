@@ -1,4 +1,4 @@
-# git-cliff configuration for projectbluefin/bluefin-lts
+# git-cliff configuration for thallium-suite/uranium
 #
 # Generates structured changelogs from Conventional Commits.
 # Consumed by the release workflow (reusable-release.yml).

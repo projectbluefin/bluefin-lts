@@ -17,7 +17,7 @@ images:
   # image's GNOME rather than failing. Pinned by digest once populated, so a
   # rebuild cannot silently pick up different packages.
   - name: gnome_packages
-    image: ghcr.io/projectbluefin/bluefin-lts-packages
+    image: ghcr.io/thallium-suite/uranium-packages
     tag: latest
     digest: ""
 

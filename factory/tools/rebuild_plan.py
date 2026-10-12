@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.build_graph import reverse_dependencies
 from tools.inventory import factory_root, inventory, recipe_files
 
-LABEL = "org.projectbluefin.factory.state"
+LABEL = "org.thallium-suite.factory.state"
 
 
 def input_digest(record, root: Path) -> str:

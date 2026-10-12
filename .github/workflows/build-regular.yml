@@ -1,4 +1,4 @@
-name: Build Bluefin LTS
+name: Build Uranium
 
 permissions:
   contents: read
@@ -59,7 +59,7 @@ jobs:
               - 'Containerfile'
 
   build:
-    name: Build bluefin-lts image
+    name: Build uranium image
     needs: [detect-changes]
     if: |
       always() &&
@@ -75,7 +75,7 @@ jobs:
       issues: write
     secrets: inherit
     with:
-      brand_name: bluefin-lts
+      brand_name: uranium
       stream_name: testing
       image_flavors: '["main"]'
       architecture: '["x86_64", "aarch64"]'
@@ -120,14 +120,14 @@ jobs:
         id: manifest
         uses: projectbluefin/actions/bootc-build/create-manifest@v1
         with:
-          image-name: bluefin-lts
-          digests-json: ${{ toJSON(fromJSON(needs.build.outputs.digests)['bluefin-lts']) }}
+          image-name: uranium
+          digests-json: ${{ toJSON(fromJSON(needs.build.outputs.digests)['uranium']) }}
           tags: testing
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify testing manifest
         env:
-          IMAGE: ghcr.io/projectbluefin/bluefin-lts
+          IMAGE: ghcr.io/thallium-suite/uranium
           DIGEST: ${{ steps.manifest.outputs.digest }}
         shell: bash
         run: |
@@ -143,7 +143,7 @@ jobs:
       - name: Sign testing manifest
         uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
         with:
-          image: ghcr.io/projectbluefin/bluefin-lts
+          image: ghcr.io/thallium-suite/uranium
           digest: ${{ steps.manifest.outputs.digest }}
           generate-sbom: 'true'
           push-attestation: 'true'
@@ -172,6 +172,6 @@ jobs:
           gh workflow run post-testing-e2e.yml \
             --repo "${{ github.repository }}" \
             --ref "${GITHUB_REF_NAME}" \
-            -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
+            -f image="ghcr.io/thallium-suite/uranium:testing" \
             -f expected-digest="${TESTING_DIGEST}" \
             -f suites="smoke"

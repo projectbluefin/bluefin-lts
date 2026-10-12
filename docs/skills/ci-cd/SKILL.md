@@ -52,7 +52,6 @@ metadata:
 | CentOS factory smoke | `.github/workflows/factory-smoke.yml` |
 | GNOME factory build/publication | `.github/workflows/factory-build.yml`, `factory-build-stage.yml`, `factory-publish.yml` |
 | Syntax and repository checks | `.github/workflows/pr-testsuite.yml`, `unit-tests.yml` |
-| Lab PR Check Run | `.github/workflows/lab-check.yml` |
 | Dependency updates | `renovate.json`, Renovate workflows |
 
 The exact workflow files in the repository are authoritative. Update this table
@@ -121,12 +120,16 @@ Check in order:
 Use the GitHub workflow run, job summary, and logs as evidence. Do not infer
 success from a green caller job if the reusable job or publication step failed.
 
-Every open Bluefin LTS PR is discovered by the lab's five-minute PR poller. The
-lab runs smoke QA against `bluefin-lts:testing` and sends bounded
-`repository_dispatch` lifecycle events to `lab-check.yml`, which must exist on
-the default branch. That workflow uses a short-lived MergeRaptor installation
-token to update one `testing-lab / bluefin-lts` Check Run for the exact PR head
-SHA. Do not duplicate the result in a PR comment or commit status.
+Automated dependency bumps are Renovate's job, including the `image-versions.yaml`
+container digests. The `customManagers` entry in `renovate.json` matches the
+`image`/`tag`/`digest` triplet and automerges digest updates; it is declared
+locally rather than inherited, because the shared preset resolves its inherited
+config through `{{parentOrg}}` and this repository is not a network fork.
+
+Do not reintroduce a bespoke digest-tracking workflow. A PR opened with the
+default `GITHUB_TOKEN` does not trigger `pull_request` workflows, so it can never
+satisfy the required `validate` check and would be permanently unmergeable;
+Renovate's own app token does not have that problem.
 
 ## Common Rationalizations
 
@@ -143,7 +146,7 @@ SHA. Do not duplicate the result in a PR comment or commit status.
 - A release or signing failure hidden with `continue-on-error`.
 - Copying a workflow from another image variant without checking path and input
   differences.
-- Posting a lab result as a PR comment instead of updating the MergeRaptor Check Run.
+- Reintroducing a bespoke dependency/digest-tracking workflow in place of Renovate.
 - Calling `create-manifest@v1` without first preparing the runner.
 
 ## Verification
@@ -160,5 +163,5 @@ commit, artifact tag, and digest. For signing or release changes, also follow
 
 ## Sources
 
-- Context7: `/websites/github_en_actions` — `repository_dispatch` payloads and
-  the requirement that the workflow exist on the default branch.
+- Context7: `/websites/github_en_actions` — `workflow_run` payloads and the
+  requirement that a `workflow_run` workflow exist on the default branch.
