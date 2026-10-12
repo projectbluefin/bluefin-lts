@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:43:11+00:00",
+  "package": "meson",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "9276cd06b46cd023263251e1a1cdae6378c1af40a1c4489281aa2faece4e1e5a",
+    "srpm_checksum_type": "sha256",
+    "tree": "b8b8429114f2228e50dcc4f07c5747df02834dbc"
+  }
+}

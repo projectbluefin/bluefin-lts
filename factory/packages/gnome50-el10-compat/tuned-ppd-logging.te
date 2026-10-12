@@ -1,0 +1,14 @@
+module tuned-ppd-logging 1.0;
+
+require {
+	type tuned_ppd_t;
+	type var_log_t;
+	class dir { add_name getattr search write };
+	class file { append create getattr open setattr write };
+}
+
+# tuned-ppd writes logs to /var/log/tuned/tuned-ppd.log.
+# EL10 base selinux-policy does not grant tuned_ppd_t access to var_log_t;
+# this module provides the missing permissions.
+allow tuned_ppd_t var_log_t:dir { add_name getattr search write };
+allow tuned_ppd_t var_log_t:file { append create getattr open setattr write };

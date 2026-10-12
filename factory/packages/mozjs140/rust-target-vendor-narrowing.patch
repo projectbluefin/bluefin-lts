@@ -1,0 +1,63 @@
+Correlate the rust target on the vendor, so rust 1.98 stops being ambiguous.
+
+Mozilla's configure does not take the autoconf triple straight to rustc. It
+runs "rustc --print target-list", groups the results by (cpu, endianness, os),
+and narrows that group down to one rust target for the triple it was given.
+For x86_64-redhat-linux-gnu -- which is what %configure passes as --host and
+--target -- the narrowing that decided it was the raw OS, "linux-gnu", which
+matched x86_64-unknown-linux-gnu and nothing else.
+
+rust 1.98 added the OpenEmbedded targets, among them x86_64-oe-linux-gnu and
+aarch64-oe-linux-gnu. Those share the raw OS *and* the raw CPU with the
+generic target, so both narrowings now leave two candidates. The last step
+tries the vendor, "redhat" names no rust target at all, and configure stops:
+
+    ERROR: Don't know how to translate x86_64-redhat-linux-gnu for rustc
+
+Nothing about the build root causes this: the same failure appears with the
+Fedora rust and with an upstream-built one, and disappears on rust 1.94, which
+has no *-oe-* targets.
+
+Upstream has since taken the vendor correlation, in the same place and with
+the same reasoning -- see the "*-oe-linux-gnu targets added in rust 1.98"
+comment on mozilla-firefox main -- but only maps the "pc" vendor config.guess
+emits onto rust's generic "unknown". A distribution triple carries a vendor
+that names no rust target, so this adds the fallback that covers it: when the
+vendor matches nothing, the generic target is the one meant. Every triple that
+already resolved still resolves to the same target, on both rust versions.
+
+diff --git a/build/moz.configure/rust.configure b/build/moz.configure/rust.configure
+--- a/build/moz.configure/rust.configure
++++ b/build/moz.configure/rust.configure
+@@ -302,6 +302,10 @@
+         elif not candidates:
+             return None
+ 
++        # config.guess uses the "pc" vendor for x86/x86_64 where rust uses its
++        # generic "unknown" vendor; normalize so we correlate on the right one.
++        vendor = "unknown" if host_or_target.vendor == "pc" else host_or_target.vendor
++
+         # We have multiple candidates. There are two cases where we can try to
+         # narrow further down using extra information from the build system.
+         # - For windows targets, correlate with the C compiler type
+@@ -402,6 +406,20 @@
+             elif narrowed:
+                 candidates = narrowed
+ 
++        # Correlate on the (normalized) vendor, so vendor-specific targets do not
++        # shadow the generic ones. rust 1.98 added x86_64-oe-linux-gnu, which
++        # shares its raw OS and raw CPU with x86_64-unknown-linux-gnu, so the
++        # narrowing below stopped resolving. A vendor that names no rust target
++        # at all -- redhat, as %configure passes it -- wants the generic target
++        # rather than whichever vendor-specific one happens to come first.
++        narrowed = [c for c in candidates if c.target.vendor == vendor]
++        if not narrowed:
++            narrowed = [c for c in candidates if c.target.vendor == "unknown"]
++        if len(narrowed) == 1:
++            return narrowed[0].rust_target
++        elif narrowed:
++            candidates = narrowed
++
+         # See if we can narrow down with the raw OS and raw CPU
+         narrowed = [
+             c

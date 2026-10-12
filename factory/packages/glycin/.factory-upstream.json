@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:46:16+00:00",
+  "package": "glycin",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "2f96d369e21b511481caf86729e9d2aebf99f661be5680eff119e70c57599aad",
+    "srpm_checksum_type": "sha256",
+    "tree": "4c0a4d065cd78d6a72efa7181c680e703add18da"
+  }
+}

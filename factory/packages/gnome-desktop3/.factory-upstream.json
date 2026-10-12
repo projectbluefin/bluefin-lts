@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:46:21+00:00",
+  "package": "gnome-desktop3",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "985db0b948002ea50ed2f3cf97721e9498fa65ab33958849febea020004bcb4e",
+    "srpm_checksum_type": "sha256",
+    "tree": "5bfdbe7630b41086224b3bac109d5296ee23a227"
+  }
+}

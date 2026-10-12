@@ -11,6 +11,15 @@ images:
     image: ghcr.io/ublue-os/brew
     tag: latest
     digest: sha256:bed056871da6edd8c6ee455a274283ae83bf269461dcad758a7729aaad018401
+  # The GNOME stack, built by factory/ against this same CentOS Stream base
+  # and published as an OCI repository image. Empty until the first factory
+  # publication; an empty digest makes the image build fall back to the base
+  # image's GNOME rather than failing. Pinned by digest once populated, so a
+  # rebuild cannot silently pick up different packages.
+  - name: gnome_packages
+    image: ghcr.io/projectbluefin/bluefin-lts-packages
+    tag: latest
+    digest: ""
 
 # Pinned binary downloads (managed by Renovate)
 downloads:

@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:48+00:00",
+  "package": "simdutf",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "401a08d3861dfd4dee9e3aec7b2a5d11ea55d5c91c4a029707bd7f9241d8e4c0",
+    "srpm_checksum_type": "sha256",
+    "tree": "6904e3dc8d167fdeeedb304801efb40c323d219a"
+  }
+}

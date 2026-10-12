@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:40:52+00:00",
+  "package": "gdk-pixbuf2",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "26ef0be0a55af9b8f6a5f94395f7702907a2d8d92e1644821971b18cac25f90e",
+    "srpm_checksum_type": "sha256",
+    "tree": "15ff78d6f01cfa478ba15a801b0530f280bbea38"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:27+00:00",
+  "package": "orca",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "bae6adb12f0788fd313cbcf3adbddc1df7d63015748f70634542acd7bb1f94c8",
+    "srpm_checksum_type": "sha256",
+    "tree": "ffa7a20e0ad425777955caf8cf76d8f8f1fc58ef"
+  }
+}

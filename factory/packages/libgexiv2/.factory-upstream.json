@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:40+00:00",
+  "package": "libgexiv2",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "1be60e293b61c9ad39bb5cef37f8d0895ce3ec3a61f25eb530e57e72095f1a72",
+    "srpm_checksum_type": "sha256",
+    "tree": "14eade134ca6d3a81b0e076b856dabc08f921655"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:30+00:00",
+  "package": "libebur128",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "c26e410baf0c156d7959b3bbc44e7ea589afe82dcf394f02f47db96ace0f4e3b",
+    "srpm_checksum_type": "sha256",
+    "tree": "510e0ba0a4adb48e501ce5a1cffb04967878296d"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:41:45+00:00",
+  "package": "gobject-introspection",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "08412c111a07878ebab527cd7520d2748757aff16d203d04423dcc811c390ba1",
+    "srpm_checksum_type": "sha256",
+    "tree": "d8a5e74166c8eefcddd74afbc2bb9c5b73a22ee0"
+  }
+}

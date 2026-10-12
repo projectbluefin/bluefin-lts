@@ -1,0 +1,53 @@
+From 5c84fa21cc590811936d36dd8b122025a4340f85 Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Wed, 30 Oct 2024 14:27:44 -0400
+Subject: [PATCH] Enable collection IDs for OCI remotes
+
+We want to use collection IDs to specify what remote to install from
+when processing /etc/flatpak/preinstall.d; in order for this to work
+for OCI remotes, we need to permit collection IDs.
+
+ - In flatpakrepo files, don't require a GPGKey for a OCI remote
+   with a collection - we don't have signature verification for GPG remotes.
+ - Don't validate that the collection ID appears in the summary -
+   the image index doesn't currently contain an image ID
+---
+ common/flatpak-dir.c        | 6 +++++-
+ common/flatpak-repo-utils.c | 5 ++++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/common/flatpak-dir.c b/common/flatpak-dir.c
+index 6936d45f89..b0937eaa65 100644
+--- a/common/flatpak-dir.c
++++ b/common/flatpak-dir.c
+@@ -12995,9 +12995,13 @@ _flatpak_dir_get_remote_state (FlatpakDir   *self,
+         return NULL;
+     }
+ 
++  /* For OCI remotes, the collection ID is local configuration only:
++   * In the future we could add it to the index format.
++   */
+   if (state->collection_id != NULL &&
+       state->summary != NULL &&
+-      !_validate_summary_for_collection_id (state->summary, state->collection_id, error))
++      !(flatpak_dir_get_remote_oci (self, state->remote_name) ||
++        _validate_summary_for_collection_id (state->summary, state->collection_id, error)))
+     return NULL;
+ 
+   if (flatpak_dir_get_remote_oci (self, remote_or_uri))
+diff --git a/common/flatpak-repo-utils.c b/common/flatpak-repo-utils.c
+index 63dc9981e7..52508d2df1 100644
+--- a/common/flatpak-repo-utils.c
++++ b/common/flatpak-repo-utils.c
+@@ -2929,7 +2929,10 @@ flatpak_parse_repofile (const char   *remote_name,
+                                                           FLATPAK_REPO_COLLECTION_ID_KEY);
+   if (collection_id != NULL)
+     {
+-      if (gpg_key == NULL)
++      /* We don't support signatures for OCI remotes, but Collection ID's are
++       * still useful for preinstallation.
++       */
++      if (gpg_key == NULL && !g_str_has_prefix (uri, "oci+"))
+         {
+           flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Collection ID requires GPG key to be provided"));
+           return NULL;

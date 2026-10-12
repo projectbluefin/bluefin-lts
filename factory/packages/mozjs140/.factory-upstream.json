@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:48:56+00:00",
+  "package": "mozjs140",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "e0d381aa963193e635bb70d2d1fabfcbd4419b17a859505da6c266e8d1948392",
+    "srpm_checksum_type": "sha256",
+    "tree": "1fef081f953fc93778d3790de31f30ee3e3df07b"
+  }
+}
