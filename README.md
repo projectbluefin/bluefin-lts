@@ -46,7 +46,7 @@ Plan migrations as fresh installs or supported upgrade paths.
 ## Community
 
 Uranium has no community infrastructure of its own yet. Until it does, use this
-repository's [issue tracker](https://github.com/thallium-suite/uranium/issues) 
+repository's [issue tracker](https://github.com/thallium-suite/uranium/issues)
 
 ## Contributing
 
