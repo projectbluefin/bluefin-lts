@@ -4,7 +4,7 @@ description: >-
   Change hardware hooks and device integration safely. Use when modifying setup hooks, services, or device-specific image behavior.
 ---
 
-# Hardware Setup — bluefin-lts
+# Hardware Setup — uranium
 
 ## When to Use
 
@@ -51,9 +51,9 @@ If absent, add:
 systemctl enable ublue-user-setup.service
 ```
 
-## Hardware hooks: shipped by common, not by bluefin-lts
+## Hardware hooks: shipped by common, not by uranium
 
-**bluefin-lts does not ship any hardware hooks directly.** They are provided by
+**uranium does not ship any hardware hooks directly.** They are provided by
 `projectbluefin/common` and land automatically via the common OCI layer.
 
 The shared layer currently provides the following hooks:
@@ -68,8 +68,8 @@ The shared layer currently provides the following hooks:
 ### Updating common hooks
 
 If a new hardware quirk needs a hook:
-1. File the hook in `projectbluefin/common` (not in bluefin-lts)
-2. Bump `image-versions.yaml` `common.digest` in bluefin-lts to the new published common image
+1. File the hook in `projectbluefin/common` (not in uranium)
+2. Bump `image-versions.yaml` `common.digest` in uranium to the new published common image
 3. Verify with `skopeo inspect docker://ghcr.io/projectbluefin/common@sha256:<digest>` that the hook files are present before bumping
 
 ### Removing a local hook that moved to common
@@ -105,13 +105,13 @@ set -xeuo pipefail
 - `grubby` is available on CentOS Stream — kernel arg management works the same as Fedora
 - `dconf write` is available — icon/setting hooks work without modification
 - `glib-compile-schemas` is available — extension schema compilation works
-- `brew` is present in bluefin-lts — it ships via a dedicated brew image layer (`BREW_IMAGE_REF`)
+- `brew` is present in uranium — it ships via a dedicated brew image layer (`BREW_IMAGE_REF`)
   copied in the Containerfile, and `brew-setup.service` is enabled in `build_scripts/40-services.sh`.
   Hooks using brew work the same as in bluefin
 
 ## NVIDIA — NVIDIA CDI (rootless Podman GPU passthrough)
 
-The `bluefin-lts-nvidia` variant ships full CDI configuration so `podman run --device nvidia.com/gpu=all` works out of the box without root or privileged containers.
+The `uranium-nvidia` variant ships full CDI configuration so `podman run --device nvidia.com/gpu=all` works out of the box without root or privileged containers.
 
 ### NVIDIA CDI wiring
 

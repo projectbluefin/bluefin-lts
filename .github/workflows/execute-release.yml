@@ -49,13 +49,17 @@ jobs:
       promoted_digests: ${{ steps.resolve.outputs.digests }}
       promoted_sha: ${{ steps.resolve-sha.outputs.sha }}
     env:
-      REGISTRY: ghcr.io/projectbluefin
+      REGISTRY: ghcr.io/thallium-suite
       VARIANTS_JSON: >-
         [
-          {"image":"bluefin-lts","source_tag":"testing","target_tag":"stable"},
-          {"image":"bluefin-lts-nvidia","source_tag":"testing","target_tag":"stable"}
+          {"image":"uranium","source_tag":"testing","target_tag":"stable"},
+          {"image":"uranium-nvidia","source_tag":"testing","target_tag":"stable"}
         ]
-      COSIGN_IDENTITY_REGEXP: ^https://github\.com/projectbluefin/(bluefin-lts|actions|execute-release)/\.github/workflows/
+      # Accepts the signing identity of this repository, the shared reusable
+      # action, and — for the org migration only — the pre-migration identity
+      # of this same project. Drop the projectbluefin alternatives once no
+      # promoted artifact carries a legacy signature.
+      COSIGN_IDENTITY_REGEXP: ^https://github\.com/(thallium-suite/uranium|projectbluefin/(bluefin-lts|actions|execute-release))/\.github/workflows/
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -281,21 +285,21 @@ jobs:
       contents: write
       id-token: write
       packages: read
-    # Use bluefin-lts as the primary image so the stock LTS (CoreOS stable) kernel
+    # Use uranium as the primary image so the stock LTS (CoreOS stable) kernel
     # version appears in the Key components table instead of the base CentOS kernel.
     uses: projectbluefin/actions/.github/workflows/reusable-release.yml@v1
     with:
       stream_name: stable
-      image: ghcr.io/projectbluefin/bluefin-lts
+      image: ghcr.io/thallium-suite/uranium
       build_workflow: build-regular.yml
       build_branch: testing
       generate_sbom_inline: true
       checkout_ref: main
-      project_name: Bluefin LTS
+      project_name: Uranium
       badge_label: LTS
       accent_color: "#0ea5e9"
       cert_identity_regexp: >-
-        ^https://github\.com/projectbluefin/(bluefin-lts|actions|execute-release)/\.github/workflows/
+        ^https://github\.com/(thallium-suite/uranium|projectbluefin/(bluefin-lts|actions|execute-release))/\.github/workflows/
       notable_packages: >-
         [
           {"sbom_name": "kernel", "label": "Kernel (LTS)"},
@@ -303,7 +307,13 @@ jobs:
           {"sbom_name": "flatpak", "label": "Flatpak"},
           {"sbom_name": "bootc", "label": "bootc"}
         ]
-      docs_url: https://docs.projectbluefin.io/changelogs
+      # The reusable's default is the Bluefin docs site, which builds from
+      # projectbluefin/documentation and does not cover this repository.
+      # Release notes are published as GitHub release bodies, so that is where
+      # the changelog link points until Uranium has its own docs site.
+      # Do not set this to an empty string: render_notes.py interpolates it
+      # unconditionally and would emit a dangling "Full changelog → ".
+      docs_url: https://github.com/thallium-suite/uranium/releases
     secrets: inherit
 
   post-release-variants:
@@ -321,16 +331,16 @@ jobs:
         id: digests
         run: |
           set -euo pipefail
-          for image in bluefin-lts bluefin-lts-nvidia; do
-            digest=$(skopeo inspect --no-tags "docker://ghcr.io/projectbluefin/${image}:stable" \
+          for image in uranium uranium-nvidia; do
+            digest=$(skopeo inspect --no-tags "docker://ghcr.io/thallium-suite/${image}:stable" \
               | jq -r '.Digest' | cut -c1-19)
             echo "${image}=${digest}" >> "$GITHUB_OUTPUT"
           done
 
       - name: Prepend variants table to release
         env:
-          LTS_DIGEST: ${{ steps.digests.outputs.bluefin-lts }}
-          NVIDIA_DIGEST: ${{ steps.digests.outputs.bluefin-lts-nvidia }}
+          LTS_DIGEST: ${{ steps.digests.outputs.uranium }}
+          NVIDIA_DIGEST: ${{ steps.digests.outputs.uranium-nvidia }}
         run: |
           set -euo pipefail
           TAG=$(gh release list --repo "${{ github.repository }}" --limit 1 --json tagName --jq '.[0].tagName')
@@ -347,10 +357,10 @@ jobs:
             '' \
             '| Variant | Tag | Digest |' \
             '|---|---|---|' \
-            "| \`bluefin-lts\` | \`:stable\` | \`${LTS_DIGEST}\` |" \
-            "| \`bluefin-lts-nvidia\` | \`:stable\` | \`${NVIDIA_DIGEST}\` |" \
+            "| \`uranium\` | \`:stable\` | \`${LTS_DIGEST}\` |" \
+            "| \`uranium-nvidia\` | \`:stable\` | \`${NVIDIA_DIGEST}\` |" \
             '' \
-            '> **bluefin-lts** and **bluefin-lts-nvidia** use the Fedora CoreOS stable kernel. The **Kernel (LTS)** version above applies to both.' \
+            '> **uranium** and **uranium-nvidia** use the Fedora CoreOS stable kernel. The **Kernel (LTS)** version above applies to both.' \
             '' \
             '---' \
             '')

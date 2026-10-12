@@ -156,7 +156,7 @@ jobs:
         run: |
           set -euo pipefail
           owner=$(printf '%s' "$REPOSITORY_OWNER" | tr "[:upper:]" "[:lower:]")
-          image="ghcr.io/${owner}/bluefin-lts-packages"
+          image="ghcr.io/${owner}/uranium-packages"
           echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "$ACTOR" --password-stdin
           if [ "$REF" = "refs/heads/main" ]; then
             candidates="latest"
@@ -166,8 +166,8 @@ jobs:
           fi
           resolved=""
           for tag in $candidates; do
-            if docker pull --quiet "ghcr.io/${owner}/bluefin-lts-packages:${tag}" >&2; then
-              digest=$(docker image inspect "ghcr.io/${owner}/bluefin-lts-packages:${tag}" \
+            if docker pull --quiet "ghcr.io/${owner}/uranium-packages:${tag}" >&2; then
+              digest=$(docker image inspect "ghcr.io/${owner}/uranium-packages:${tag}" \
                 --format '{{index .RepoDigests 0}}' | sed 's/.*@//')
               resolved="${image}@${digest}"
               break
@@ -197,7 +197,7 @@ jobs:
             python3 - <<'PY'
           import json, os, sys
           labels = json.load(open("work/factory-labels.json")) or {}
-          value = labels.get("org.projectbluefin.factory.state", "{}")
+          value = labels.get("org.thallium-suite.factory.state", "{}")
           try:
               document = json.loads(value)
           except json.JSONDecodeError:

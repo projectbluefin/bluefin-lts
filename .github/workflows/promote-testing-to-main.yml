@@ -10,7 +10,7 @@ name: Promote testing to main
 #
 # Release cadence: the actual merge/release only happens on Thursdays (UTC),
 # as part of the factory-wide 3x/week promotion schedule (bluefin: Tuesday,
-# bluefin-lts: Thursday, dakota: Sunday). LTS sits two days after Bluefin's
+# uranium: Thursday, dakota: Sunday). LTS sits two days after Bluefin's
 # Tuesday stable, giving a soak window for Fedora/CentOS-base regressions
 # that surface in Bluefin's stable before they reach LTS. The daily heartbeat
 # below keeps the promotion PR fresh and gate checks re-running all week;
@@ -105,7 +105,7 @@ jobs:
             exit 0
           fi
 
-          # bluefin-lts stable releases on Thursdays (UTC), day 4 of ISO 8601 week.
+          # uranium stable releases on Thursdays (UTC), day 4 of ISO 8601 week.
           day_of_week="$(date -u +%u)"
           if [[ "$day_of_week" == "4" ]]; then
             echo "is-release-window=true" >> "$GITHUB_OUTPUT"
@@ -121,13 +121,17 @@ jobs:
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
-        [{"image":"bluefin-lts"},{"image":"bluefin-lts-nvidia"}]
+        [{"image":"uranium"},{"image":"uranium-nvidia"}]
+      # Migration window: also accepts this project's pre-migration signing
+      # identity so already-published testing artifacts can be promoted once.
+      # Drop the projectbluefin alternatives after the first post-migration
+      # promotion completes.
       cosign_identity_regexp: >-
-        ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
+        ^https://github\.com/(thallium-suite/uranium|projectbluefin/(bluefin-lts|actions))/\.github/workflows/
       source_branch: testing
       target_branch: main
       run_e2e: true
-      e2e_image: ghcr.io/projectbluefin/bluefin-lts:testing
+      e2e_image: ghcr.io/thallium-suite/uranium:testing
       # main uses a merge queue ruleset (17070416): gh pr merge --auto is blocked.
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead, which
       # places the PR in the queue and lets it squash-merge once checks pass.
@@ -173,7 +177,7 @@ jobs:
             gh workflow run post-testing-e2e.yml \
               --repo "$REPO" \
               --ref testing \
-              -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
+              -f image="ghcr.io/thallium-suite/uranium:testing" \
               -f suites="smoke"
             echo "Dispatched post-testing-e2e against testing ($testing_head)."
           else
@@ -183,7 +187,7 @@ jobs:
           gh workflow run post-testing-e2e.yml \
             --repo "$REPO" \
             --ref testing \
-            -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
+            -f image="ghcr.io/thallium-suite/uranium:testing" \
             -f suites="smoke"
           echo "Dispatched post-testing-e2e against testing ($testing_head)."
 

@@ -23,10 +23,10 @@ setup() {
     IMAGE_INFO_FILE="${BATS_TEST_TMPDIR}/image-info.json"
     cat > "${IMAGE_INFO_FILE}" <<'EOF'
 {
-  "image-name": "bluefin-lts",
+  "image-name": "uranium",
   "image-flavor": "main",
-  "image-vendor": "projectbluefin",
-  "image-ref": "ostree-image-signed:docker://ghcr.io/projectbluefin/bluefin-lts",
+  "image-vendor": "thallium-suite",
+  "image-ref": "ostree-image-signed:docker://ghcr.io/thallium-suite/uranium",
   "image-tag": "stable",
   "centos-version": "10"
 }
@@ -66,33 +66,36 @@ json_field() {
 @test "image-info-set: preserves image-name when IMAGE_NAME is not overridden" {
     run_image_info_set dx
     [ "$status" -eq 0 ]
-    [ "$(json_field '."image-name"')" = "bluefin-lts" ]
+    [ "$(json_field '."image-name"')" = "uranium" ]
 }
 
 @test "image-info-set: preserves image-ref when IMAGE_REF is not overridden" {
     run_image_info_set dx
     [ "$status" -eq 0 ]
-    [ "$(json_field '."image-ref"')" = "ostree-image-signed:docker://ghcr.io/projectbluefin/bluefin-lts" ]
+    [ "$(json_field '."image-ref"')" = "ostree-image-signed:docker://ghcr.io/thallium-suite/uranium" ]
 }
 
 @test "image-info-set: IMAGE_NAME overrides the recorded image name" {
-    IMAGE_INFO="${IMAGE_INFO_FILE}" IMAGE_NAME=bluefin-lts-dx run bash "${IMAGE_INFO_SET}" dx
+    IMAGE_INFO="${IMAGE_INFO_FILE}" IMAGE_NAME=uranium-dx run bash "${IMAGE_INFO_SET}" dx
     [ "$status" -eq 0 ]
-    [ "$(json_field '."image-name"')" = "bluefin-lts-dx" ]
+    [ "$(json_field '."image-name"')" = "uranium-dx" ]
 }
 
 @test "image-info-set: IMAGE_REF overrides the recorded image ref" {
     IMAGE_INFO="${IMAGE_INFO_FILE}" \
-        IMAGE_REF="ostree-image-signed:docker://ghcr.io/projectbluefin/bluefin-lts-dx" \
+        IMAGE_REF="ostree-image-signed:docker://ghcr.io/thallium-suite/uranium-dx" \
         run bash "${IMAGE_INFO_SET}" dx
     [ "$status" -eq 0 ]
-    [ "$(json_field '."image-ref"')" = "ostree-image-signed:docker://ghcr.io/projectbluefin/bluefin-lts-dx" ]
+    [ "$(json_field '."image-ref"')" = "ostree-image-signed:docker://ghcr.io/thallium-suite/uranium-dx" ]
 }
 
 @test "image-info-set: leaves unrelated keys untouched" {
     run_image_info_set dx
     [ "$status" -eq 0 ]
-    [ "$(json_field '."image-vendor"')" = "projectbluefin" ]
+    # image-vendor is never written by image-info-set, so this holds for any
+    # value already in the file, including a legacy one carried across an
+    # upgrade from a pre-rename image.
+    [ "$(json_field '."image-vendor"')" = "thallium-suite" ]
     [ "$(json_field '."image-tag"')" = "stable" ]
     [ "$(json_field '."centos-version"')" = "10" ]
 }

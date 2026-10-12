@@ -1,7 +1,7 @@
 ---
 name: build
 description: >-
-  Local builds, validation, variants, and VM artifacts for projectbluefin/bluefin-lts.
+  Local builds, validation, variants, and VM artifacts for thallium-suite/uranium.
   Use when running just recipes, understanding the LTS/NVIDIA variant map, or debugging
   a build failure.
 ---
@@ -42,8 +42,8 @@ Run before every commit.
 
 | Goal | Command | Time |
 |---|---|---|
-| Regular LTS | `just build bluefin-lts lts 0 0` | 45–90 min |
-| NVIDIA | `just build bluefin-lts-nvidia lts 0 1` | 45–90 min |
+| Regular LTS | `just build uranium lts 0 0` | 45–90 min |
+| NVIDIA | `just build uranium-nvidia lts 0 1` | 45–90 min |
 
 `gnome_version` defaults to `50`; override only when testing a future GNOME version.
 
@@ -51,7 +51,7 @@ LTS uses the Fedora CoreOS 44 akmods stream by default. Override it explicitly w
 
 ```bash
 COREOS_STABLE_VERSION=44 COREOS_STABLE_KERNEL=7.1.8-200.fc44 \
-  just build bluefin-lts-nvidia lts 0 1
+  just build uranium-nvidia lts 0 1
 ```
 
 **Never cancel builds.** Use a 120+ minute timeout.
@@ -60,8 +60,8 @@ COREOS_STABLE_VERSION=44 COREOS_STABLE_KERNEL=7.1.8-200.fc44 \
 
 | Variant | What changes |
 |---|---|
-| `bluefin-lts` | base image, CoreOS-stable kernel track |
-| `bluefin-lts-nvidia` | NVIDIA drivers, CUDA toolkit, rootless Podman CDI configuration |
+| `uranium` | base image, CoreOS-stable kernel track |
+| `uranium-nvidia` | NVIDIA drivers, CUDA toolkit, rootless Podman CDI configuration |
 
 NVIDIA overrides live in `build_scripts/overrides/nvidia/`, `system_files_overrides/nvidia/`, and arch-specific directories.
 

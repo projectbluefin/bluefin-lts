@@ -1,4 +1,4 @@
-name: Build Bluefin Nvidia (aarch64)
+name: Build Uranium Nvidia (aarch64)
 
 # ARM is intentionally isolated from the x86_64 NVIDIA publication path.
 # A missing ARM kmod or transient ARM build failure must not block amd64 users.
@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build bluefin-lts-nvidia image (aarch64)
+    name: Build uranium-nvidia image (aarch64)
     uses: projectbluefin/actions/.github/workflows/reusable-build.yml@v1
     permissions:
       contents: read
@@ -38,7 +38,7 @@ jobs:
       issues: write
     secrets: inherit
     with:
-      brand_name: bluefin-lts-nvidia
+      brand_name: uranium-nvidia
       stream_name: testing
       image_flavors: '["main"]'
       architecture: '["aarch64"]'

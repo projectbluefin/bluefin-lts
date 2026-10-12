@@ -9,7 +9,7 @@ it produces a repository, and the image points dnf at it.
 
 ## Why this exists
 
-bluefin-lts is built on CentOS Stream 10, which ships GNOME 47. Until recently
+Uranium is built on CentOS Stream 10, which ships GNOME 47. Until recently
 the GNOME 50 stack came from a third-party COPR project
 (`jreilly1821/c10s-gnome-50`). That works, and it was the right call while the
 stack was somebody else's problem to maintain. It is not a durable answer for

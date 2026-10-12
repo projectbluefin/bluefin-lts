@@ -69,7 +69,7 @@ spec:
   templates:
   - name: run
     container:
-      image: ghcr.io/projectbluefin/bluefin-lts:stable
+      image: ghcr.io/thallium-suite/uranium:stable
       command: [bash, -c]
       args:
       - |
@@ -124,7 +124,7 @@ spec:
           - name: image
             value: "ghcr.io/ublue-os/bluefin:lts"
           - name: expected_target
-            value: "ghcr.io/projectbluefin/bluefin-lts:stable"
+            value: "ghcr.io/thallium-suite/uranium:stable"
       - name: legacy-hwe
         template: smoke
         arguments:
@@ -132,7 +132,7 @@ spec:
           - name: image
             value: "ghcr.io/ublue-os/bluefin:lts-hwe"
           - name: expected_target
-            value: "ghcr.io/projectbluefin/bluefin-lts:stable"
+            value: "ghcr.io/thallium-suite/uranium:stable"
   - name: smoke
     inputs:
       parameters:

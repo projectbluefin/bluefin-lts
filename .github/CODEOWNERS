@@ -1,10 +1,10 @@
 # Default: maintainers team owns everything
-* @projectbluefin/maintainers
+* @thallium-suite/maintainers
 
 # Sensitive paths — require maintainer review
-.github/workflows/  @projectbluefin/maintainers
-Justfile            @projectbluefin/maintainers
-build_scripts/      @projectbluefin/maintainers
+.github/workflows/  @thallium-suite/maintainers
+Justfile            @thallium-suite/maintainers
+build_scripts/      @thallium-suite/maintainers
 
 # Exempt from CODEOWNERS review (Renovate-managed, auto-merged by renovate-automerge.yml)
 image-versions.yaml

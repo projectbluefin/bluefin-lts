@@ -52,10 +52,10 @@ testing → main → :stable
 
 ```bash
 # Check promotion PR status
-gh pr list --repo projectbluefin/bluefin-lts --head auto/promote-testing-to-main
+gh pr list --repo thallium-suite/uranium --head auto/promote-testing-to-main
 
 # Emergency bypass (CODEOWNERS or merge queue blocking — requires admin)
-gh pr merge <pr-number> --repo projectbluefin/bluefin-lts --squash --admin
+gh pr merge <pr-number> --repo thallium-suite/uranium --squash --admin
 ```
 
 ## Branch protection
@@ -75,8 +75,8 @@ Do NOT trust "the fix is in main" as evidence the fix is published. Verify:
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
-for IMAGE in bluefin-lts bluefin-lts-nvidia; do
-  skopeo inspect --no-tags --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:stable \
+for IMAGE in uranium uranium-nvidia; do
+  skopeo inspect --no-tags --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/thallium-suite/${IMAGE}:stable \
     | python3 -c "import json,sys; d=json.load(sys.stdin); print('${IMAGE}:stable', d['Digest'][:22], d['Labels'].get('org.opencontainers.image.created','?')[:10])"
 done
 ```
@@ -84,7 +84,7 @@ done
 A fix is published when:
 1. The `:stable` digest differs from the last known digest
 2. The `org.opencontainers.image.created` date is after the fix merged
-3. Both variants (bluefin-lts and bluefin-lts-nvidia) are updated
+3. Both variants (uranium and uranium-nvidia) are updated
 4. `skopeo inspect --raw` shows a complete amd64/arm64 index.
 
 ## Build cascade — rapid commits cancel in-progress builds
@@ -93,7 +93,7 @@ Each push to `testing` triggers new builds which cancel in-progress builds via c
 
 ```bash
 SHA=<commit-sha>
-gh run list --repo projectbluefin/bluefin-lts \
+gh run list --repo thallium-suite/uranium \
   --json workflowName,status,conclusion,headSha \
   --jq "[.[] | select(.headSha | startswith(\"$SHA\")) | select(.workflowName | contains(\"Build\"))]"
 ```
@@ -102,13 +102,13 @@ gh run list --repo projectbluefin/bluefin-lts \
 
 ```bash
 gh auth token | skopeo login ghcr.io -u castrojo --password-stdin
-skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts
-skopeo list-tags docker://ghcr.io/projectbluefin/bluefin-lts-nvidia
+skopeo list-tags docker://ghcr.io/thallium-suite/uranium
+skopeo list-tags docker://ghcr.io/thallium-suite/uranium-nvidia
 ```
 
 Images publish to:
-- `ghcr.io/projectbluefin/bluefin-lts`
-- `ghcr.io/projectbluefin/bluefin-lts-nvidia`
+- `ghcr.io/thallium-suite/uranium`
+- `ghcr.io/thallium-suite/uranium-nvidia`
 
 ## Emergency rollback
 
@@ -117,8 +117,8 @@ GHCR_TOKEN=$(gh auth token)
 skopeo copy \
   --src-no-creds \
   --dest-creds "castrojo:${GHCR_TOKEN}" \
-  docker://ghcr.io/projectbluefin/IMAGE:stable-YYYYMMDD \
-  docker://ghcr.io/projectbluefin/IMAGE:stable
+  docker://ghcr.io/thallium-suite/IMAGE:stable-YYYYMMDD \
+  docker://ghcr.io/thallium-suite/IMAGE:stable
 ```
 
 Rollback both variants, then verify digest/created time.
@@ -132,14 +132,14 @@ Rollback both variants, then verify digest/created time.
 
 ```bash
 GHCR_TOKEN=$(gh auth token)
-for IMAGE in bluefin-lts bluefin-lts-nvidia; do
-  DIGEST=$(skopeo inspect --no-tags --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/projectbluefin/${IMAGE}:testing \
+for IMAGE in uranium uranium-nvidia; do
+  DIGEST=$(skopeo inspect --no-tags --creds "castrojo:${GHCR_TOKEN}" docker://ghcr.io/thallium-suite/${IMAGE}:testing \
     | python3 -c "import json,sys; print(json.load(sys.stdin)['Digest'])")
   skopeo copy \
     --src-creds "castrojo:${GHCR_TOKEN}" \
     --dest-creds "castrojo:${GHCR_TOKEN}" \
-    docker://ghcr.io/projectbluefin/${IMAGE}@${DIGEST} \
-    docker://ghcr.io/projectbluefin/${IMAGE}:stable
+    docker://ghcr.io/thallium-suite/${IMAGE}@${DIGEST} \
+    docker://ghcr.io/thallium-suite/${IMAGE}:stable
 done
 ```
 
@@ -160,7 +160,7 @@ PR builds validate that the image builds but do not push to GHCR.
 bootc stores the kernel and initramfs under `/usr/lib/modules/<kver>/`, not `/boot/`. An empty `/boot/` in the container layer is expected and correct.
 
 ```bash
-podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c '
+podman run --rm ghcr.io/thallium-suite/uranium:stable bash -c '
   sha256sum /usr/lib/modules/*/initramfs.img
   ls -la /usr/lib/modules/*/vmlinuz
   grep BUILD_ID /etc/os-release
@@ -172,9 +172,9 @@ podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c '
 After a dracut-related fix, verify the initramfs SHA changed:
 
 ```bash
-OLD=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256sum /usr/lib/modules/*/initramfs.img' 2>/dev/null | awk '{print $1}')
-podman pull ghcr.io/projectbluefin/bluefin-lts:stable
-NEW=$(podman run --rm ghcr.io/projectbluefin/bluefin-lts:stable bash -c 'sha256sum /usr/lib/modules/*/initramfs.img' 2>/dev/null | awk '{print $1}')
+OLD=$(podman run --rm ghcr.io/thallium-suite/uranium:stable bash -c 'sha256sum /usr/lib/modules/*/initramfs.img' 2>/dev/null | awk '{print $1}')
+podman pull ghcr.io/thallium-suite/uranium:stable
+NEW=$(podman run --rm ghcr.io/thallium-suite/uranium:stable bash -c 'sha256sum /usr/lib/modules/*/initramfs.img' 2>/dev/null | awk '{print $1}')
 [ "$OLD" != "$NEW" ] && echo "initramfs changed" || echo "same initramfs — promotion may be a no-op"
 ```
 

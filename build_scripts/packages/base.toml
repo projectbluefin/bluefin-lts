@@ -1,10 +1,10 @@
-# Package manifest for the bluefin-lts base image (CentOS Stream 10).
+# Package manifest for the uranium base image (CentOS Stream 10).
 # Read by build scripts via build_scripts/scripts/read-packages.
 #
 # Sections:
 #   [gnome]              GNOME 50 packages (10-packages-image-base.sh)
 #   [gnome_excluded]     packages excluded via -x during GNOME install
-#   [install]            main bluefin-lts packages (20-packages.sh)
+#   [install]            main uranium packages (20-packages.sh)
 #   [install_excluded]   packages excluded via -x during main install
 #   [remove]             packages removed before install (20-packages.sh)
 #   [versionlock_gnome]  GNOME 50 components pinned against EL10 downgrades
@@ -54,7 +54,7 @@ packages = [
 ]
 
 [install]
-# Main bluefin-lts packages from base/EPEL repos.
+# Main uranium packages from base/EPEL repos.
 packages = [
     "NetworkManager-openconnect-gnome",
     "NetworkManager-openvpn-gnome",
@@ -99,7 +99,7 @@ packages = [
 
 [versionlock_gnome]
 # GNOME 50 components pinned to prevent downgrades to EL10 base versions.
-# See: https://github.com/projectbluefin/bluefin-lts/issues — GNOME 50 skew
+# See: https://github.com/thallium-suite/uranium/issues — GNOME 50 skew
 packages = [
     "gnome-shell",
     "gdm",
