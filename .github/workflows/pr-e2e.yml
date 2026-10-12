@@ -26,6 +26,10 @@ env:
 jobs:
   compose:
     name: Compose PR test image
+    # Fork PRs get a read-only GITHUB_TOKEN: the push to ghcr.io fails with
+    # "denied: installation not allowed to Write organization package". Skip
+    # the lane instead of reporting an expected failure as red.
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       contents: read
