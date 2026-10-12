@@ -55,11 +55,12 @@ jobs:
           {"image":"uranium","source_tag":"testing","target_tag":"stable"},
           {"image":"uranium-nvidia","source_tag":"testing","target_tag":"stable"}
         ]
-      # Accepts the signing identity of this repository, the shared reusable
-      # action, and — for the org migration only — the pre-migration identity
-      # of this same project. Drop the projectbluefin alternatives once no
-      # promoted artifact carries a legacy signature.
-      COSIGN_IDENTITY_REGEXP: ^https://github\.com/(thallium-suite/uranium|projectbluefin/(bluefin-lts|actions|execute-release))/\.github/workflows/
+      # Only this repository may sign. A reusable workflow invoked through
+      # `uses:` takes the caller's OIDC identity, so signing always happens as
+      # thallium-suite/uranium regardless of which action performs it. Nothing
+      # at this registry path pre-dates the move, so there is no legacy
+      # signature to accommodate.
+      COSIGN_IDENTITY_REGEXP: ^https://github\.com/thallium-suite/uranium/\.github/workflows/
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -299,7 +300,7 @@ jobs:
       badge_label: LTS
       accent_color: "#0ea5e9"
       cert_identity_regexp: >-
-        ^https://github\.com/(thallium-suite/uranium|projectbluefin/(bluefin-lts|actions|execute-release))/\.github/workflows/
+        ^https://github\.com/thallium-suite/uranium/\.github/workflows/
       notable_packages: >-
         [
           {"sbom_name": "kernel", "label": "Kernel (LTS)"},

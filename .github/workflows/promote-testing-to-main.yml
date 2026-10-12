@@ -122,12 +122,11 @@ jobs:
     with:
       variants: >-
         [{"image":"uranium"},{"image":"uranium-nvidia"}]
-      # Migration window: also accepts this project's pre-migration signing
-      # identity so already-published testing artifacts can be promoted once.
-      # Drop the projectbluefin alternatives after the first post-migration
-      # promotion completes.
+      # Only this repository may sign. A reusable workflow invoked through `uses:`
+      # takes the caller's OIDC identity, and nothing at this registry path
+      # pre-dates the move, so there is no legacy signature to accommodate.
       cosign_identity_regexp: >-
-        ^https://github\.com/(thallium-suite/uranium|projectbluefin/(bluefin-lts|actions))/\.github/workflows/
+        ^https://github\.com/thallium-suite/uranium/\.github/workflows/
       source_branch: testing
       target_branch: main
       run_e2e: true
