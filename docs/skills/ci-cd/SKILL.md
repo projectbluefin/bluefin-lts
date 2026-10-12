@@ -46,7 +46,10 @@ metadata:
 | NVIDIA manifest assembly | `.github/workflows/build-nvidia-manifest.yml` |
 | Promotion | `.github/workflows/promote-testing-to-main.yml` |
 | Stable publication | `.github/workflows/execute-release.yml` |
-| End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml` |
+| End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml`, `post-testing-e2e.yml` |
+| Complete GNOME factory stack | `.github/workflows/factory-stack.yml` |
+| CentOS factory smoke | `.github/workflows/factory-smoke.yml` |
+| GNOME factory build/publication | `.github/workflows/factory-build.yml`, `factory-build-stage.yml`, `factory-publish.yml` |
 | Syntax and repository checks | `.github/workflows/pr-testsuite.yml`, `unit-tests.yml` |
 | Dependency updates | `.github/renovate.json5`, Renovate workflows |
 

@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:41:10+00:00",
+  "package": "gnome-autoar",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "a9717f80cbf49768b436572a18fbb1e06d8957c08319587f887176d1501d623d",
+    "srpm_checksum_type": "sha256",
+    "tree": "444fec8f05a3938831afae199cd74fa764369496"
+  }
+}

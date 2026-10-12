@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "package": "libosinfo",
+  "imported_at": "2026-10-10T08:38:27.624076+00:00",
+  "source": {
+    "kind": "git",
+    "repository": "https://github.com/projectbluefin/utah-packages",
+    "tree": "35bbfb3a2ac1206571a3ce176b3b0a2be8774ce3",
+    "path": "packages/libosinfo"
+  }
+}

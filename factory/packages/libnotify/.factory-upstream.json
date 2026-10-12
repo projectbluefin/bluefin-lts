@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:50+00:00",
+  "package": "libnotify",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "633e821bae8954902c1f006b5422fcfaff053e827bcb64d621942bfb5cbc91f5",
+    "srpm_checksum_type": "sha256",
+    "tree": "04c1d360bd0cea947f735fb15a383d6fc2e86634"
+  }
+}

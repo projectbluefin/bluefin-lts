@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:44+00:00",
+  "package": "shaderc",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "0802f3a4fd5ed71a12f321d8c437dad92f88432247634322d1808d0c8e102acc",
+    "srpm_checksum_type": "sha256",
+    "tree": "80303c2e0b748b345b9f96b272162ee98b9a8a97"
+  }
+}

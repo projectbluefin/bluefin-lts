@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:46:12+00:00",
+  "package": "glib2",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "ae48de17c6bae00d5ee296fef29fcca1676eee8f9ad638e22c5cadf8f655b5ef",
+    "srpm_checksum_type": "sha256",
+    "tree": "d6841245dcf0c43b5a4206a85a4f8ecafb2298ad"
+  }
+}

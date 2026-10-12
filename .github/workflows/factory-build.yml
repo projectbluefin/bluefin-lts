@@ -1,0 +1,529 @@
+# Build the factory's RPMs and publish them as an OCI repository image.
+#
+# This is the binary lane. It runs in our own workflow, against the c10s image
+# pinned in factory/config/buildroot.json, because that is the base the image
+# actually ships on. Packit and Copr cannot stand in for it: Copr has no
+# CentOS Stream 10 chroot, so anything built there would target a different ABI
+# than the image it feeds.
+#
+# Order of operations:
+#   prepare  pull the build root once; solve the BuildRequires graph; select
+#            what changed against the published image's state label
+#   buildN   one call per wave, each a fail-fast:false package matrix
+#   publish  assemble the candidate repository, sign it, push it to GHCR
+#
+# The image this publishes contains nothing but createrepo_c output. The image
+# build copies it in with COPY --from= pinned by digest and points dnf at a
+# file:// URL. See the factory/README.md for the consumption side.
+name: Build factory packages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "factory/**"
+      - ".packit.yaml"
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Build only this package (and its dependents).
+        required: false
+        type: string
+      full:
+        description: Ignore the published state and rebuild everything.
+        required: false
+        default: false
+        type: boolean
+      skip_publish:
+        description: Build and check, but do not publish.
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+  packages: write
+  attestations: write
+
+# One run per ref, and a merge never cancels a run in flight: every selected
+# package's build finishes. GitHub keeps one run pending and replaces an older
+# pending run with a newer one, which is safe because selection reads the
+# published image's state label -- every change since the last publication --
+# rather than the previous push's diff.
+concurrency:
+  group: factory-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      build_list: ${{ steps.select.outputs.build_list }}
+      stage0: ${{ steps.select.outputs.stage0 }}
+      stage1: ${{ steps.select.outputs.stage1 }}
+      stage2: ${{ steps.select.outputs.stage2 }}
+      stage3: ${{ steps.select.outputs.stage3 }}
+      stage4: ${{ steps.select.outputs.stage4 }}
+      stage5: ${{ steps.select.outputs.stage5 }}
+      stage6: ${{ steps.select.outputs.stage6 }}
+      stage7: ${{ steps.select.outputs.stage7 }}
+      stage8: ${{ steps.select.outputs.stage8 }}
+      stage9: ${{ steps.select.outputs.stage9 }}
+      stage10: ${{ steps.select.outputs.stage10 }}
+      stage11: ${{ steps.select.outputs.stage11 }}
+      stage12: ${{ steps.select.outputs.stage12 }}
+      stage13: ${{ steps.select.outputs.stage13 }}
+      stage14: ${{ steps.select.outputs.stage14 }}
+      stage15: ${{ steps.select.outputs.stage15 }}
+      buildroot_digest: ${{ steps.buildroot.outputs.digest }}
+      factory_image: ${{ steps.factory_image.outputs.image }}
+      seed_image: ${{ steps.factory_image.outputs.seed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+
+      - name: Validate the factory before building anything
+        run: |
+          python3 factory/tools/validate.py
+          python3 factory/tools/render_packit_config.py --check
+
+      # Pulled once for the whole run and handed to every job as an artifact.
+      # Three things this fixes that a digest pin alone cannot: the pin cannot
+      # be garbage collected between the run starting and a later job starting;
+      # every job provably uses the same bytes; and several hundred registry
+      # pulls become one.
+      - name: Pull the build root once and record what it resolved to
+        id: buildroot
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y zstd
+          python3 factory/tools/buildroot.py --output work/buildroot-resolved.json \
+            --snapshot buildroot-provenance.json
+          digest="$(python3 -c 'import json; print(json.load(open("work/buildroot-resolved.json"))["actual"])')"
+          test -n "$digest"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          # A bare, unqualified name. Every job runs this image by that name
+          # with no registry behind it, so a job that failed to load the
+          # artifact cannot silently fall back to pulling something else --
+          # docker refuses an unqualified name it does not have locally.
+          docker tag "$(python3 factory/tools/buildroot.py --digest-only)" factory-buildroot:run
+          docker save factory-buildroot:run | zstd -T0 -3 -o buildroot.tar.zst
+          ls -l buildroot.tar.zst
+
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: factory-buildroot-image
+          path: |
+            buildroot.tar.zst
+            buildroot-provenance.json
+          if-no-files-found: error
+          retention-days: 1
+
+      # Waves come from real BuildRequires, parsed by rpmspec in the build
+      # root. Hand-assigned stages were tried first and rotted: a new
+      # BuildRequires edge was invisible until a build failed later, and a
+      # stage no longer needed still serialized work.
+      - name: Extract BuildRequires and solve the wave order
+        run: |
+          set -euo pipefail
+          mkdir -p work/graph
+          python3 factory/tools/extract_buildrequires.py \
+            --image factory-buildroot:run \
+            --output work/graph
+          python3 factory/tools/build_graph.py plan \
+            --root factory \
+            --rows work/graph/rows --graph-only \
+            --output work/graph/plan.json
+
+      # The published image is the witness for what may be skipped, and it
+      # lives in one place: the OCI image publish writes. Resolved once here
+      # to a digest so every job reads the same repository even if publish
+      # moves the tag while the run is in flight.
+      - name: Resolve the published factory image
+        id: factory_image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REF: ${{ github.ref }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          owner=$(printf '%s' "$REPOSITORY_OWNER" | tr "[:upper:]" "[:lower:]")
+          image="ghcr.io/${owner}/bluefin-lts-packages"
+          echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          if [ "$REF" = "refs/heads/main" ]; then
+            candidates="latest"
+          else
+            branch=$(printf '%s' "$REF_NAME" | tr "/" "-" | tr -cd "[:alnum:]._-" | cut -c1-96)
+            candidates="$branch latest"
+          fi
+          resolved=""
+          for tag in $candidates; do
+            if docker pull --quiet "ghcr.io/${owner}/bluefin-lts-packages:${tag}" >&2; then
+              digest=$(docker image inspect "ghcr.io/${owner}/bluefin-lts-packages:${tag}" \
+                --format '{{index .RepoDigests 0}}' | sed 's/.*@//')
+              resolved="${image}@${digest}"
+              break
+            fi
+          done
+          echo "factory repository: ${resolved:-<none>}"
+          echo "image=${resolved}" >> "$GITHUB_OUTPUT"
+          echo "seed=${resolved}" >> "$GITHUB_OUTPUT"
+          mkdir -p work
+          if [ -n "$resolved" ]; then
+            docker image inspect "$resolved" --format '{{json .Config.Labels}}' > work/factory-labels.json
+          else
+            # No image means nothing can be skipped, which is not an error.
+            echo null > work/factory-labels.json
+          fi
+
+      - name: Select what to build
+        id: select
+        env:
+          ONLY_PACKAGE: ${{ inputs.package }}
+          FULL: ${{ inputs.full == true && '1' || '' }}
+        run: |
+          set -euo pipefail
+          mkdir -p work
+          witness=work/factory-state.json
+          if [ "$(cat work/factory-labels.json)" != "null" ]; then
+            python3 - <<'PY'
+          import json, os, sys
+          labels = json.load(open("work/factory-labels.json")) or {}
+          value = labels.get("org.projectbluefin.factory.state", "{}")
+          try:
+              document = json.loads(value)
+          except json.JSONDecodeError:
+              print("::warning title=unreadable state label::treating as no witness")
+              document = {}
+          json.dump(document, open("work/factory-state.json", "w"))
+          PY
+          else
+            echo '{}' > "$witness"
+          fi
+          only=()
+          if [ -n "$ONLY_PACKAGE" ]; then
+            only=(--package "$ONLY_PACKAGE")
+          fi
+          full=()
+          if [ -n "$FULL" ]; then
+            full=(--full)
+          fi
+          python3 factory/tools/rebuild_plan.py \
+            --root factory \
+            --witness "$witness" \
+            --edges work/graph/plan.json \
+            "${only[@]}" "${full[@]}" \
+            --output work/selection.json
+
+          # Emit one output per wave so the static job graph below can call
+          # build-stage.yml once per wave.
+          build_list=$(jq -c '.build_list' work/selection.json)
+          echo "build_list=$build_list" >> "$GITHUB_OUTPUT"
+          python3 factory/tools/build_graph.py plan --rows work/graph/rows \
+            --packages "$build_list" --output work/graph/plan.json
+          depth=$(jq '.waves | length' work/graph/plan.json)
+          if [ "$depth" -gt 16 ]; then
+            echo "::error::selected graph needs $depth waves; workflow supports sixteen"
+            exit 1
+          fi
+          for stage in {0..15}; do
+            packages=$(python3 - "$stage" <<'PY'
+          import json, sys
+          plan = json.load(open("work/graph/plan.json"))
+          selection = set(json.load(open("work/selection.json"))["build_list"])
+          waves = plan["waves"]
+          index = int(sys.argv[1])
+          from factory.tools.packit_workflow import package_chunks
+          names = sorted(set(waves[index]) & selection) if index < len(waves) else []
+          print(json.dumps(package_chunks(names)))
+          PY
+          )
+          echo "stage${stage}=${packages}" >> "$GITHUB_OUTPUT"
+          echo "wave $stage: $(jq length <<<"$packages") packages"
+          done
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: factory-build-graph
+          path: work/graph
+          retention-days: 7
+
+      - name: Summarise the run
+        run: |
+          {
+            echo "### Factory selection"
+            echo
+            echo "| package | why |"
+            echo "| --- | --- |"
+            jq -r '.reasons | to_entries[] | "| `\(.key)` | \(.value) |"' work/selection.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build0:
+    needs: prepare
+    if: needs.prepare.outputs.stage0 != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage0) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '0'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build1:
+    needs: [prepare, build0]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage1 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage1) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '1'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build2:
+    needs: [prepare, build0, build1]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage2 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage2) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '2'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build3:
+    needs: [prepare, build0, build1, build2]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage3 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage3) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '3'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build4:
+    needs: [prepare, build0, build1, build2, build3]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage4 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage4) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '4'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build5:
+    needs: [prepare, build0, build1, build2, build3, build4]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage5 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage5) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '5'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build6:
+    needs: [prepare, build0, build1, build2, build3, build4, build5]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage6 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage6) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '6'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build7:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage7 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage7) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '7'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build8:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage8 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage8) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '8'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build9:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage9 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage9) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '9'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build10:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage10 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage10) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '10'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build11:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage11 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage11) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '11'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build12:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage12 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage12) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '12'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build13:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage13 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage13) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '13'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build14:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12, build13]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage14 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage14) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '14'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  build15:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12, build13, build14]
+    if: ${{ !cancelled() && needs.prepare.outputs.stage15 != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare.outputs.stage15) }}
+    uses: ./.github/workflows/factory-build-stage.yml
+    with:
+      stage: '15'
+      packages: ${{ matrix.chunk }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+
+  # Names every selected package that did not produce an RPM. Failures are
+  # read from the run's own artifact list -- a build job uploads only for a
+  # package that produced RPMs -- so this works whether or not publish ran.
+  #
+  # It depends on the waves, not on publish. Making report depend on publish
+  # while publish depends on report is a cycle GitHub rejects outright; and
+  # neither genuinely needs the other, since the artifact list is the witness
+  # for both.
+  #
+  # `!cancelled()` rather than `always()`: a run someone cancelled by hand has
+  # no verdict. Its waves stopped before uploading, so every selected package
+  # would look failed and the report would name the entire build list.
+  report:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12, build13, build14, build15]
+    if: ${{ !cancelled() && needs.prepare.result == 'success' && needs.prepare.outputs.build_list != '[]' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Name every package that did not build
+        id: name
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          BUILD_LIST: ${{ needs.prepare.outputs.build_list }}
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$REPOSITORY/actions/runs/$RUN_ID/artifacts?per_page=100" \
+            --jq '.artifacts[].name' | jq -R . | jq -s . > artifacts.json
+          python3 factory/tools/publish_gate.py report \
+            --build-list "$BUILD_LIST" \
+            --artifacts artifacts.json \
+            --run-url "$RUN_URL" \
+            --output report.md \
+            --failed-output failed.json > /dev/null
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+          echo "failed=$(jq -c . failed.json)" >> "$GITHUB_OUTPUT"
+          for package in $(jq -r '.[]' failed.json); do
+            echo "::error title=package did not build::$package failed this run"
+          done
+
+  publish:
+    needs: [prepare, build0, build1, build2, build3, build4, build5, build6, build7, build8, build9, build10, build11, build12, build13, build14, build15]
+    if: ${{ !cancelled() && needs.prepare.result == 'success' && inputs.skip_publish != true && needs.prepare.outputs.build_list != '[]' }}
+    uses: ./.github/workflows/factory-publish.yml
+    with:
+      build_list: ${{ needs.prepare.outputs.build_list }}
+      seed_image: ${{ needs.prepare.outputs.seed_image }}
+      buildroot_digest: ${{ needs.prepare.outputs.buildroot_digest }}

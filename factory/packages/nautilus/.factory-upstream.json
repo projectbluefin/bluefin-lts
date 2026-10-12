@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:24+00:00",
+  "package": "nautilus",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "9ad264eb62531de4a2fed078577d54988e9c7fbb830c9dd2b7bf19456cc8754f",
+    "srpm_checksum_type": "sha256",
+    "tree": "78e42abdfc4e600fccea7b268723bb4396f18b1a"
+  }
+}

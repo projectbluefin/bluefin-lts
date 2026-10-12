@@ -1,0 +1,24 @@
+# Workaround for EL10 + GDM 50 dynamic greeter users.
+#
+# Install as: /etc/pam.d/systemd-user
+#
+# Problem: pam_unix.so calls unix_chkpwd to look up account info.
+# unix_chkpwd cannot resolve GDM 50's dynamically-allocated greeter users
+# (gdm-greeter, gdm-greeter-2, ...) which are served via systemd userdb
+# Varlink API. It returns PAM_AUTHINFO_UNAVAIL (not PAM_USER_UNKNOWN),
+# so [user_unknown=ignore] does not help.
+#
+# Fix: replace the account stack with pam_permit.so for the systemd-user
+# PAM service. Real authentication happens via GDM, not here.
+#
+# Upstream file: /usr/lib/pam.d/systemd-user (owned by systemd package)
+
+account  required  pam_permit.so
+
+session  required   pam_selinux.so close
+session  required   pam_selinux.so nottys open
+session  required   pam_loginuid.so
+session  optional   pam_keyinit.so force revoke
+session  required   pam_namespace.so
+session  optional   pam_umask.so silent
+session  include    system-auth

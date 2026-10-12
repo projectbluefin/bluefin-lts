@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:42+00:00",
+  "package": "selinux-policy",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "2075dcc053d5a082870f6d788dd3f91b258858a61149aa93061e0aaf037fdc59",
+    "srpm_checksum_type": "sha256",
+    "tree": "e6f6e9d585f72851e804c12c0256c424e86ce862"
+  }
+}

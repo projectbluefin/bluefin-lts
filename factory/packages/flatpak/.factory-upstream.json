@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:40:44+00:00",
+  "package": "flatpak",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "c32b0599185601cb0ceb9e39b505a3fcf63d812e36f8912ed58d66cf9a4a30a1",
+    "srpm_checksum_type": "sha256",
+    "tree": "9be59029c3c2c1720e3f34324a09759ee00cabcf"
+  }
+}

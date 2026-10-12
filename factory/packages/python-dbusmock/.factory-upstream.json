@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:35+00:00",
+  "package": "python-dbusmock",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "953a16d9133cd3125a3cceb982976a184afa5e4101b9c62d1e0bd959587166fd",
+    "srpm_checksum_type": "sha256",
+    "tree": "703fb6f0fdfe2fc9f1e36741e83e1204b4c7a08f"
+  }
+}

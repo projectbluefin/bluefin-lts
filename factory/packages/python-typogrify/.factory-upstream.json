@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:39+00:00",
+  "package": "python-typogrify",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "277c508913e542aef5d2f8d192556823bb9e01c0a55c9ff3c2cb185b6eb42f7c",
+    "srpm_checksum_type": "sha256",
+    "tree": "b3b4b1cf6e13825cd4bcafc8ac3b8e27d14ee9de"
+  }
+}

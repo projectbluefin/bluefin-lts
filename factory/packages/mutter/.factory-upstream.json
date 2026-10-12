@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:19+00:00",
+  "package": "mutter",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "a0b99d9545d67e2ecc7cb1c217b18ead874090ba088977d15234b91ae4e1fcb9",
+    "srpm_checksum_type": "sha256",
+    "tree": "6472b435f2dac7cfe22e2be637a7c0ffa9ea8aea"
+  }
+}

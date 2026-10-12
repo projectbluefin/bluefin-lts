@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:41:16+00:00",
+  "package": "gnome-control-center",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "8f692810d55b082951800b4f72fe4e185989cb850b00bf2f25a05f3b6fecb0a3",
+    "srpm_checksum_type": "sha256",
+    "tree": "36441dd0741d49d2c8332c090bd2f3b2638e9654"
+  }
+}

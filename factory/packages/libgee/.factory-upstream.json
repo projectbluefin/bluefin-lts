@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:38+00:00",
+  "package": "libgee",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "9373aaaa99abe7f369981b8debbd6a961906b6311cb2985f93de7dbb50cab6ac",
+    "srpm_checksum_type": "sha256",
+    "tree": "c538c3f2a16233ed59d5a8e5c4604182520795fb"
+  }
+}

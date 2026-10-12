@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:35+00:00",
+  "package": "libgda",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "af2ca1d0ab73d33b57e8b4a5347ca9d29cd6eaa74086266b3ed8fa27860b3bbb",
+    "srpm_checksum_type": "sha256",
+    "tree": "45af757a82690ee91e6fb118cdce34f248df58e0"
+  }
+}
