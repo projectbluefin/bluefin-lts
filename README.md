@@ -6,8 +6,6 @@
 
 Long-term support desktop built on CentOS Stream 10 for longer support windows, conservative upgrades, and production-focused workstations.
 
-![image](https://github.com/user-attachments/assets/2e160934-44e6-4aee-b2b8-accb3bcf0a41)
-
 ## Images
 
 ### Uranium
