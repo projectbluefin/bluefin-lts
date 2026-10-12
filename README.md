@@ -1,7 +1,8 @@
 # Uranium
-*Achillobator giganticus*
 
-[![Build Uranium](https://github.com/thallium-suite/uranium/actions/workflows/build-regular.yml/badge.svg)](https://github.com/thallium-suite/uranium/actions/workflows/build-regular.yml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/thallium-suite/uranium)
+> NOTE: This once was Project Bluefin's LTS it's still close to the original just different branding.
+
+[![Build Uranium](https://github.com/thallium-suite/uranium/actions/workflows/build-regular.yml/badge.svg)](https://github.com/thallium-suite/uranium/actions/workflows/build-regular.yml)
 
 Long-term support desktop built on CentOS Stream 10 for longer support windows, conservative upgrades, and production-focused workstations.
 
@@ -39,17 +40,13 @@ automatically. There is no automatic migration: switch explicitly.
 sudo bootc switch ghcr.io/thallium-suite/uranium:stable --enforce-container-sigpolicy
 ```
 
-Rebasing between the Fedora-based Bluefin family and Uranium is not supported.
+Rebasing between the Fedora-based Amotic family and Uranium is not supported.
 Plan migrations as fresh installs or supported upgrade paths.
 
 ## Community
 
 Uranium has no community infrastructure of its own yet. Until it does, use this
-repository's [issue tracker](https://github.com/thallium-suite/uranium/issues) and
-the upstream Bluefin channels:
-
-- **[Discussions](https://community.projectbluefin.io/)** — community forum
-- **[Documentation](https://docs.projectbluefin.io/)** — user guides and reference
+repository's [issue tracker](https://github.com/thallium-suite/uranium/issues) 
 
 ## Contributing
 
