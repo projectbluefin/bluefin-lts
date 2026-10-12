@@ -54,19 +54,26 @@ testing → main → :stable
 # Check promotion PR status
 gh pr list --repo thallium-suite/uranium --head auto/promote-testing-to-main
 
-# Emergency bypass (CODEOWNERS or merge queue blocking — requires admin)
+# Emergency bypass (merge queue blocking — requires admin)
 gh pr merge <pr-number> --repo thallium-suite/uranium --squash --admin
 ```
 
 ## Branch protection
 
-`main` requires a PR with merge queue entry. Gate check: `Lint & syntax`. 0 approvals required.
-`.github/workflows/` is CODEOWNERS-protected — PRs touching workflow files require `--admin` bypass.
+`main` is governed by ruleset "uranium — release (main)": PR only, squash-only,
+non-fast-forward, merge queue, and one required status check. The required
+context is `validate`, which `merge-queue-validate.yml` posts once the PR is
+enqueued in the merge queue. `pr-testsuite.yml` supplies the separate lint,
+syntax and COPR-guard checks that run against the PR itself. 0 approvals
+required and no CODEOWNERS: this is a single-maintainer repository, so a
+code-owner requirement could never be satisfied, because GitHub does not let
+you approve your own PR. Reintroduce CODEOWNERS together with a ruleset bypass
+actor once a second maintainer exists.
 
 ## Daily cadence
 
 - Fully automated: **daily 04:00 UTC** — cron fires, promote workflow updates the PR, merge queue processes it, execute-release publishes `:stable`
-- No human approval required — `Lint & syntax` is the only gate
+- No human approval required — the `validate` context is the only gate, and it is posted by the merge queue itself
 - `workflow_dispatch` is the supported manual release path
 
 ## Image verification — always check digests
