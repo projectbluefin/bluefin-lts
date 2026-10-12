@@ -9,6 +9,16 @@ name: Promote testing to main
 # Compares testing vs main trees and opens auto/promote-testing-to-main → main
 # when they differ. On merge, execute-release.yml fires and publishes :stable.
 #
+# Release cadence: the actual merge/release only happens on Thursdays (UTC),
+# as part of the factory-wide 3x/week promotion schedule (bluefin: Tuesday,
+# uranium: Thursday, dakota: Sunday). LTS sits two days after Bluefin's
+# Tuesday stable, giving a soak window for Fedora/CentOS-base regressions
+# that surface in Bluefin's stable before they reach LTS. The daily heartbeat
+# below keeps the promotion PR fresh and gate checks re-running all week;
+# check-release-window gates the merge itself to Thursday.
+# workflow_dispatch bypasses the release-window gate as the documented
+# hotfix escape hatch.
+#
 # Triggers:
 #   - successful Post-Testing E2E completion on testing (re-evaluation after each build)
 #   - daily 04:00 UTC — matches bluefin cadence
@@ -35,18 +45,87 @@ permissions:
   statuses: write
 
 jobs:
+  wait-nvidia-e2e:
+    name: Wait for NVIDIA E2E
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Wait for NVIDIA Post-Testing E2E to complete
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          testing_head="$(gh api "repos/$REPO/branches/testing" --jq '.commit.sha')"
+          echo "Testing HEAD: ${testing_head}"
+
+          # Poll for a successful NVIDIA E2E run on this SHA.
+          for i in $(seq 1 30); do
+            nvidia_run="$(gh run list --repo "$REPO" --workflow post-testing-e2e-nvidia.yml \
+              --branch testing --status success \
+              --json headSha \
+              --jq "[.[] | select(.headSha == \"${testing_head}\")] | length")"
+            if [[ "${nvidia_run}" -gt 0 ]]; then
+              echo "NVIDIA E2E passed for ${testing_head}."
+              exit 0
+            fi
+            echo "NVIDIA E2E not yet complete for ${testing_head} (attempt ${i}/30) — waiting 30s..."
+            sleep 30
+          done
+
+          echo "::error::NVIDIA E2E did not complete successfully for ${testing_head} within timeout"
+          exit 1
+
+  check-release-window:
+    name: Check Thursday release window
+    runs-on: ubuntu-latest
+    outputs:
+      is-release-window: ${{ steps.window.outputs.is-release-window }}
+    steps:
+      - name: Determine if today is the Thursday stable release window (UTC)
+        id: window
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # workflow_dispatch is the documented hotfix escape hatch: always
+          # allow the merge, regardless of day.
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "is-release-window=true" >> "$GITHUB_OUTPUT"
+            echo "workflow_dispatch: bypassing release-window gate (hotfix escape hatch)."
+            exit 0
+          fi
+
+          # uranium stable releases on Thursdays (UTC), day 4 of ISO 8601 week.
+          day_of_week="$(date -u +%u)"
+          if [[ "$day_of_week" == "4" ]]; then
+            echo "is-release-window=true" >> "$GITHUB_OUTPUT"
+            echo "Today is Thursday (UTC); release window is open."
+          else
+            echo "is-release-window=false" >> "$GITHUB_OUTPUT"
+            echo "Today is not Thursday (UTC, ISO day ${day_of_week}); release window is closed."
+          fi
   promote:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     uses: projectbluefin/actions/.github/workflows/reusable-promote-squash.yml@v1
     with:
       variants: >-
-        [{"image":"bluefin-lts"},{"image":"bluefin-lts-nvidia"}]
+        [{"image":"uranium"},{"image":"uranium-nvidia"}]
+      # Only this repository may sign. A reusable workflow invoked through `uses:`
+      # takes the caller's OIDC identity, and nothing at this registry path
+      # pre-dates the move, so there is no legacy signature to accommodate.
       cosign_identity_regexp: >-
-        ^https://github\.com/projectbluefin/(bluefin-lts|actions)/\.github/workflows/
+        ^https://github\.com/thallium-suite/uranium/\.github/workflows/
       source_branch: testing
       target_branch: main
       run_e2e: true
-      e2e_image: ghcr.io/projectbluefin/bluefin-lts:testing
+      e2e_image: ghcr.io/thallium-suite/uranium:testing
       # main uses a merge queue ruleset (17070416): gh pr merge --auto is blocked.
       # use_merge_queue: true calls enqueuePullRequest GraphQL instead, which
       # places the PR in the queue and lets it squash-merge once checks pass.
@@ -92,6 +171,6 @@ jobs:
           gh workflow run post-testing-e2e.yml \
             --repo "$REPO" \
             --ref testing \
-            -f image="ghcr.io/projectbluefin/bluefin-lts:testing" \
+            -f image="ghcr.io/thallium-suite/uranium:testing" \
             -f suites="smoke"
           echo "Dispatched post-testing-e2e against testing ($testing_head)."

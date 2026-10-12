@@ -162,8 +162,8 @@ jobs:
           cp -a work/candidate/. image/repository/
           cp work/buildroot-provenance.json image/repository/reports/buildroot.json
           printf 'FROM scratch\nCOPY repository /factory\n' > image/Containerfile
-          docker build -f image/Containerfile --label "org.projectbluefin.factory.state=$(cat work/state.json)" \
-            --label "org.projectbluefin.factory.buildroot=$BUILDROOT_DIGEST" \
+          docker build -f image/Containerfile --label "org.thallium-suite.factory.state=$(cat work/state.json)" \
+            --label "org.thallium-suite.factory.buildroot=$BUILDROOT_DIGEST" \
             --label "org.opencontainers.image.revision=$(git rev-parse HEAD)" \
             -t factory-repo:stage image
 
@@ -177,7 +177,7 @@ jobs:
         run: |
           set -euo pipefail
           owner=$(printf '%s' "$REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
-          image="ghcr.io/$owner/bluefin-lts-packages"
+          image="ghcr.io/$owner/uranium-packages"
           immutable="$image:run-$RUN_ID-$RUN_ATTEMPT"
           docker tag factory-repo:stage "$immutable"
           docker push "$immutable"
@@ -190,7 +190,7 @@ jobs:
       - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
         if: steps.assemble.outputs.count != '0'
         with:
-          subject-name: ghcr.io/${{ github.repository_owner }}/bluefin-lts-packages
+          subject-name: ghcr.io/${{ github.repository_owner }}/uranium-packages
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 

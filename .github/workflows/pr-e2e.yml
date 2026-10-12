@@ -1,6 +1,6 @@
 name: PR E2E Gate (advisory)
 
-# Composes system_files/ changes from the PR on top of bluefin-lts:testing
+# Composes system_files/ changes from the PR on top of uranium:testing
 # and runs the smoke suite. Non-blocking — informational coverage only.
 # See: issue #68, ACMM Level 3 bridge gap.
 
@@ -19,9 +19,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  BASE_IMAGE: ghcr.io/projectbluefin/bluefin-lts:testing
+  BASE_IMAGE: ghcr.io/thallium-suite/uranium:testing
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
-  IMAGE_NAME: bluefin-lts
+  IMAGE_NAME: uranium
 
 jobs:
   compose:

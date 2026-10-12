@@ -8,7 +8,7 @@ on:
       image:
         description: Full image reference to test
         required: false
-        default: ghcr.io/projectbluefin/bluefin-lts:testing
+        default: ghcr.io/thallium-suite/uranium:testing
         type: string
       suites:
         description: Comma-separated list of test suites to run
@@ -36,7 +36,7 @@ jobs:
     steps:
       - name: Verify testing image is reachable
         env:
-          IMAGE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.image || 'ghcr.io/projectbluefin/bluefin-lts:testing' }}
+          IMAGE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.image || 'ghcr.io/thallium-suite/uranium:testing' }}
           EXPECTED_DIGEST: ${{ inputs['expected-digest'] }}
         shell: bash
         run: |

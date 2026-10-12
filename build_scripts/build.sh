@@ -76,7 +76,7 @@ fi
 
 run_buildscripts_for base
 
-CUSTOM_NAME="bluefin"
+CUSTOM_NAME="uranium"
 copy_systemfiles_for ../files
 run_buildscripts_for ..
 CUSTOM_NAME=""

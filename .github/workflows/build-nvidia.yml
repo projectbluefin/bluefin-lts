@@ -1,4 +1,4 @@
-name: Build Bluefin Nvidia
+name: Build Uranium Nvidia
 
 permissions:
   contents: read
@@ -60,7 +60,7 @@ jobs:
               - 'Containerfile'
 
   build:
-    name: Build bluefin-lts-nvidia image
+    name: Build uranium-nvidia image
     needs: [detect-changes]
     if: |
       always() &&
@@ -76,7 +76,7 @@ jobs:
       issues: write
     secrets: inherit
     with:
-      brand_name: bluefin-lts-nvidia
+      brand_name: uranium-nvidia
       stream_name: testing
       image_flavors: '["main"]'
       architecture: '["x86_64"]'

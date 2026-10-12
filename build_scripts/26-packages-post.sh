@@ -13,10 +13,6 @@ glib-compile-schemas /usr/share/glib-2.0/schemas
 # Rebuild gdk-pixbuf loader cache so all installed loaders are registered
 gdk-pixbuf-query-loaders-64 --update-cache
 
-# Offline Bluefin documentation
-ghcurl https://github.com/projectbluefin/documentation/releases/download/0.1/bluefin.pdf --retry 3 -Lo /tmp/bluefin.pdf
-install -Dm0644 -t /usr/share/doc/bluefin/ /tmp/bluefin.pdf
-
 # Add Flathub by default
 mkdir -p /etc/flatpak/remotes.d
 curl --retry 3 -o /etc/flatpak/remotes.d/flathub.flatpakrepo "https://dl.flathub.org/repo/flathub.flatpakrepo"

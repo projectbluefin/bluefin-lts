@@ -24,13 +24,13 @@ systemctl enable uupd.timer
 systemctl enable ublue-system-setup.service
 systemctl --global enable ublue-user-setup.service
 systemctl mask bootc-fetch-apply-updates.timer bootc-fetch-apply-updates.service
-# rpm-ostree-countme uses embedded libdnf4 that cannot expand
-# ${releasever_minor:+-z} in EPEL 10's metalink URL (HTTP 404 on CentOS).
-# Replace with a dnf-based equivalent; the dnf CLI resolves the metalink
-# correctly (dnf5 is unavailable in CentOS Stream 10 and EPEL 10).
-# Ref: coreos/rpm-ostree#5464
+# Count me reporting was removed with the Bluefin branding: the weekly
+# rpm-ostree-countme ping had no Uranium endpoint to report to. The inherited
+# units are masked so neither the upstream timer nor the pre-rebrand
+# bluefin-lts-countme.timer leaves an orphaned enable symlink after upgrade.
+# Ref: coreos/rpm-ostree#5464 (rpm-ostree-countme is broken on CentOS anyway)
 systemctl mask rpm-ostree-countme.service rpm-ostree-countme.timer
-systemctl enable bluefin-lts-countme.timer
+systemctl mask bluefin-lts-countme.timer uranium-countme.timer || true
 systemctl disable sshd.service
 
 # Disable lastlog display on previous failed login in GDM (This makes logins slow)
