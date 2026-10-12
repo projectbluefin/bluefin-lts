@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.inventory import factory_root, inventory
 from tools.source_pipeline import fetch_source, verify_staged
 
-PACKIT_IMAGE = "quay.io/packit/packit@sha256:b4667f390c25f4a871e458bddc62003db30c60fac64f17a925dfaaa9279a8af7"
+PACKIT_IMAGE = "quay.io/packit/packit@sha256:1eb66a731ba6e5733db0a77feb76dabf83b145c0c676a8a8e30278ac2ba34a85"
 
 
 def command(package: str, record, output: Path, root: Path, image: str, engine: str = "docker") -> list[str]:
