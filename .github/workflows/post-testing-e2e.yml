@@ -26,17 +26,25 @@ permissions:
   packages: write
 
 jobs:
-  e2e:
+  verify-manifest:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       packages: read
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
     steps:
-      - name: Verify testing image is reachable
+      - name: Resolve image reference
+        id: resolve
         env:
-          IMAGE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.image || 'ghcr.io/projectbluefin/bluefin-lts:testing' }}
+          IMAGE_REF: ${{ inputs.image || 'ghcr.io/projectbluefin/bluefin-lts:testing' }}
+        run: echo "image=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify testing image is reachable and multi-arch
+        env:
+          IMAGE_REF: ${{ steps.resolve.outputs.image }}
           EXPECTED_DIGEST: ${{ inputs['expected-digest'] }}
         shell: bash
         run: |
@@ -54,3 +62,15 @@ jobs:
             and ([.manifests[]?.platform.architecture] | sort) == ["amd64", "arm64"]
           ' >/dev/null
           echo "Verified ${IMAGE_REF} -> ${actual_digest} is an amd64/arm64 image index."
+
+  testsuite:
+    needs: [verify-manifest]
+    if: always() && needs.verify-manifest.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/run-testsuite.yml
+    with:
+      image: ${{ needs.verify-manifest.outputs.image }}
+      suites: ${{ inputs.suites || 'smoke' }}
+    secrets: inherit
