@@ -29,14 +29,27 @@ automatically. There is no automatic migration: switch explicitly.
 |---|---|
 | `ghcr.io/projectbluefin/bluefin-lts:stable` | `ghcr.io/thallium-suite/uranium:stable` |
 | `ghcr.io/projectbluefin/bluefin-lts-nvidia:stable` | `ghcr.io/thallium-suite/uranium-nvidia:stable` |
+| `ghcr.io/projectbluefin/bluefin-lts-hwe:stable` | `ghcr.io/thallium-suite/uranium:stable` |
+| `ghcr.io/projectbluefin/bluefin-dx-hwe:stable` | `ghcr.io/thallium-suite/uranium:stable` + run `ujust devmode` after reboot |
 | `ghcr.io/ublue-os/bluefin:lts` (legacy) | `ghcr.io/thallium-suite/uranium:stable` |
+| `ghcr.io/ublue-os/bluefin:lts-hwe` (legacy) | `ghcr.io/thallium-suite/uranium:stable` |
 | `ghcr.io/ublue-os/bluefin-dx:lts` (legacy) | `ghcr.io/thallium-suite/uranium:stable` + run `ujust devmode` after reboot |
+| `ghcr.io/ublue-os/bluefin-dx:lts-hwe` (legacy) | `ghcr.io/thallium-suite/uranium:stable` + run `ujust devmode` after reboot |
 | `ghcr.io/ublue-os/bluefin-gdx:lts` (legacy) | `ghcr.io/thallium-suite/uranium-nvidia:stable` + run `ujust devmode` after reboot |
 | arm64 variants | No in-place migration — reinstall from the current image |
 
 ```bash
 sudo bootc switch ghcr.io/thallium-suite/uranium:stable --enforce-container-sigpolicy
 ```
+
+### HWE note
+
+If you are currently on a `bluefin-lts-hwe` or `ublue-os/bluefin:lts-hwe` image, you are
+already running the Fedora CoreOS stable kernel — the same kernel track Uranium uses
+for **all** of its builds. Uranium does not publish a separate HWE variant; the
+hardware-enablement kernel and common akmods (xone, OpenRazer, Framework laptop,
+v4l2loopback) ship in every Uranium image by default. No action is needed for the
+kernel: switching to Uranium keeps you on the same newer kernel and module set.
 
 Rebasing between the Fedora-based Amotic family and Uranium is not supported.
 Plan migrations as fresh installs or supported upgrade paths.
