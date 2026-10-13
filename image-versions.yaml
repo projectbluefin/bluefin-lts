@@ -10,7 +10,7 @@ images:
   - name: brew
     image: ghcr.io/ublue-os/brew
     tag: latest
-    digest: sha256:bed056871da6edd8c6ee455a274283ae83bf269461dcad758a7729aaad018401
+    digest: sha256:5bdf54dc7c21c22db29df6550e3711788719c5123549ea6dc5645d5af47795e3
   # The GNOME stack, built by factory/ against this same CentOS Stream base
   # and published as an OCI repository image. Empty until the first factory
   # publication; an empty digest makes the image build fall back to the base
