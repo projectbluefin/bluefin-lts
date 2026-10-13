@@ -2,15 +2,15 @@ images:
   - name: centos-bootc
     image: quay.io/centos-bootc/centos-bootc
     tag: c10s
-    digest: sha256:2b7e3b1abf8db094d1efb083721dc0f72e6feeef2355fc16ea010d0266b2bb95
+    digest: sha256:fe31b7a45259893485cfb37f3648e7da70140b16dcc5b06f493f69f11c19e04d
   - name: common
     image: ghcr.io/projectbluefin/common
     tag: latest
-    digest: sha256:44c7c59c910e00a26b0209f8be0915d8c67af095b108ed5a9d4842c32ed63dae
+    digest: sha256:c440159054188b10d11bbd448ff2e4763c90fd0facc3e2012a79ee4f38948556
   - name: brew
     image: ghcr.io/ublue-os/brew
     tag: latest
-    digest: sha256:bed056871da6edd8c6ee455a274283ae83bf269461dcad758a7729aaad018401
+    digest: sha256:5bdf54dc7c21c22db29df6550e3711788719c5123549ea6dc5645d5af47795e3
   # The GNOME stack, built by factory/ against this same CentOS Stream base
   # and published as an OCI repository image. Empty until the first factory
   # publication; an empty digest makes the image build fall back to the base
