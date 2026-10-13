@@ -1,4 +1,4 @@
-# name	interval	# bootstrap heuristics — updated by pkg-cadence workflow
+# name	interval	# maintained by reusable-pkg-cadence workflow — do not edit by hand
 LCEVCdec	monthly
 ModemManager	monthly
 ModemManager-glib	monthly
