@@ -78,12 +78,6 @@ packages:
     downstream_package_name: el10-v2-buildflags
     paths:
       - factory/packages/el10-v2-buildflags
-  flatpak:
-    specfile_path: flatpak.spec
-    upstream_package_name: flatpak
-    downstream_package_name: flatpak
-    paths:
-      - factory/packages/flatpak
   fontconfig:
     specfile_path: fontconfig.spec
     upstream_package_name: fontconfig
