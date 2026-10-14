@@ -53,7 +53,7 @@ jobs:
       - name: Install host RPM and signing tools
         run: sudo apt-get update && sudo apt-get install -y rpm
 
-      - uses: sigstore/cosign-installer@c95fe1489396fe8a9fa6b4ca0b05dd4e0c2689de # v3.9.2
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
         with:
           cosign-release: v2.6.0
 
