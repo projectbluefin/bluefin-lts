@@ -6,7 +6,7 @@ set -xeuo pipefail
 # looks in /usr/lib64/plymouth. Create symlink to fix module loading.
 echo "=== Plymouth libdir fix ==="
 echo "Checking /usr/lib64/plymouth:"
-ls -la /usr/lib64/ 2>/dev/null | grep -E "plymouth|lib64" || echo "  /usr/lib64/plymouth not found"
+ls -la /usr/lib64/plymouth 2>/dev/null || echo "  /usr/lib64/plymouth not found"
 echo "Checking /usr/lib/plymouth:"
 ls -la /usr/lib/plymouth/ 2>/dev/null | head -5 || echo "  /usr/lib/plymouth not found"
 
