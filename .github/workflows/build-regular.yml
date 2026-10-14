@@ -148,6 +148,7 @@ jobs:
           generate-sbom: 'true'
           push-attestation: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          certificate-identity-regexp: https://github.com/thallium-suite/(uranium|uranium-nvidia)/.github/workflows/
 
   trigger-post-testing:
     name: Trigger post-testing verification
