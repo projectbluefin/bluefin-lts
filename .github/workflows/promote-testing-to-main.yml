@@ -49,7 +49,12 @@ jobs:
     name: Wait for NVIDIA E2E
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Must stay comfortably above POLL_ATTEMPTS * POLL_INTERVAL_SECONDS / 60.
+    # It used to be 15, which equalled the poll budget exactly, so an exhausted
+    # budget killed the job before the script could `exit 1` — every scheduled
+    # promotion since 2026-10-05 ended as "exceeded the maximum execution time"
+    # with no cause, and `promote` was skipped every time.
+    timeout-minutes: 135
     permissions:
       contents: read
       actions: read
@@ -58,6 +63,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          # 120 * 60s = 120 minutes. The NVIDIA path is push → amd64 + arm64
+          # builds (~40-90 min, parallel) → multi-arch manifest assembly →
+          # post-testing-e2e-nvidia, so 15 minutes could never have worked.
+          # The `workflow_run` trigger on the NVIDIA E2E completion is the
+          # prompt completion path; this budget is the backstop for the
+          # push/schedule triggers that fire long before any run exists.
+          POLL_ATTEMPTS: 120
+          POLL_INTERVAL_SECONDS: 60
         shell: bash
         run: |
           set -euo pipefail
@@ -65,21 +78,37 @@ jobs:
           testing_head="$(gh api "repos/$REPO/branches/testing" --jq '.commit.sha')"
           echo "Testing HEAD: ${testing_head}"
 
-          # Poll for a successful NVIDIA E2E run on this SHA.
-          for i in $(seq 1 30); do
-            nvidia_run="$(gh run list --repo "$REPO" --workflow post-testing-e2e-nvidia.yml \
-              --branch testing --status success \
-              --json headSha \
-              --jq "[.[] | select(.headSha == \"${testing_head}\")] | length")"
-            if [[ "${nvidia_run}" -gt 0 ]]; then
+          # All NVIDIA E2E runs recorded against this SHA, successful or not.
+          nvidia_runs_for_head() {
+            gh run list --repo "$REPO" --workflow post-testing-e2e-nvidia.yml \
+              --branch testing \
+              --json headSha,conclusion,url \
+              --jq "[.[] | select(.headSha == \"${testing_head}\")]"
+          }
+
+          for i in $(seq 1 "${POLL_ATTEMPTS}"); do
+            runs="$(nvidia_runs_for_head)"
+
+            if [[ "$(jq 'map(select(.conclusion == "success")) | length' <<<"${runs}")" -gt 0 ]]; then
               echo "NVIDIA E2E passed for ${testing_head}."
+              jq -r '.[] | select(.conclusion == "success") | "  " + .url' <<<"${runs}"
               exit 0
             fi
-            echo "NVIDIA E2E not yet complete for ${testing_head} (attempt ${i}/30) — waiting 30s..."
-            sleep 30
+
+            # Fail fast and closed: once a run exists for this SHA and did not
+            # pass, waiting longer cannot change the answer. Without this the
+            # gate burned the whole poll budget re-confirming a known failure.
+            if [[ "$(jq 'length' <<<"${runs}")" -gt 0 ]]; then
+              echo "::error::NVIDIA E2E ran for ${testing_head} but did not pass; promotion stays blocked."
+              jq -r '.[] | "  " + .conclusion + "  " + .url' <<<"${runs}" >&2
+              exit 1
+            fi
+
+            echo "NVIDIA E2E not yet recorded for ${testing_head} (attempt ${i}/${POLL_ATTEMPTS}) — waiting ${POLL_INTERVAL_SECONDS}s..."
+            sleep "${POLL_INTERVAL_SECONDS}"
           done
 
-          echo "::error::NVIDIA E2E did not complete successfully for ${testing_head} within timeout"
+          echo "::error::NVIDIA E2E did not complete for ${testing_head} within $(( POLL_ATTEMPTS * POLL_INTERVAL_SECONDS / 60 )) minutes"
           exit 1
 
   check-release-window:

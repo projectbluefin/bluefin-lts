@@ -128,7 +128,7 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR=${repo_organization}")
     BUILD_ARGS+=("--build-arg" "ENABLE_DX=${dx}")
     BUILD_ARGS+=("--build-arg" "ENABLE_NVIDIA=${nvidia}")
-BUILD_ARGS+=("--build-arg" "GNOME_VERSION=${gnome_version}")
+    BUILD_ARGS+=("--build-arg" "GNOME_VERSION=${gnome_version}")
 
     # The GNOME factory image is optional. An empty digest means the factory
     # has not published yet, and the build must still work using the base

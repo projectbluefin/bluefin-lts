@@ -192,6 +192,11 @@ jobs:
           generate-sbom: 'true'
           push-attestation: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # The action's default identity regex only covers the projectbluefin
+          # org, so cosign signs and then rejects its own signature. Keep in
+          # sync with build-regular.yml and execute-release.yml.
+          certificate-identity-regexp: >-
+            ^https://github\.com/thallium-suite/uranium/\.github/workflows/
 
       - name: Dispatch post-testing E2E for NVIDIA
         if: steps.find-runs.outputs.ready == 'true'

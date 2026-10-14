@@ -148,6 +148,13 @@ jobs:
           generate-sbom: 'false'
           push-attestation: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # The action's default identity regex only covers the projectbluefin
+          # org. Without this, cosign signs successfully and then fails its own
+          # verify step: "none of the expected identities matched what was in
+          # the certificate". Keep in sync with execute-release.yml and
+          # promote-testing-to-main.yml.
+          certificate-identity-regexp: >-
+            ^https://github\.com/thallium-suite/uranium/\.github/workflows/
 
   trigger-post-testing:
     name: Trigger post-testing verification
