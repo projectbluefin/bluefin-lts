@@ -79,6 +79,7 @@ dnf -y install "${GNOME_EXCLUDE_ARGS[@]}" "${GNOME_PKGS[@]}"
 
 dnf -y install \
 	plymouth \
+	plymouth-scripts \
 	plymouth-system-theme \
 	fwupd \
 	systemd-{resolved,container,oomd} \
