@@ -8,7 +8,7 @@ echo "=== Plymouth libdir fix ==="
 echo "Checking /usr/lib64/plymouth:"
 ls -la /usr/lib64/plymouth 2>/dev/null || echo "  /usr/lib64/plymouth not found"
 echo "Checking /usr/lib/plymouth:"
-ls -la /usr/lib/plymouth/ 2>/dev/null | head -5 || echo "  /usr/lib/plymouth not found"
+ls -la /usr/lib/plymouth/ 2>/dev/null || echo "  /usr/lib/plymouth not found"
 
 if [ ! -e /usr/lib64/plymouth ]; then
 	echo "Creating symlink /usr/lib64/plymouth -> /usr/lib/plymouth"
