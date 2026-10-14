@@ -10,7 +10,7 @@ Name: libosinfo
 Version: 1.12.0
 Release: 1%{?dist}
 License: LGPL-2.1-or-later
-Source: https://releases.pagure.org/libosinfo/libosinfo-1.12.0.tar.xz
+Source: https://gitlab.com/libosinfo/libosinfo/-/releases/v1.12.0/downloads/libosinfo-1.12.0.tar.xz
 URL: https://libosinfo.org/
 
 BuildRequires: meson

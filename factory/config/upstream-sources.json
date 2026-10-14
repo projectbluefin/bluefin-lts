@@ -583,7 +583,7 @@
       "version": "1.12.0",
       "sources": [
         {
-          "url": "https://releases.pagure.org/libosinfo/libosinfo-1.12.0.tar.xz",
+          "url": "https://gitlab.com/libosinfo/libosinfo/-/releases/v1.12.0/downloads/libosinfo-1.12.0.tar.xz",
           "filename": "libosinfo-1.12.0.tar.xz",
           "sha512": "13647b6df14443f7e39bc09bd47be93fcd9f367ecfd7b13f3dac15e2614ad8a812d6077e070b2dc0f49f68f022881ad2fa59bac92f7731032358658a522e6572",
           "checksum_type": "sha512"
