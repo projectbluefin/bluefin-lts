@@ -133,6 +133,12 @@ jobs:
           docker run --rm --pull=never -v "$PWD/work/candidate:/repository:Z" \
             factory-buildroot:run bash -exc 'dnf -y install createrepo_c; createrepo_c --update /repository'
 
+      # createrepo_c runs as root inside the container, leaving repodata files
+      # that the runner user (UID != 0) cannot write the cosign signature into.
+      - name: Restore ownership of repository metadata
+        if: steps.assemble.outputs.count != '0'
+        run: sudo chown -R "$(id -u):$(id -g)" "$PWD/work/candidate"
+
       - name: Resolve the consumer transaction against factory and CentOS
         if: steps.assemble.outputs.count != '0'
         run: |
