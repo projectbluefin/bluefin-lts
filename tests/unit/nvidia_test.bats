@@ -265,13 +265,20 @@ teardown() {
     grep -q "^options nouveau modeset=0$" "${TEST_ROOT}/usr/lib/modprobe.d/00-nouveau-blacklist.conf"
 }
 
-@test "nvidia: writes bootc kargs that blacklist nouveau and enable drm modeset" {
+@test "nvidia: ships bootc kargs declaratively from the overlay, not inline" {
+    # #651 moved the kargs into system_files_overrides/nvidia/usr/lib/bootc/kargs.d
+    # so they are part of the overlay rather than a tee inside the build script.
     patch_and_run
     [ "$status" -eq 0 ]
-    local kargs="${TEST_ROOT}/usr/lib/bootc/kargs.d/00-nvidia.toml"
-    grep -q "rd.driver.blacklist=nouveau" "${kargs}"
-    grep -q "modprobe.blacklist=nouveau" "${kargs}"
-    grep -q "nvidia-drm.modeset=1" "${kargs}"
+    ! grep -q "bootc/kargs.d" "${CMD_LOG}"
+}
+
+@test "nvidia: the nvidia overlay declares the nouveau and modeset kargs" {
+    local overlay="$(cd "${BATS_TEST_DIRNAME}/../.." && pwd)/system_files_overrides/nvidia/usr/lib/bootc/kargs.d/00-nvidia.toml"
+    [ -f "${overlay}" ]
+    grep -q "rd.driver.blacklist=nouveau" "${overlay}"
+    grep -q "modprobe.blacklist=nouveau" "${overlay}"
+    grep -q "nvidia-drm.modeset=1" "${overlay}"
 }
 
 @test "nvidia: rewrites the dracut config from omit_drivers to force_drivers" {

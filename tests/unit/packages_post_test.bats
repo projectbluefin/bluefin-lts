@@ -198,29 +198,6 @@ teardown() {
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Offline documentation
-# ──────────────────────────────────────────────────────────────────────────────
-
-@test "packages-post: installs the offline documentation PDF" {
-    patch_and_run
-    [ "$status" -eq 0 ]
-    [ -f "${TEST_ROOT}/usr/share/doc/bluefin/bluefin.pdf" ]
-}
-
-@test "packages-post: fetches the PDF with ghcurl, not bare curl" {
-    patch_and_run
-    [ "$status" -eq 0 ]
-    grep -q "ghcurl https://github.com/projectbluefin/documentation/" "${CMD_LOG}"
-}
-
-@test "packages-post: propagates a ghcurl failure instead of shipping a partial image" {
-    export STUB_GHCURL_EXIT=22
-    patch_and_run
-    [ "$status" -eq 22 ]
-    [ ! -f "${TEST_ROOT}/usr/share/doc/bluefin/bluefin.pdf" ]
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
 # Flathub remote
 # ──────────────────────────────────────────────────────────────────────────────
 

@@ -42,7 +42,10 @@ FROM quay.io/centos-bootc/centos-bootc:$MAJOR_VERSION
 ARG ENABLE_DX="${ENABLE_DX:-0}"
 ARG ENABLE_NVIDIA="${ENABLE_NVIDIA:-0}"
 ARG FEDORA_AKMODS_VERSION="${FEDORA_AKMODS_VERSION:-43}"
-ARG GNOME_VERSION="${GNOME_VERSION:-50}"
+# The GNOME stack version is owned by the factory that builds it and pinned by
+# digest in image-versions.yaml (see factory/config/gnome-stack.json). It is no
+# longer a Containerfile knob, so there is nothing for a GNOME_VERSION arg to
+# select here.
 ARG IMAGE_NAME="${IMAGE_NAME:-uranium}"
 ARG IMAGE_VENDOR="${IMAGE_VENDOR:-ublue-os}"
 ARG SHA_HEAD_SHORT="${SHA_HEAD_SHORT:-deadbeef}"
