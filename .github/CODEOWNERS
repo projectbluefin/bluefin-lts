@@ -1,0 +1,25 @@
+# Default: the maintainers team owns everything
+* @thallium-suite/maintainers
+
+# Sensitive paths — require maintainer review.
+# Each of these is gated behind review by AGENTS.md: the release and signing
+# gates, the build recipe, the image build scripts, and the GNOME factory
+# whose buildroot ABI every published RPM is attributable to.
+.github/workflows/  @thallium-suite/maintainers
+Justfile            @thallium-suite/maintainers
+build_scripts/      @thallium-suite/maintainers
+factory/            @thallium-suite/maintainers
+.packit.yaml        @thallium-suite/maintainers
+
+# Exempt from CODEOWNERS review (Renovate-managed, auto-merged by
+# renovate-automerge.yml)
+image-versions.yaml
+
+# Enforcement note — read this before requiring a code-owner review.
+# GitHub does not let a code-owner review be satisfied by the PR author.
+# @thallium-suite/maintainers currently has a single member, so *requiring*
+# one would leave every PR permanently unmergeable with no way to approve it.
+# The testing ruleset therefore leaves require_code_owner_review in "evaluate"
+# (advisory) and the main ruleset does not set it at all. Both are correct
+# today and neither blocks anyone. Add MD-2016 or TheOddCell to
+# @thallium-suite/maintainers *before* switching testing to "active".
