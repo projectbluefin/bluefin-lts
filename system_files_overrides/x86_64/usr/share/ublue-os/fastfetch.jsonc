@@ -1,0 +1,133 @@
+{
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "logo": {
+        "source": "/usr/share/ublue-os/fastfetch-ascii.txt",
+        "padding": {
+            "top": 2,
+            "left": 2
+        },
+        "color": {
+            "1": "\u001b[38;5;208m"
+        }
+    },
+    "display": {
+        "separator": "",
+        "constants": [
+            "──────────────"
+        ],
+        "key": {
+            "width": 10
+        }
+    },
+    "modules": [
+        {
+            "type": "custom",
+            "format": "{#90}┌{$1} Hardware {$1}{$1}┐{#}"
+        },
+        {
+            "key": "CPU",
+            "type": "cpu",
+            "showPeCoreCount": true,
+            "keyColor": "33"
+        },
+        {
+            "key": "GPU",
+            "type": "gpu",
+            "keyColor": "32"
+        },
+        {
+            "key": "Display",
+            "type": "display",
+            "keyColor": "36"
+        },
+        {
+            "key": "Disk",
+            "type": "disk",
+            "folders": "/",
+            "keyColor": "34"
+        },
+        {
+            "key": "Disk",
+            "type": "disk",
+            "folders": "/home",
+            "keyColor": "94"
+        },
+        {
+            "key": "Memory",
+            "type": "memory",
+            "keyColor": "31"
+        },
+        {
+            "key": "Swap",
+            "type": "swap",
+            "keyColor": "95"
+        },
+        {
+            "type": "custom",
+            "format": "{#90}└{$1}────────────────────────{$1}┘{#}"
+        },
+        {
+            "type": "custom",
+            "format": "{#90}┌{$1} Software {$1}{$1}┐{#}"
+        },
+        {
+            "key": "OS",
+            "type": "os",
+            "keyColor": "33"
+        },
+        {
+            "key": "Kernel",
+            "type": "kernel",
+            "keyColor": "93"
+        },
+        {
+            "key": "DM",
+            "type": "lm",
+            "keyColor": "35"
+        },
+        {
+            "key": "DE",
+            "type": "de",
+            "keyColor": "91"
+        },
+        {
+            "key": "WM",
+            "type": "wm",
+            "keyColor": "32"
+        },
+        {
+            "key": "Theme",
+            "type": "theme",
+            "keyColor": "92"
+        },
+        {
+            "key": "Icons",
+            "type": "icons",
+            "keyColor": "36"
+        },
+        {
+            "key": "Font",
+            "type": "font",
+            "keyColor": "96"
+        },
+        {
+            "key": "Font",
+            "type": "terminalfont",
+            "keyColor": "34"
+        },
+        {
+            "key": "Terminal",
+            "type": "terminal",
+            "keyColor": "94"
+        },
+        {
+            "key": "Shell",
+            "type": "shell",
+            "keyColor": "34"
+        },
+        {
+            "type": "custom",
+            "format": "{#90}└{$1}────────────────────────{$1}┘{#}"
+        }
+    ]
+}

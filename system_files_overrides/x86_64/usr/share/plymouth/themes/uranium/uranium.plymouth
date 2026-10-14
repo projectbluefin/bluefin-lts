@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Uranium
+Description=Uranium Plymouth Theme
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/uranium
+ScriptFile=/usr/share/plymouth/themes/uranium/uranium.script
