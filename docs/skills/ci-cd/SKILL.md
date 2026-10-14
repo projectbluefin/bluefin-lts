@@ -73,6 +73,27 @@ when a workflow is renamed or removed.
   tag.
 - Never weaken workflow permissions to make a failing step pass.
 
+## Host package installs
+
+Install host packages with `.github/actions/apt-ubuntu-archive`, never with a
+bare `apt-get update` in a workflow. It is the only supported way to install
+build tooling, and the reason is that `apt-get update` is all-or-nothing: the
+hosted runner image ships third-party feeds we did not add, and one unreadable
+feed fails the command and every job that shelled out to apt, whatever else the
+update fetched first. A `packages.microsoft.com` outage failed every factory job
+in the run at the step that installs `zstd`, in a wave that was not building
+anything from Microsoft.
+
+The action names the Ubuntu archive explicitly and forces IPv4, because these
+runners have no IPv6 route and apt treats `connect(ENETUNREACH)` as fatal for a
+host instead of falling back to the IPv4 addresses it already resolved. It also
+resolves the archive source by content rather than by filename alone, so a stub
+`sources.list` cannot leave it refreshing an empty index and failing later with
+"Unable to locate package".
+
+When the error names an unreachable repository, check whether the job needed that
+repository before weakening the update. It usually did not.
+
 ## Multi-architecture publication
 
 The reusable build workflow pushes each architecture separately and returns a
@@ -147,6 +168,7 @@ Renovate's own app token does not have that problem.
   differences.
 - Reintroducing a bespoke dependency/digest-tracking workflow in place of Renovate.
 - Calling `create-manifest@v1` without first preparing the runner.
+- `apt-get update` outside `.github/actions/apt-ubuntu-archive`.
 
 ## Verification
 

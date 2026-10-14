@@ -24,8 +24,9 @@ runs:
   using: composite
   steps:
     - name: Install zstd
-      shell: bash
-      run: sudo apt-get update && sudo apt-get install -y zstd
+      uses: ./.github/actions/apt-ubuntu-archive
+      with:
+        packages: zstd
 
     - name: Download the build root artifact
       uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v6

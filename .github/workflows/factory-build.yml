@@ -87,6 +87,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install zstd
+        uses: ./.github/actions/apt-ubuntu-archive
+        with:
+          packages: zstd
+
       - name: Validate the factory before building anything
         run: |
           python3 factory/tools/validate.py
@@ -101,7 +106,6 @@ jobs:
         id: buildroot
         run: |
           set -euo pipefail
-          sudo apt-get update && sudo apt-get install -y zstd
           python3 factory/tools/buildroot.py --output work/buildroot-resolved.json \
             --snapshot buildroot-provenance.json
           digest="$(python3 -c 'import json; print(json.load(open("work/buildroot-resolved.json"))["actual"])')"

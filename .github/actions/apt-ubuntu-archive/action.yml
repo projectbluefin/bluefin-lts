@@ -1,0 +1,73 @@
+name: Install from the Ubuntu archive
+
+description: >
+  Install host packages from the Ubuntu archive, and from no other repository.
+
+# `apt-get update` is all-or-nothing: one repository it cannot read fails the
+# command, and with it every job that shells out to apt, whatever else the
+# update managed to fetch first. The hosted runner image carries third-party
+# feeds that we neither control nor need -- it installs packages.microsoft.com
+# itself, see install-ms-repos.sh in actions/runner-images -- and when that feed
+# became unreachable it took the whole factory run down in this step with
+# "E: The repository 'https://packages.microsoft.com/ubuntu/24.04/prod noble
+# Release' no longer has a Release file".
+#
+# Everything this repository installs on the host comes from the Ubuntu
+# archive. Naming that source explicitly means a feed we did not add, and are
+# not responsible for, can never decide whether our builds run.
+#
+# ForceIPv4 is not belt-and-braces. These runners have no IPv6 route, and apt
+# treats connect(ENETUNREACH) as fatal for a host instead of falling back to the
+# IPv4 addresses it already resolved alongside the IPv6 ones, so any source that
+# answers with AAAA first fails the update outright rather than degrading.
+
+inputs:
+  packages:
+    description: Space-separated package names to install from the archive.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Update the Ubuntu archive index
+      shell: bash
+      run: |
+        set -euo pipefail
+        # The runner image rewrites the URIs inside this file to point at a
+        # mirror list; it does not replace the file (configure-apt-sources.sh
+        # in actions/runner-images). The filename is therefore stable across
+        # image updates even though the hosts inside it are not.
+        #
+        # That script keeps ubuntu.sources on 24.04 and sources.list elsewhere,
+        # so both are tried. On 24.04 sources.list is a stub that only points at
+        # ubuntu.sources, and apt reads a stub happily: it would refresh an
+        # empty index and leave the install to fail later with "Unable to
+        # locate package". Requiring a line that actually declares a source
+        # turns that into the error below instead.
+        archive=
+        for candidate in sources.list.d/ubuntu.sources sources.list; do
+          if [ -f "/etc/apt/$candidate" ] && grep -qE '^(deb |URIs: )' "/etc/apt/$candidate"; then
+            archive=$candidate
+            break
+          fi
+        done
+        if [ -z "$archive" ]; then
+          echo "::error::no Ubuntu archive source found under /etc/apt; the runner image no longer names it this way"
+          exit 1
+        fi
+        echo "installing from $archive"
+
+        sudo apt-get update \
+          -o Dir::Etc::sourcelist="$archive" \
+          -o Dir::Etc::sourceparts=- \
+          -o APT::Get::List-Cleanup=0 \
+          -o Acquire::ForceIPv4=true
+
+    - name: Install
+      shell: bash
+      env:
+        PACKAGES: ${{ inputs.packages }}
+      run: |
+        set -euo pipefail
+        # shellcheck disable=SC2086
+        sudo apt-get install -y $PACKAGES

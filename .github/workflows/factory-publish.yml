@@ -50,8 +50,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Install host RPM and signing tools
-        run: sudo apt-get update && sudo apt-get install -y rpm
+      - name: Install host RPM
+        uses: ./.github/actions/apt-ubuntu-archive
+        with:
+          packages: rpm
 
       - uses: sigstore/cosign-installer@c95fe1489396fe8a9fa6b4ca0b05dd4e0c2689de # v3.9.2
         with:

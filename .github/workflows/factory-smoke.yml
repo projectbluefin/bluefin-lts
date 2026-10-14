@@ -7,6 +7,7 @@ on:
       - 'factory/**'
       - '.github/workflows/factory-*.yml'
       - '.github/actions/factory-load-buildroot/**'
+      - '.github/actions/apt-ubuntu-archive/**'
       - 'Containerfile'
   workflow_dispatch:
 permissions:
@@ -21,10 +22,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install zstd
+        uses: ./.github/actions/apt-ubuntu-archive
+        with:
+          packages: zstd
       - name: Pull and save the pinned CentOS buildroot
         run: |
           set -euo pipefail
-          sudo apt-get update && sudo apt-get install -y zstd
           python3 factory/tools/buildroot.py --output work/buildroot-resolved.json \
             --snapshot buildroot-provenance.json
           docker tag "$(python3 factory/tools/buildroot.py --digest-only)" factory-buildroot:run

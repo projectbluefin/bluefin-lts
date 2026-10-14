@@ -95,6 +95,10 @@ Run `just factory-check` before every commit that touches `factory/**` or
 - **Imported specs carry upstream typos.** `docbook-style-xsl` had a
   malformed `%2F{%version}` that produced a 404 URL. The digest check is what
   surfaced it.
+- **Host tooling goes through `.github/actions/apt-ubuntu-archive`.** A plain
+  `apt-get update` fails a whole wave when a feed the runner image ships, and
+  the factory does not use, becomes unreadable. See
+  [ci-cd](../ci-cd/SKILL.md).
 - **GNOME 51 changes API and dependencies.** Keep Mutter's API version,
   Wayland minima, and source locks aligned with upstream meson.build. Remove
   backports already present upstream and rebase remaining patches. Glycin’s

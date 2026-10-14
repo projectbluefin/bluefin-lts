@@ -45,6 +45,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install host rpm
+        uses: ./.github/actions/apt-ubuntu-archive
+        with:
+          packages: rpm
+
       # Loaded from the artifact prepare produced, not pulled from a registry.
       # See the comment in factory-build.yml: this is what makes every job in
       # the run provably use the same build root bytes.
@@ -68,7 +73,6 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
-          sudo apt-get update && sudo apt-get install -y rpm
           mkdir -p work/prior work/newrpms work/dl
           if [ -n "$SEED_IMAGE" ]; then
             docker pull "$SEED_IMAGE"
