@@ -207,6 +207,7 @@ jobs:
           generate-sbom: 'true'
           push-attestation: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          certificate-identity-regexp: https://github.com/thallium-suite/(uranium|uranium-nvidia)/.github/workflows/
 
       - name: Dispatch post-testing E2E for NVIDIA
         if: steps.find-runs.outputs.ready == 'true'
