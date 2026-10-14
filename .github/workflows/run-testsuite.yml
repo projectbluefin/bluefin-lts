@@ -7,7 +7,7 @@ on:
   workflow_call:
     inputs:
       image:
-        description: "Full image reference to test (e.g. ghcr.io/projectbluefin/bluefin-lts:testing)"
+        description: "Full image reference to test (e.g. ghcr.io/thallium-suite/uranium:testing)"
         required: true
         type: string
       suites:
@@ -28,6 +28,6 @@ jobs:
       image: ${{ inputs.image }}
       suites: ${{ inputs.suites }}
       # Keep the checked-out tests aligned with the managed workflow tag.
-      # Defaulting to testsuite/main can gate bluefin-lts on unreleased test changes.
+      # Defaulting to testsuite/main can gate uranium on unreleased test changes.
       test_ref: v1
     secrets: inherit

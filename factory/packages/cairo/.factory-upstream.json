@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:45:54+00:00",
+  "package": "cairo",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "6c67a0fdbdc32e90009ea399e54e1322428515451e2c19868ee544211d85f470",
+    "srpm_checksum_type": "sha256",
+    "tree": "bd492e19d0b8b15edbf0503540672c0ddc8dcd3c"
+  }
+}

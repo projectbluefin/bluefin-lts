@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:29+00:00",
+  "package": "pango",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "7b7b67432cd675cefda94830347a77bb82c8115ac7ab900d7c1a44c66a06f5d1",
+    "srpm_checksum_type": "sha256",
+    "tree": "078a7501fbcc3976814015a843f1fa9299e20659"
+  }
+}

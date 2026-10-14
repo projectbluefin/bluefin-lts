@@ -1,0 +1,104 @@
+commit f0bc60dc0b34669e64d48e723a5e84c0b90b281d
+Author: Owen W. Taylor <otaylor@fishsoup.net>
+Date:   Wed Feb 5 12:29:43 2025 -0500
+ 
+    Pass token to flatpak_image_source_new_remote()
+   
+    Since flatpak_image_source_new_remote() already tries to load files
+    from the registry, having a separate flatpak_image_source_set_token()
+    doesn't work - when the token is set, it's already too late to
+    be passed along with the initial requests.
+ 
+diff --git a/common/flatpak-dir.c b/common/flatpak-dir.c
+index 26ec176f..3621dd3b 100644
+--- a/common/flatpak-dir.c
++++ b/common/flatpak-dir.c
+@@ -1225,12 +1225,10 @@ flatpak_remote_state_new_image_source (FlatpakRemoteState *self,
+   if (registry_uri == NULL)
+     return NULL;
+ 
+-  image_source = flatpak_image_source_new_remote (registry_uri, oci_repository, digest, NULL, error);
++  image_source = flatpak_image_source_new_remote (registry_uri, oci_repository, digest, token, NULL, error);
+   if (image_source == NULL)
+     return NULL;
+ 
+-  flatpak_image_source_set_token (image_source, token);
+-
+   return g_steal_pointer (&image_source);
+ }
+ 
+@@ -6473,6 +6471,9 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
+   else
+     image_source = flatpak_remote_state_fetch_image_source (state, self, ref, opt_rev, token, cancellable, error);
+ 
++  if (!image_source)
++    return FALSE;
++
+   flatpak_progress_start_oci_pull (progress);
+ 
+   g_info ("Mirroring OCI image %s", flatpak_image_source_get_digest (image_source));
+@@ -6514,6 +6515,9 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
+   else
+     image_source = flatpak_remote_state_fetch_image_source (state, self, ref, opt_rev, token, cancellable, error);
+ 
++  if (!image_source)
++    return FALSE;
++
+   oci_digest = flatpak_image_source_get_digest (image_source);
+ 
+   /* Short circuit if we've already got this commit */
+diff --git a/common/flatpak-image-source-private.h b/common/flatpak-image-source-private.h
+index 597a8174..5f9604d8 100644
+--- a/common/flatpak-image-source-private.h
++++ b/common/flatpak-image-source-private.h
+@@ -45,14 +45,13 @@ FlatpakImageSource *flatpak_image_source_new_local (GFile        *file,
+ FlatpakImageSource *flatpak_image_source_new_remote (const char   *uri,
+                                                      const char   *oci_repository,
+                                                      const char   *digest,
++                                                     const char   *token,
+                                                      GCancellable *cancellable,
+                                                      GError      **error);
+ FlatpakImageSource *flatpak_image_source_new_for_location (const char   *location,
+                                                            GCancellable *cancellable,
+                                                            GError      **error);
+ 
+-void flatpak_image_source_set_token (FlatpakImageSource *self,
+-                                     const char         *token);
+ void flatpak_image_source_set_delta_url (FlatpakImageSource *self,
+                                          const char         *delta_url);
+ 
+diff --git a/common/flatpak-image-source.c b/common/flatpak-image-source.c
+index a31f1084..1fc0eeb0 100644
+--- a/common/flatpak-image-source.c
++++ b/common/flatpak-image-source.c
+@@ -180,6 +180,7 @@ FlatpakImageSource *
+ flatpak_image_source_new_remote (const char   *uri,
+                                  const char   *oci_repository,
+                                  const char   *digest,
++                                 const char   *token,
+                                  GCancellable *cancellable,
+                                  GError      **error)
+ {
+@@ -189,6 +190,8 @@ flatpak_image_source_new_remote (const char   *uri,
+   if (!registry)
+     return NULL;
+ 
++  flatpak_oci_registry_set_token (registry, token);
++
+   return flatpak_image_source_new (registry, oci_repository, digest, cancellable, error);
+ }
+ 
+@@ -327,13 +330,6 @@ flatpak_image_source_new_for_location (const char   *location,
+     }
+ }
+ 
+-void
+-flatpak_image_source_set_token (FlatpakImageSource *self,
+-                                const char            *token)
+-{
+-  flatpak_oci_registry_set_token (self->registry, token);
+-}
+-
+ void
+ flatpak_image_source_set_delta_url (FlatpakImageSource *self,
+                                     const char         *delta_url)

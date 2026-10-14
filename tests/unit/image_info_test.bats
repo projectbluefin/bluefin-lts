@@ -79,8 +79,8 @@ teardown() {
 # boundaries. Uses `run env ...` (direct command) instead of a function wrapper
 # to avoid bats function-dispatch inconsistencies with PATH export.
 _run_image_info() {
-    local image_name="${1:-bluefin}"
-    local image_vendor="${2:-projectbluefin}"
+    local image_name="${1:-uranium}"
+    local image_vendor="${2:-thallium-suite}"
     local major_version="${3:-10}"
     local sha="${4:-deadbeef}"
 
@@ -104,25 +104,25 @@ _run_image_info() {
 }
 
 @test "image-info: image-info.json contains image-name" {
-    _run_image_info bluefin
+    _run_image_info uranium
     [ "$status" -eq 0 ]
-    grep -q '"image-name": "bluefin"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
+    grep -q '"image-name": "uranium"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
 @test "image-info: image-info.json contains image-vendor" {
-    _run_image_info bluefin projectbluefin
+    _run_image_info uranium thallium-suite
     [ "$status" -eq 0 ]
-    grep -q '"image-vendor": "projectbluefin"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
+    grep -q '"image-vendor": "thallium-suite"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
 @test "image-info: image-info.json contains centos-version" {
-    _run_image_info bluefin projectbluefin 10
+    _run_image_info uranium thallium-suite 10
     [ "$status" -eq 0 ]
     grep -q '"centos-version": "10"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
 
 @test "image-info: image-tag reflects the release stream" {
-    _run_image_info bluefin projectbluefin 10
+    _run_image_info uranium thallium-suite 10
     [ "$status" -eq 0 ]
     grep -q '"image-tag": "stable/testing"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
 }
@@ -131,16 +131,16 @@ _run_image_info() {
 # os-release patching
 # ──────────────────────────────────────────────────────────────────────────────
 
-@test "image-info: os-release NAME is set to 'Bluefin LTS'" {
+@test "image-info: os-release NAME is set to 'Uranium'" {
     _run_image_info
     [ "$status" -eq 0 ]
-    grep -q 'NAME="Bluefin LTS"' "${TEST_ROOT}/usr/lib/os-release"
+    grep -q 'NAME="Uranium"' "${TEST_ROOT}/usr/lib/os-release"
 }
 
-@test "image-info: os-release PRETTY_NAME is set to 'Bluefin LTS'" {
+@test "image-info: os-release PRETTY_NAME is set to 'Uranium'" {
     _run_image_info
     [ "$status" -eq 0 ]
-    grep -q 'PRETTY_NAME="Bluefin LTS"' "${TEST_ROOT}/usr/lib/os-release"
+    grep -q 'PRETTY_NAME="Uranium"' "${TEST_ROOT}/usr/lib/os-release"
 }
 
 @test "image-info: os-release VERSION_CODENAME is set to Achillobator" {
@@ -149,10 +149,10 @@ _run_image_info() {
     grep -q 'VERSION_CODENAME="Achillobator"' "${TEST_ROOT}/usr/lib/os-release"
 }
 
-@test "image-info: os-release CPE_NAME is rewritten to universal-blue:bluefin-lts" {
+@test "image-info: os-release CPE_NAME is rewritten to universal-blue:uranium" {
     _run_image_info
     [ "$status" -eq 0 ]
-    grep -q 'cpe:/o:universal-blue:bluefin-lts' "${TEST_ROOT}/usr/lib/os-release"
+    grep -q 'cpe:/o:universal-blue:uranium' "${TEST_ROOT}/usr/lib/os-release"
 }
 
 @test "image-info: os-release strips REDHAT_ fields" {
@@ -169,15 +169,15 @@ _run_image_info() {
 }
 
 @test "image-info: os-release appends BUILD_ID from SHA_HEAD_SHORT" {
-    _run_image_info bluefin projectbluefin 10 abc1234
+    _run_image_info uranium thallium-suite 10 abc1234
     [ "$status" -eq 0 ]
     grep -q 'BUILD_ID="abc1234"' "${TEST_ROOT}/usr/lib/os-release"
 }
 
-@test "image-info: os-release appends DEFAULT_HOSTNAME=bluefin" {
+@test "image-info: os-release appends DEFAULT_HOSTNAME=uranium" {
     _run_image_info
     [ "$status" -eq 0 ]
-    grep -q 'DEFAULT_HOSTNAME="bluefin"' "${TEST_ROOT}/usr/lib/os-release"
+    grep -q 'DEFAULT_HOSTNAME="uranium"' "${TEST_ROOT}/usr/lib/os-release"
 }
 
 # ──────────────────────────────────────────────────────────────────────────────

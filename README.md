@@ -1,67 +1,63 @@
-# Bluefin LTS
-*Achillobator giganticus*
+# Uranium
 
-[![Build Bluefin LTS](https://github.com/projectbluefin/bluefin-lts/actions/workflows/build-regular.yml/badge.svg)](https://github.com/projectbluefin/bluefin-lts/actions/workflows/build-regular.yml) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10098/badge)](https://www.bestpractices.dev/projects/10098) [![Bluefin LTS on ArtifactHub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/bluefin)](https://artifacthub.io/packages/container/bluefin/bluefin) [![Installs](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/ublue-os/countme/main/badge-endpoints/bluefin-lts.json&label=Installs)](https://github.com/projectbluefin/bluefin-lts) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/projectbluefin/bluefin-lts)
+> NOTE: This once was Project Bluefin's LTS it's still close to the original just different branding.
 
-Larger, more lethal [Bluefin](https://projectbluefin.io). Built on CentOS Stream 10 for longer support windows, conservative upgrades, and production-focused workstations.
+[![Build Uranium](https://github.com/thallium-suite/uranium/actions/workflows/build-regular.yml/badge.svg)](https://github.com/thallium-suite/uranium/actions/workflows/build-regular.yml)
 
-![image](https://github.com/user-attachments/assets/2e160934-44e6-4aee-b2b8-accb3bcf0a41)
-
-## Latest Release
-
-<a href="https://docs.projectbluefin.io/changelogs/">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://docs.projectbluefin.io/img/cards/bluefin-lts-dark.png">
-    <img src="https://docs.projectbluefin.io/img/cards/bluefin-lts-light.png" alt="Bluefin LTS latest release" width="800">
-  </picture>
-</a>
+Long-term support desktop built on CentOS Stream 10 for longer support windows, conservative upgrades, and production-focused workstations.
 
 ## Images
 
-Full catalog at [docs.projectbluefin.io/images →](https://docs.projectbluefin.io/images/)
+### Uranium
 
-### Bluefin LTS
-
-Long-term support Bluefin stream built on CentOS Stream 10.
+Long-term support stream built on CentOS Stream 10.
 
 ```bash
 # LTS — recommended
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:stable --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/thallium-suite/uranium:stable --enforce-container-sigpolicy
 # LTS — NVIDIA
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts-nvidia:stable --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/thallium-suite/uranium-nvidia:stable --enforce-container-sigpolicy
 ```
 
-## Migrating from ublue-os/bluefin-lts
+## Migrating
 
-Users on the previous `ghcr.io/ublue-os/bluefin*:lts` images will be migrated automatically via a systemd service shipped in the weekly build. No action required — your machine will switch on its next reboot after pulling the update.
+Uranium is published at a new registry path, so existing installs keep
+receiving updates from their current image reference and **will not** be moved
+automatically. There is no automatic migration: switch explicitly.
 
-| Old image (ublue-os) | New image (projectbluefin) |
+| Previous image | Current image |
 |---|---|
-| `bluefin:lts` | `bluefin-lts:stable` |
-| `bluefin:lts-hwe` (legacy tag) | `bluefin-lts:stable` |
-| `bluefin-dx:lts` | `bluefin-lts:stable` + run `ujust devmode` after reboot |
-| `bluefin-dx:lts-hwe` (legacy tag) | `bluefin-lts:stable` + run `ujust devmode` after reboot |
-| `bluefin-gdx:lts` | `bluefin-lts-nvidia:stable` + run `ujust devmode` after reboot |
-| arm64 variants | No automatic migration — reinstall from new image |
-
-To migrate manually before the automatic migration ships:
+| `ghcr.io/projectbluefin/bluefin-lts:stable` | `ghcr.io/thallium-suite/uranium:stable` |
+| `ghcr.io/projectbluefin/bluefin-lts-nvidia:stable` | `ghcr.io/thallium-suite/uranium-nvidia:stable` |
+| `ghcr.io/projectbluefin/bluefin-lts-hwe:stable` | `ghcr.io/thallium-suite/uranium:stable` |
+| `ghcr.io/projectbluefin/bluefin-dx-hwe:stable` | `ghcr.io/thallium-suite/uranium:stable` + run `ujust devmode` after reboot |
+| `ghcr.io/ublue-os/bluefin:lts` (legacy) | `ghcr.io/thallium-suite/uranium:stable` |
+| `ghcr.io/ublue-os/bluefin:lts-hwe` (legacy) | `ghcr.io/thallium-suite/uranium:stable` |
+| `ghcr.io/ublue-os/bluefin-dx:lts` (legacy) | `ghcr.io/thallium-suite/uranium:stable` + run `ujust devmode` after reboot |
+| `ghcr.io/ublue-os/bluefin-dx:lts-hwe` (legacy) | `ghcr.io/thallium-suite/uranium:stable` + run `ujust devmode` after reboot |
+| `ghcr.io/ublue-os/bluefin-gdx:lts` (legacy) | `ghcr.io/thallium-suite/uranium-nvidia:stable` + run `ujust devmode` after reboot |
+| arm64 variants | No in-place migration — reinstall from the current image |
 
 ```bash
-sudo bootc switch ghcr.io/projectbluefin/bluefin-lts:stable --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/thallium-suite/uranium:stable --enforce-container-sigpolicy
 ```
 
-## Getting Started
+### HWE note
 
-Visit **[projectbluefin.io](https://projectbluefin.io/#scene-picker)** to download Bluefin LTS, or check the **[LTS Documentation](https://docs.projectbluefin.io/lts/)** for installation and upgrade instructions.
+If you are currently on a `bluefin-lts-hwe` or `ublue-os/bluefin:lts-hwe` image, you are
+already running the Fedora CoreOS stable kernel — the same kernel track Uranium uses
+for **all** of its builds. Uranium does not publish a separate HWE variant; the
+hardware-enablement kernel and common akmods (xone, OpenRazer, Framework laptop,
+v4l2loopback) ship in every Uranium image by default. No action is needed for the
+kernel: switching to Uranium keeps you on the same newer kernel and module set.
 
-Rebasing between the Bluefin (Fedora) and Bluefin LTS (CentOS) image families is not supported. Plan migrations as fresh installs or supported upgrade paths.
+Rebasing between the Fedora-based Amotic family and Uranium is not supported.
+Plan migrations as fresh installs or supported upgrade paths.
 
 ## Community
 
-- 📰 **[Blog](https://blog.projectbluefin.io/)** — announcements and release posts
-- 💬 **[Discussions](https://community.projectbluefin.io/)** — community forum
-- 📋 **[Project Board](https://todo.projectbluefin.io/)** — what we're working on
-- 📖 **[Documentation](https://docs.projectbluefin.io/)** — user guides and reference
+Uranium has no community infrastructure of its own yet. Until it does, use this
+repository's [issue tracker](https://github.com/thallium-suite/uranium/issues)
 
 ## Contributing
 
@@ -73,4 +69,4 @@ Report security vulnerabilities via [SECURITY.md](SECURITY.md).
 
 Apache License 2.0 — see [LICENSE](LICENSE).
 
-Bluefin LTS incorporates [CentOS Stream](https://www.centos.org/centos-stream/), [GNOME](https://www.gnome.org/), [Universal Blue](https://universal-blue.org/), and various CNCF projects, each under their respective licenses.
+Uranium incorporates [CentOS Stream](https://www.centos.org/centos-stream/), [GNOME](https://www.gnome.org/), [Universal Blue](https://universal-blue.org/), and various CNCF projects, each under their respective licenses.

@@ -4,13 +4,13 @@
 
 | Branch | Supported |
 |---|---|
-| `main` (active development) | ✅ Active development |
-| `lts` | ✅ Security fixes |
+| `main` (stable releases) | ✅ Security fixes |
+| `testing` (integration) | ✅ Active development |
 | Older releases | ❌ |
 
 ## Reporting a Vulnerability
 
-**Please use [GitHub Private Vulnerability Reporting](https://github.com/projectbluefin/bluefin-lts/security/advisories/new) to report security issues.**
+**Please use [GitHub Private Vulnerability Reporting](https://github.com/thallium-suite/uranium/security/advisories/new) to report security issues.**
 
 This ensures your report is handled confidentially before public disclosure.
 
@@ -38,7 +38,7 @@ We follow coordinated disclosure. Reporters are credited in the release notes un
 
 ## Scope
 
-This policy covers the `projectbluefin/bluefin-lts` OCI image build pipeline, including:
+This policy covers the `thallium-suite/uranium` OCI image build pipeline, including:
 
 - `Containerfile` and build scripts in `build_scripts/`
 - GitHub Actions workflows in `.github/workflows/`

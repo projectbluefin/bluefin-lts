@@ -6,7 +6,7 @@ description: >-
 
 # GNOME Shell Extensions
 
-Extensions in bluefin-lts are **git submodules** tracked in `system_files/usr/share/gnome-shell/extensions/<UUID>/`. Renovate updates submodule digests automatically.
+Extensions in uranium are **git submodules** tracked in `system_files/usr/share/gnome-shell/extensions/<UUID>/`. Renovate updates submodule digests automatically.
 
 ## Adding an extension
 
@@ -113,10 +113,10 @@ Do not remove this step — it regenerates the system schemas DB after all per-e
 If an extension needs preconfigured defaults, create a keyfile:
 
 ```
-system_files/etc/dconf/db/distro.d/<NN>-bluefin-lts-<short-name>
+system_files/etc/dconf/db/distro.d/<NN>-uranium-<short-name>
 ```
 
-Example path: `system_files/etc/dconf/db/distro.d/05-bluefin-lts-custom-command-menu`
+Example path: `system_files/etc/dconf/db/distro.d/05-uranium-custom-command-menu`
 
 Use numeric prefix to control override priority. Higher numbers win.
 

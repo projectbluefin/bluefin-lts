@@ -1,0 +1,13 @@
+diff --git a/libgda-ui/meson.build b/libgda-ui/meson.build
+index a6b4eb5..03ed1e5 100644
+--- a/libgda-ui/meson.build
++++ b/libgda-ui/meson.build
+@@ -209,7 +209,7 @@ libgdaui_vapi = custom_target('gdaui'+project_api_version+'_vapi',
+ 		],
+ 	output: 'libgdaui-'+project_api_version+'.vapi',
+ 	install: true,
+-	depends: libgdaui,
++	depends: [libgdaui, libgda_vapi],
+ 	install_dir: join_paths(get_option('datadir'),'vala','vapi')
+ 	)
+ endif

@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:42:26+00:00",
+  "package": "libcanberra",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "87e58792df27af44b1a99d7957c4934995b35419aa741a7b47e35fae71b8cb86",
+    "srpm_checksum_type": "sha256",
+    "tree": "6f04d58214024bbb07f2e319220a4d5c99862106"
+  }
+}

@@ -1,0 +1,64 @@
+# Validate the GNOME package factory.
+#
+# The fast gate. It answers "is the factory's own configuration coherent?"
+# and never builds an RPM, so it runs on every pull request in well under a
+# minute. The expensive proof -- that a package actually compiles against the
+# pinned c10s root -- is the SRPM gate and the build workflow.
+name: Validate factory
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "factory/**"
+      - ".packit.yaml"
+      - ".github/workflows/factory-*.yml"
+  pull_request:
+    paths:
+      - "factory/**"
+      - ".packit.yaml"
+      - ".github/workflows/factory-*.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: factory-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+
+      - name: Run the factory test suite
+        run: python3 -m unittest discover -s factory/tests -v
+
+      # Each check is run separately so a failure names the invariant that
+      # broke rather than "validation failed".
+      - name: Validate factory configuration
+        run: |
+          set -euo pipefail
+          for check in provenance locks buildroot contract specs; do
+            python3 factory/tools/validate.py --check "$check"
+          done
+
+      # The committed .packit.yaml is generated. If it drifts from the
+      # inventory, Packit would build a different package set than the one
+      # the build workflow builds, and neither job would notice.
+      - name: Check the generated Packit configuration is current
+        run: python3 factory/tools/render_packit_config.py --check
+
+      - name: Check every recipe's provenance sidecar is recorded
+        run: python3 factory/tools/import_srpm.py status
+
+      - name: Report the recipe count
+        run: |
+          echo "recipes: $(python3 factory/tools/packit_workflow.py packages \
+            | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')"

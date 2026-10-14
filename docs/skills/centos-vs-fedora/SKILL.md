@@ -1,14 +1,14 @@
 ---
 name: centos-vs-fedora
 description: >-
-  CentOS Stream 10 vs Fedora package and repo differences for bluefin-lts.
+  CentOS Stream 10 vs Fedora package and repo differences for uranium.
   Use when adding packages, enabling repos, choosing akmods tags, or resolving
   COPR chroot names.
 ---
 
 # CentOS vs Fedora
 
-bluefin-lts is built on **CentOS Stream 10**, not Fedora. Stock builds use the Fedora CoreOS stable kernel.
+uranium is built on **CentOS Stream 10**, not Fedora. Stock builds use the Fedora CoreOS stable kernel.
 
 ## What does not exist on CentOS Stream 10
 

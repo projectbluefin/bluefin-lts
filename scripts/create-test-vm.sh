@@ -1,29 +1,29 @@
 #!/bin/bash
 set -e
 
-# Script to create a test VM from Bluefin LTS with SSH enabled
+# Script to create a test VM from Uranium with SSH enabled
 # This allows testing bootc images in Lima/QEMU VMs
 
-VM_NAME="${1:-bluefin-test-ssh}"
+VM_NAME="${1:-uranium-test-ssh}"
 IMAGE_TAG="${2:-stable}"
 SSH_PUB_KEY="${3:-$HOME/.ssh/id_ed25519.pub}"
 DISK_SIZE="32G"
 MEMORY="8GiB"
 CPUS="4"
 
-echo "=== Bluefin LTS Test VM Creator ==="
+echo "=== Uranium Test VM Creator ==="
 echo "VM Name: $VM_NAME"
-echo "Base Image: ghcr.io/projectbluefin/bluefin-lts:$IMAGE_TAG"
+echo "Base Image: ghcr.io/thallium-suite/uranium:$IMAGE_TAG"
 echo "SSH Key: $SSH_PUB_KEY"
 echo ""
 
 # Step 1: Pull the base image
 echo "Step 1: Pulling base image..."
-podman pull "ghcr.io/projectbluefin/bluefin-lts:$IMAGE_TAG"
+podman pull "ghcr.io/thallium-suite/uranium:$IMAGE_TAG"
 
 # Step 2: Create disk image
 echo "Step 2: Creating disk image..."
-DISK_IMAGE="/tmp/bluefin-vm-${VM_NAME}.img"
+DISK_IMAGE="/tmp/uranium-vm-${VM_NAME}.img"
 rm -f "$DISK_IMAGE"
 truncate -s "$DISK_SIZE" "$DISK_IMAGE"
 
@@ -32,7 +32,7 @@ echo "Step 3: Installing to disk with SSH key injection..."
 sudo podman run --rm --privileged --pid=host -e BOOTC_SETENFORCE0_FALLBACK=1 \
     -v /tmp:/tmp \
     -v "$(dirname "$SSH_PUB_KEY"):/ssh" \
-    "ghcr.io/projectbluefin/bluefin-lts:$IMAGE_TAG" \
+    "ghcr.io/thallium-suite/uranium:$IMAGE_TAG" \
     bootc install to-disk \
     --via-loopback \
     --filesystem xfs \

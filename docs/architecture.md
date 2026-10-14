@@ -42,14 +42,14 @@ isolated in explicit build arguments and override directories.
 
 ## Telemetry
 
-- `bluefin-lts-countme.timer` runs `/usr/libexec/bluefin-lts-countme` weekly to
-  report an installation-age cohort bucket to
-  `countme.projectbluefin.io`, on by default (ADR 0006,
-  projectbluefin/bluefin-lts#591).
-- To opt out, create `/etc/projectbluefin/countme/disabled` (any content, even
-  empty). This also disables the unit's other `ExecStart`
-  (`dnf makecache`, the EPEL mirror's countme ping), since both run under the
-  same `ConditionPathExists=!/etc/projectbluefin/countme/disabled` gate.
+Uranium ships no installation-count telemetry. The Bluefin LTS `countme`
+units and their helper script were dropped in the rebrand: there is no Uranium
+endpoint to report to, and the only badge endpoint available reported Bluefin's
+install count. `build_scripts/40-services.sh` masks `rpm-ostree-countme` and
+any leftover `*-countme.timer` unit so an upgrade cannot leave one enabled.
+
+Adding telemetry back requires an endpoint owned by this image, an opt-out path,
+and a privacy review. Do not reintroduce the Bluefin endpoint.
 
 For implementation procedures, load the relevant skill from
 [`docs/skills/INDEX.md`](skills/INDEX.md).

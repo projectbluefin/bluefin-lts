@@ -19,11 +19,14 @@ tee "$IMAGE_INFO" <<EOF
 EOF
 chmod 0644 "${IMAGE_INFO}"
 
-IMAGE_PRETTY_NAME="Bluefin LTS"
-HOME_URL="https://projectbluefin.io"
+IMAGE_PRETTY_NAME="Uranium"
+# TODO(rebrand): thalliumsuite.io / docs.thalliumsuite.io do not resolve yet.
+# Home points at this repository; documentation still points at the existing
+# projectbluefin LTS docs site until the new docs are published.
+HOME_URL="https://github.com/thallium-suite/uranium"
 DOCUMENTATION_URL="https://docs.projectbluefin.io"
-SUPPORT_URL="https://github.com/projectbluefin/bluefin-lts/issues/"
-BUG_SUPPORT_URL="https://github.com/projectbluefin/bluefin-lts/issues/"
+SUPPORT_URL="https://github.com/thallium-suite/uranium/issues/"
+BUG_SUPPORT_URL="https://github.com/thallium-suite/uranium/issues/"
 CODE_NAME="Achillobator"
 
 # OS Release File (changed in order with upstream)
@@ -34,7 +37,7 @@ s/^VARIANT_ID=.*/VARIANT_ID=${IMAGE_NAME}/
 s/^PRETTY_NAME=.*/PRETTY_NAME=\"${IMAGE_PRETTY_NAME}\"/
 s|^HOME_URL=.*|HOME_URL=\"${HOME_URL}\"|
 s|^BUG_REPORT_URL=.*|BUG_REPORT_URL=\"${BUG_SUPPORT_URL}\"|
-s|^CPE_NAME=\"cpe:/o:centos:centos|CPE_NAME=\"cpe:/o:universal-blue:bluefin-lts|
+s|^CPE_NAME=\"cpe:/o:centos:centos|CPE_NAME=\"cpe:/o:universal-blue:uranium|
 
 /^REDHAT_BUGZILLA_PRODUCT=/d
 /^REDHAT_BUGZILLA_PRODUCT_VERSION=/d
@@ -45,16 +48,17 @@ EOF
 tee -a /usr/lib/os-release <<EOF
 DOCUMENTATION_URL="${DOCUMENTATION_URL}"
 SUPPORT_URL="${SUPPORT_URL}"
-DEFAULT_HOSTNAME="bluefin"
+DEFAULT_HOSTNAME="uranium"
 BUILD_ID="${SHA_HEAD_SHORT:-deadbeef}"
 EOF
 
-# Weekly user count for fastfetch
-# TODO: switch to bluefin-lts.json once ublue-os/countme re-enables the bluefin-lts
-# badge entry (currently commented out as "centos countme data is broken").
-# The countme fix is in bluefin-lts-countme.service (dnf-based, replaces the broken
-# rpm-ostree-countme). See coreos/rpm-ostree#5464, projectbluefin/bluefin-lts#656.
-ghcurl https://raw.githubusercontent.com/ublue-os/countme/main/badge-endpoints/bluefin.json --retry 3 | jq -r ".message" > /usr/share/ublue-os/fastfetch-user-count
+# Weekly user count for fastfetch.
+# Removed with the Bluefin branding: the only endpoint available was
+# ublue-os/countme's bluefin.json, which reports Bluefin's install count.
+# fastfetch.jsonc still runs `cat` on this path, so write a neutral
+# placeholder rather than letting it fail on every invocation.
+# Restore the real fetch once a Uranium endpoint is published upstream.
+printf 'N/A\n' > /usr/share/ublue-os/fastfetch-user-count
 
 # bazaar weekly downloads used for fastfetch
 curl -X 'GET' \

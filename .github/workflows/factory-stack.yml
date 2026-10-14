@@ -1,0 +1,274 @@
+# Full-stack binary verification, with no registry publication or signing.
+name: Factory GNOME stack
+on:
+  pull_request:
+    paths:
+      - 'factory/**'
+      - '.github/workflows/factory-stack.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: factory-stack-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Validate recipes and load the pinned CentOS root
+        run: |
+          set -euo pipefail
+          python3 factory/tools/validate.py
+          python3 factory/tools/render_packit_config.py --check
+          python3 factory/tools/buildroot.py --output work/buildroot-resolved.json \
+            --snapshot work/buildroot-provenance.json
+          docker tag "$(python3 factory/tools/buildroot.py --digest-only)" factory-buildroot:run
+          python3 factory/tools/container_policy.py load
+      - name: Extract exact dependencies and solve the GNOME stack
+        id: plan
+        run: |
+          set -euo pipefail
+          python3 factory/tools/extract_buildrequires.py --image factory-buildroot:run --output work/graph
+          python3 factory/tools/build_graph.py plan --rows work/graph/rows \
+            --stack --output work/graph/plan.json
+          test "$(python3 -c 'import json; print(len(json.load(open("work/graph/plan.json"))["waves"]))')" -le 16
+      - name: Check GNOME dependency tree before compilation
+        id: preflight
+        run: |
+          set -euo pipefail
+          python3 factory/tools/dependency_preflight.py --rows work/graph/rows \
+            --plan work/graph/plan.json --output work/graph/dependency-preflight.json
+          # Exercise Glycin's namespace setup with its actual recipe profile
+          # before spending time on any stack compilation.
+          python3 factory/tools/container_policy.py args --package glycin > work/glycin-policy-args
+          mapfile -t security_args < work/glycin-policy-args
+          docker run --rm --pull=never "${security_args[@]}" \
+            factory-buildroot:run bash -c \
+            'set -e; dnf -y install bubblewrap; bwrap --unshare-all --die-with-parent --chdir / \
+              --ro-bind /usr /usr --dev /dev --ro-bind-try /etc/ld.so.cache /etc/ld.so.cache \
+              --tmpfs /tmp-home --tmpfs /tmp-run --clearenv \
+              --setenv HOME /tmp-home --setenv XDG_RUNTIME_DIR /tmp-run \
+              --symlink /usr/lib64 /lib64 --symlink /usr/lib /lib /usr/bin/true' \
+            2>&1 | tee work/graph/sandbox-preflight.log
+      - name: Build wave 0
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 0
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave0
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 1
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave1
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 2
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave2
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 3
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 3
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave3
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 4
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave4
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 5
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 5
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave5
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 6
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 6
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave6
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave7
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 8
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 8
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave8
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 9
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 9
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave9
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 10
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 10
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave10
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 11
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 11
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave11
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 12
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 12
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave12
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 13
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 13
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave13
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 14
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 14
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave14
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Build wave 15
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: python3 factory/tools/build_stack.py --plan work/graph/plan.json --wave 15
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        with:
+          name: factory-stack-wave15
+          path: |
+            work/stack-logs
+            work/stack-report.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Require the complete stack and solve the GNOME 51 consumer transaction
+        if: ${{ !cancelled() && steps.preflight.conclusion == 'success' }}
+        run: |
+          set -euo pipefail
+          python3 factory/tools/build_stack.py --plan work/graph/plan.json --check
+          docker run --rm --pull=never -v "$PWD:/repo:ro" -v "$PWD/work/prior:/factory" \
+            factory-buildroot:run bash -c \
+            'set -e; dnf -y install createrepo_c; createrepo_c /factory; bash /repo/factory/tools/consumer_transaction.sh' \
+            2>&1 | tee work/consumer-transaction.log
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: factory-stack-evidence
+          path: |
+            work/graph
+            work/stack-logs
+            work/stack-report.json
+            work/consumer-transaction.log
+            work/buildroot-provenance.json
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: factory-stack-rpms
+          path: work/rpms
+          if-no-files-found: error
+          retention-days: 7

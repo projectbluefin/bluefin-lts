@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:45:20+00:00",
+  "package": "xdg-desktop-portal-gnome",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "554edf5dab6962852f45ede81cb0acb39f0c1228a16a2dee94a1551511c9cdb2",
+    "srpm_checksum_type": "sha256",
+    "tree": "4996590a341c543d6984a3c54febdb5b1428d3c3"
+  }
+}

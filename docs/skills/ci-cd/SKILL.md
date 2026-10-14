@@ -46,9 +46,12 @@ metadata:
 | NVIDIA manifest assembly | `.github/workflows/build-nvidia-manifest.yml` |
 | Promotion | `.github/workflows/promote-testing-to-main.yml` |
 | Stable publication | `.github/workflows/execute-release.yml` |
-| End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml` |
+| End-to-end tests | `.github/workflows/run-testsuite.yml`, `pr-e2e.yml`, `post-testing-e2e.yml` |
+| Complete GNOME factory stack | `.github/workflows/factory-stack.yml` |
+| CentOS factory smoke | `.github/workflows/factory-smoke.yml` |
+| GNOME factory build/publication | `.github/workflows/factory-build.yml`, `factory-build-stage.yml`, `factory-publish.yml` |
 | Syntax and repository checks | `.github/workflows/pr-testsuite.yml`, `unit-tests.yml` |
-| Dependency updates | `.github/renovate.json5`, Renovate workflows |
+| Dependency updates | `renovate.json`, Renovate workflows |
 
 The exact workflow files in the repository are authoritative. Update this table
 when a workflow is renamed or removed.
@@ -116,6 +119,16 @@ Check in order:
 Use the GitHub workflow run, job summary, and logs as evidence. Do not infer
 success from a green caller job if the reusable job or publication step failed.
 
+Automated dependency bumps are Renovate's job, including the `image-versions.yaml`
+container digests. The `customManagers` entry in `renovate.json` matches the
+`image`/`tag`/`digest` triplet and automerges digest updates; it is declared
+locally rather than inherited, because the shared preset resolves its inherited
+config through `{{parentOrg}}` and this repository is not a network fork.
+
+Do not reintroduce a bespoke digest-tracking workflow. A PR opened with the
+default `GITHUB_TOKEN` does not trigger `pull_request` workflows, so it can never
+satisfy the required `validate` check and would be permanently unmergeable;
+Renovate's own app token does not have that problem.
 
 ## Common Rationalizations
 
@@ -132,6 +145,7 @@ success from a green caller job if the reusable job or publication step failed.
 - A release or signing failure hidden with `continue-on-error`.
 - Copying a workflow from another image variant without checking path and input
   differences.
+- Reintroducing a bespoke dependency/digest-tracking workflow in place of Renovate.
 - Calling `create-manifest@v1` without first preparing the runner.
 
 ## Verification
@@ -148,4 +162,5 @@ commit, artifact tag, and digest. For signing or release changes, also follow
 
 ## Sources
 
-- Context7: `/websites/github_en_actions` — GitHub Actions workflow syntax and permissions.
+- Context7: `/websites/github_en_actions` — `workflow_run` payloads and the
+  requirement that a `workflow_run` workflow exist on the default branch.

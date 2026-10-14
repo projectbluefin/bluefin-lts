@@ -1,0 +1,48 @@
+name: Factory load build root
+
+description: >
+  Load the build root image that the prepare job pulled once, from the run's
+  own artifact, under a bare local name.
+
+# This is the other half of the "pull the build root once" decision documented
+# in factory-build.yml. The image is tagged `factory-buildroot:run` -- a bare
+# name with no registry behind it -- so a job that failed to load the artifact
+# cannot silently fall back to pulling something else: docker refuses an
+# unqualified name it does not have locally.
+#
+# Deliberately not pulling by digest here. The pin is enforced at prepare and
+# the bytes are carried in the artifact, so re-resolving against a registry
+# would reintroduce exactly the mid-run expiry this avoids.
+
+inputs:
+  artifact:
+    description: Name of the build root artifact.
+    required: false
+    default: factory-buildroot-image
+
+runs:
+  using: composite
+  steps:
+    - name: Install zstd
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y zstd
+
+    - name: Download the build root artifact
+      uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v6
+      with:
+        name: ${{ inputs.artifact }}
+        path: work
+
+    - name: Load the image
+      shell: bash
+      run: |
+        set -euo pipefail
+        zstd -d -c work/buildroot.tar.zst | docker load
+        # docker load names the image factory-buildroot:run because that is
+        # the tag prepare applied before saving. Verify it rather than assume:
+        # a rename in prepare would otherwise surface here as a confusing
+        # "image not found" from a later docker run.
+        docker image inspect factory-buildroot:run >/dev/null \
+          || { echo "the build root artifact did not contain factory-buildroot:run" >&2; exit 1; }
+        docker image inspect factory-buildroot:run \
+          --format 'build root loaded: {{.Id}}'

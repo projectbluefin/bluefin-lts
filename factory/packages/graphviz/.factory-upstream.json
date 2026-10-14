@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:41:55+00:00",
+  "package": "graphviz",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "8d8b2562510b123f01423aebebe92d3c0ad459da669afc4a15ab4154dc3d9919",
+    "srpm_checksum_type": "sha256",
+    "tree": "478e5d800c5c5c20e7785d7cfc88081593be03cc"
+  }
+}

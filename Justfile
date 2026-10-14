@@ -1,5 +1,5 @@
-export repo_organization := env("GITHUB_REPOSITORY_OWNER", "projectbluefin")
-export image_name := env("IMAGE_NAME", "bluefin")
+export repo_organization := env("GITHUB_REPOSITORY_OWNER", "thallium-suite")
+export image_name := env("IMAGE_NAME", "uranium")
 export centos_version := env("CENTOS_VERSION", "stream10")
 export default_tag := env("DEFAULT_TAG", "stable")
 export bib_image := env("BIB_IMAGE", "quay.io/centos-bootc/bootc-image-builder:latest")
@@ -9,6 +9,7 @@ export coreos_stable_kernel := env("COREOS_STABLE_KERNEL", "7.1.8-200.fc44")
 export HOME := env("HOME", "")
 export common_image := env("COMMON_IMAGE", "ghcr.io/projectbluefin/common:latest")
 export brew_image := env("BREW_IMAGE", "ghcr.io/ublue-os/brew:latest")
+export gnome_packages_image := env("GNOME_PACKAGES_IMAGE", "ghcr.io/thallium-suite/uranium-packages:latest")
 
 alias build-vm := build-qcow2
 alias rebuild-vm := rebuild-qcow2
@@ -75,7 +76,7 @@ sudoif command *args:
 # This Justfile recipe builds a container image using Podman.
 #
 # Arguments:
-#   $target_image - The tag you want to apply to the image (default: bluefin).
+#   $target_image - The tag you want to apply to the image (default: uranium).
 #   $tag - The tag for the image (default: stable).
 #   $dx - Enable DX (default: "0").
 #   $nvidia - Enable Nvidia drivers (default: "0").
@@ -93,9 +94,9 @@ sudoif command *args:
 # just build $target_image $tag $dx $nvidia
 #
 # Example usage:
-#   just build bluefin-lts stable 1 0
+#   just build uranium stable 1 0
 #
-# This will build an image 'bluefin-lts:stable' with DX and the HWE CoreOS kernel enabled.
+# This will build an image 'uranium:stable' with DX and the HWE CoreOS kernel enabled.
 #
 
 [private]
@@ -127,6 +128,19 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR=${repo_organization}")
     BUILD_ARGS+=("--build-arg" "ENABLE_DX=${dx}")
     BUILD_ARGS+=("--build-arg" "ENABLE_NVIDIA=${nvidia}")
+
+    # The GNOME factory image is optional. An empty digest means the factory
+    # has not published yet, and the build must still work using the base
+    # image's GNOME -- so the arg is omitted entirely rather than passed empty,
+    # because "FROM ''" is a parse error rather than a fallback.
+    gnome_packages_sha=$(yq -r '.images[] | select(.name == "gnome_packages") | .digest // ""' image-versions.yaml)
+    if [[ -n "${gnome_packages_sha}" ]]; then
+        BUILD_ARGS+=("--build-arg" "GNOME_PACKAGES_IMAGE_REF=${gnome_packages_image}@${gnome_packages_sha}")
+        echo "GNOME packages from ${gnome_packages_image}@${gnome_packages_sha}"
+    else
+        echo "WARNING: no GNOME factory digest in image-versions.yaml; using the base image's GNOME"
+        echo "         expected until the factory publishes its first image"
+    fi
     # Select the pinned CoreOS akmods stream for mounted ZFS/NVIDIA images.
     ARCH=$(uname -m)
     coreos_fedora_ver="${coreos_stable_version}"
@@ -271,8 +285,8 @@ build-iso $target_image=("localhost/" + image_name) $tag=default_tag:
     fi
 
     # Determine Variant
-    VARIANT="bluefin"
-    if [[ "{{ target_image }}" =~ bluefin-lts ]]; then
+    VARIANT="uranium"
+    if [[ "{{ target_image }}" =~ uranium ]]; then
         VARIANT="lts"
     fi
 
@@ -397,14 +411,14 @@ lint:
 
 # Usage: just create-test-vm [name] [tag] [ssh-key]
 [group('VM Testing')]
-create-test-vm name="bluefin-test-ssh" tag="stable" ssh_key="":
+create-test-vm name="uranium-test-ssh" tag="stable" ssh_key="":
     @echo "Creating test VM: {{ name }}"
     @if [ -z "{{ ssh_key }}" ]; then ssh_key="{{ HOME }}/.ssh/id_ed25519.pub"; fi
     @./scripts/create-test-vm.sh "{{ name }}" "{{ tag }}" "{{ ssh_key }}"
 
 # Create and immediately start a test VM
 [group('VM Testing')]
-run-test-vm name="bluefin-test-ssh" tag="stable":
+run-test-vm name="uranium-test-ssh" tag="stable":
     @just create-test-vm "{{ name }}" "{{ tag }}" ""
     @echo "Starting VM: {{ name }}"
     @limactl start "{{ name }}"
@@ -417,7 +431,7 @@ run-test-vm name="bluefin-test-ssh" tag="stable":
 # Return the OCI image name for a given brand/stream/flavor combination.
 # For LTS each variant is its own brand_name so flavor is always "main".
 [group('Utility')]
-image_name base="bluefin-lts" stream="stable" flavor="main":
+image_name base="uranium" stream="stable" flavor="main":
     echo "{{ base }}"
 
 # Return the default OCI tag for the given stream (tag == stream for LTS).
@@ -427,7 +441,7 @@ generate-default-tag stream="stable" ghcr="0":
 
 # Return "cache-name allow-cache-write" for the dnf-cache composite action.
 [group('Utility')]
-setup-cache base="bluefin-lts" stream="stable" ghcr="0" event="push":
+setup-cache base="uranium" stream="stable" ghcr="0" event="push":
     #!/usr/bin/bash
     set -eou pipefail
     ALLOW_CACHE_WRITE="false"
@@ -440,7 +454,7 @@ setup-cache base="bluefin-lts" stream="stable" ghcr="0" event="push":
 # Build image for GHCR publication — called with sudo by reusable-build.yml.
 # Maps brand_name suffix to ENABLE_NVIDIA build args.
 [group('Image')]
-build-ghcr base="bluefin-lts" stream="stable" flavor="main" kernel_pin="":
+build-ghcr base="uranium" stream="stable" flavor="main" kernel_pin="":
     #!/usr/bin/bash
     set -eoux pipefail
     if [[ "${UID}" -gt "0" ]]; then
@@ -453,7 +467,7 @@ build-ghcr base="bluefin-lts" stream="stable" flavor="main" kernel_pin="":
 
 # Generate space-separated alias tags (dated + CentOS version aliases for production).
 [group('Utility')]
-generate-build-tags base="bluefin-lts" tag="stable" flavor="main" kernel_pin="" ghcr="0" version="" github_event="" github_number="":
+generate-build-tags base="uranium" tag="stable" flavor="main" kernel_pin="" ghcr="0" version="" github_event="" github_number="":
     #!/usr/bin/bash
     set -eou pipefail
     TODAY="$(date +%Y%m%d)"
@@ -477,7 +491,7 @@ tag-images image_name="" default_tag="" tags="":
 
 # Generate SBOM for the built image using syft.
 [group('Utility')]
-gen-sbom base="bluefin-lts" stream="stable" flavor="main" syft_cmd="syft":
+gen-sbom base="uranium" stream="stable" flavor="main" syft_cmd="syft":
     #!/usr/bin/bash
     set -eou pipefail
     IMAGE_NAME="$({{ just_executable() }} image_name {{ base }} {{ stream }} {{ flavor }})"
@@ -502,10 +516,83 @@ gen-sbom base="bluefin-lts" stream="stable" flavor="main" syft_cmd="syft":
 
 # Secureboot validation stub — LTS uses bootc + TPM2/Verity, not UKI.
 [group('Utility')]
-secureboot base="bluefin-lts" tag="stable" flavor="main":
+secureboot base="uranium" tag="stable" flavor="main":
     echo "Secureboot check: LTS is CentOS bootc-based (TPM2/Verity). UKI check not applicable."
 
 # Run unit tests for build scripts
 [group('Just')]
 unit-tests:
     bats tests/unit/
+
+# ── GNOME package factory ───────────────────────────────────────────────────
+# The factory in factory/ builds the GNOME stack against CentOS Stream 10 and
+# publishes it as an OCI repository image. See factory/README.md.
+#
+# These are fast local checks. Nothing here builds an RPM: that is the
+# `Factory build packages` workflow, against the pinned c10s build root.
+
+# Everything CI gates on for the factory, in the order it should fail.
+# Mirrors .github/workflows/factory-validate.yml.
+[group('Factory')]
+factory-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "==> factory unit tests"
+    python3 -m unittest discover -s factory/tests
+    echo "==> factory configuration"
+    for check in provenance locks buildroot contract specs; do
+        python3 factory/tools/validate.py --check "$check"
+    done
+    echo "==> recipe provenance sidecars"
+    python3 factory/tools/import_srpm.py status
+    echo "==> generated Packit configuration is current"
+    python3 factory/tools/render_packit_config.py --check
+
+# What the factory would build and why. Pass `full=true` to ignore the
+# published state and list everything.
+[group('Factory')]
+factory-plan full="false":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    args=(--root factory)
+    [[ "{{ full }}" == "true" ]] && args+=(--full)
+    python3 factory/tools/rebuild_plan.py "${args[@]}"
+
+# Check the GNOME dependency tree in the pinned CentOS root without compiling.
+[group('Factory')]
+factory-dependencies engine="podman":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python3 factory/tools/buildroot.py --engine "{{ engine }}" --output work/buildroot-resolved.json
+    image=$(python3 factory/tools/buildroot.py --digest-only)
+    python3 factory/tools/extract_buildrequires.py --engine "{{ engine }}" --image "$image" --output work/graph
+    python3 factory/tools/build_graph.py plan --rows work/graph/rows --stack --output work/graph/plan.json
+    python3 factory/tools/dependency_preflight.py --rows work/graph/rows --plan work/graph/plan.json --output work/graph/dependency-preflight.json
+
+# The resolved upstream source for every recipe, and which are still unlocked.
+[group('Factory')]
+factory-sources:
+    python3 factory/tools/source_pipeline.py report
+
+# Re-render config/upstream-sources.json from the recipes, in the build root.
+# Needs a container engine; downloads every source to compute its digest.
+[group('Factory')]
+factory-relock engine="podman":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python3 factory/tools/render_source_locks.py --engine "{{ engine }}" --write
+    python3 factory/tools/render_packit_config.py --write
+
+# Re-render .packit.yaml after adding or removing a recipe.
+[group('Factory')]
+factory-packit-config:
+    python3 factory/tools/render_packit_config.py --write
+
+# Prove one recipe produces an SRPM. Needs a container engine.
+[group('Factory')]
+factory-srpm package engine="docker":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p factory/work/srpm
+    python3 factory/tools/srpm_gate.py "{{ package }}" \
+        --engine "{{ engine }}" --output "factory/work/srpm/{{ package }}.src.rpm"

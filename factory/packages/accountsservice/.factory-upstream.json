@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "package": "accountsservice",
+  "imported_at": "2026-10-10T15:37:51.161507+00:00",
+  "source": {
+    "kind": "git",
+    "repository": "https://github.com/projectbluefin/utah-packages",
+    "tree": "35bbfb3a2ac1206571a3ce176b3b0a2be8774ce3",
+    "path": "packages/accountsservice",
+    "upstream_repository": "https://src.fedoraproject.org/rpms/accountsservice.git",
+    "upstream_commit": "65d399bd14163f97dda1e267bb297e8080440e44"
+  }
+}

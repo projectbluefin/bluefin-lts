@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:49:03+00:00",
+  "package": "pipewire",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "f755e831199af187dd8cb18897af54e305e323f1e2e118cd5bb047935fd717e6",
+    "srpm_checksum_type": "sha256",
+    "tree": "2de67b3c8b17f872969308d81331e75e69089a72"
+  }
+}

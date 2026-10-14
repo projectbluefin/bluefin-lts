@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:44:56+00:00",
+  "package": "tecla",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "d868518ee52e5987ff9d6f5609e6efbd74c87746cfc76f4f0e9b4282e60cdea2",
+    "srpm_checksum_type": "sha256",
+    "tree": "4284c48a3fdd5a2b8e2b367cfd73147f211f8fa1"
+  }
+}

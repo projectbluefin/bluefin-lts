@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:45:14+00:00",
+  "package": "wayland-protocols",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "78d3eb63b07532bb10a3bfc0d3b4c0ded1ccf568fdf4afed54313b3f3e4425c9",
+    "srpm_checksum_type": "sha256",
+    "tree": "2e66553343d37fe3915087cd1969bca9a84f6550"
+  }
+}

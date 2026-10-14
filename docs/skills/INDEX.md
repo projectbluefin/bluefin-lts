@@ -8,6 +8,7 @@ matches the task; supporting references are loaded on demand.
 | Build or validate an image locally | [`build`](build/SKILL.md) |
 | Choose or change packages | [`packages`](packages/SKILL.md) |
 | Resolve platform package differences | [`centos-vs-fedora`](centos-vs-fedora/SKILL.md) |
+| Build, bump or debug GNOME RPM recipes | [`factory`](factory/SKILL.md) |
 | Change or debug CI workflows | [`ci-cd`](ci-cd/SKILL.md) |
 | Add or remove desktop extensions | [`gnome-extensions`](gnome-extensions/SKILL.md) |
 | Change hardware integration | [`hardware`](hardware/SKILL.md) |

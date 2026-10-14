@@ -1,0 +1,4160 @@
+From 7255a7ff96d9066c5c8e090f3a6d76de2f38ba50 Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Mon, 14 Oct 2024 09:12:39 -0400
+Subject: [PATCH 01/12]image-source: Refactor - add FlatpakImageSource type
+
+To avoid passing around combinations of a FlaptakOciRegistry with
+repository and digest, add a FlatpakImageSource type.
+
+This also reduces duplicated code where every place that did
+this independently retrieved the repository and image config.
+---
+ app/flatpak-builtins-build-import-bundle.c |  65 +-----
+ common/flatpak-common-types-private.h      |   1 +
+ common/flatpak-dir.c                       |  80 +++-----
+ common/flatpak-image-source-private.h      |  57 ++++++
+ common/flatpak-image-source.c              | 227 +++++++++++++++++++++
+ common/flatpak-oci-registry-private.h      |  11 +-
+ common/flatpak-oci-registry.c              |  46 ++---
+ common/meson.build                         |   1 +
+ doc/reference/meson.build                  |   1 +
+ system-helper/flatpak-system-helper.c      |  57 +-----
+ 10 files changed, 348 insertions(+), 198 deletions(-)
+ create mode 100644 common/flatpak-image-source-private.h
+ create mode 100644 common/flatpak-image-source.c
+
+diff --git a/app/flatpak-builtins-build-import-bundle.c b/app/flatpak-builtins-build-import-bundle.c
+index d5d6fc26..f3508709 100644
+--- a/app/flatpak-builtins-build-import-bundle.c
++++ b/app/flatpak-builtins-build-import-bundle.c
+@@ -30,9 +30,10 @@
+ #include "libglnx.h"
+ 
+ #include "flatpak-builtins.h"
++#include "flatpak-image-source-private.h"
++#include "flatpak-oci-registry-private.h"
+ #include "flatpak-repo-utils-private.h"
+ #include "flatpak-utils-private.h"
+-#include "flatpak-oci-registry-private.h"
+ 
+ static char *opt_ref;
+ static gboolean opt_oci = FALSE;
+@@ -58,65 +59,17 @@ import_oci (OstreeRepo *repo, GFile *file,
+             GCancellable *cancellable, GError **error)
+ {
+   g_autofree char *commit_checksum = NULL;
+-  g_autofree char *dir_uri = NULL;
+   g_autofree char *target_ref = NULL;
+-  const char *oci_digest;
+-  g_autoptr(FlatpakOciRegistry) registry = NULL;
+-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
+-  g_autoptr(FlatpakOciImage) image_config = NULL;
+-  FlatpakOciManifest *manifest = NULL;
+-  g_autoptr(FlatpakOciIndex) index = NULL;
+-  const FlatpakOciManifestDescriptor *desc;
++  g_autoptr(FlatpakImageSource) image_source = NULL;
+   GHashTable *labels;
+ 
+-  dir_uri = g_file_get_uri (file);
+-  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
+-  if (registry == NULL)
+-    return NULL;
+-
+-  index = flatpak_oci_registry_load_index (registry, cancellable, error);
+-  if (index == NULL)
+-    return NULL;
+-
+-  if (opt_ref)
+-    {
+-      desc = flatpak_oci_index_get_manifest (index, opt_ref);
+-      if (desc == NULL)
+-        {
+-          flatpak_fail (error, _("Ref '%s' not found in registry"), opt_ref);
+-          return NULL;
+-        }
+-    }
+-  else
+-    {
+-      desc = flatpak_oci_index_get_only_manifest (index);
+-      if (desc == NULL)
+-        {
+-          flatpak_fail (error, _("Multiple images in registry, specify a ref with --ref"));
+-          return NULL;
+-        }
+-    }
+-
+-  oci_digest = desc->parent.digest;
+-
+-  versioned = flatpak_oci_registry_load_versioned (registry, NULL,
+-                                                   oci_digest, NULL, NULL,
+-                                                   cancellable, error);
+-  if (versioned == NULL)
++  image_source = flatpak_image_source_new_local (file, opt_ref, cancellable, error);
++  if (image_source == NULL)
+     return NULL;
+ 
+-  manifest = FLATPAK_OCI_MANIFEST (versioned);
+-
+-  image_config = flatpak_oci_registry_load_image_config (registry, NULL,
+-                                                         manifest->config.digest, NULL,
+-                                                         NULL, cancellable, error);
+-  if (image_config == NULL)
+-    return FALSE;
+-
+-  labels = flatpak_oci_image_get_labels (image_config);
+-  if (labels)
+-    flatpak_oci_parse_commit_labels (labels, NULL, NULL, NULL,
+-                                     &target_ref, NULL, NULL, NULL);
++  labels = flatpak_image_source_get_labels (image_source);
++  flatpak_oci_parse_commit_labels (labels, NULL, NULL, NULL,
++                                   &target_ref, NULL, NULL, NULL);
+   if (target_ref == NULL)
+     {
+       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+@@ -124,7 +77,7 @@ import_oci (OstreeRepo *repo, GFile *file,
+       return NULL;
+     }
+ 
+-  commit_checksum = flatpak_pull_from_oci (repo, registry, NULL, oci_digest, NULL, manifest, image_config,
++  commit_checksum = flatpak_pull_from_oci (repo, image_source, NULL,
+                                            NULL, target_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, cancellable, error);
+   if (commit_checksum == NULL)
+     return NULL;
+diff --git a/common/flatpak-common-types-private.h b/common/flatpak-common-types-private.h
+index 05130144..d7f3913b 100644
+--- a/common/flatpak-common-types-private.h
++++ b/common/flatpak-common-types-private.h
+@@ -53,6 +53,7 @@ typedef enum {
+ 
+ typedef struct FlatpakDir          FlatpakDir;
+ typedef struct FlatpakDeploy       FlatpakDeploy;
++typedef struct _FlatpakImageSource FlatpakImageSource;
+ typedef struct FlatpakOciRegistry  FlatpakOciRegistry;
+ typedef struct _FlatpakOciManifest FlatpakOciManifest;
+ typedef struct _FlatpakOciImage    FlatpakOciImage;
+diff --git a/common/flatpak-dir.c b/common/flatpak-dir.c
+index 6936d45f..b0c29a70 100644
+--- a/common/flatpak-dir.c
++++ b/common/flatpak-dir.c
+@@ -52,6 +52,7 @@
+ #include "flatpak-dir-utils-private.h"
+ #include "flatpak-error.h"
+ #include "flatpak-locale-utils-private.h"
++#include "flatpak-image-source-private.h"
+ #include "flatpak-oci-registry-private.h"
+ #include "flatpak-ref.h"
+ #include "flatpak-repo-utils-private.h"
+@@ -1049,14 +1050,16 @@ lookup_oci_registry_uri_from_summary (GVariant *summary,
+   return g_steal_pointer (&registry_uri);
+ }
+ 
+-static FlatpakOciRegistry *
+-flatpak_remote_state_new_oci_registry (FlatpakRemoteState *self,
++static FlatpakImageSource *
++flatpak_remote_state_new_image_source (FlatpakRemoteState *self,
++                                       const char   *oci_repository,
++                                       const char   *digest,
+                                        const char   *token,
+                                        GCancellable *cancellable,
+                                        GError      **error)
+ {
+   g_autofree char *registry_uri = NULL;
+-  g_autoptr(FlatpakOciRegistry) registry = NULL;
++  g_autoptr(FlatpakImageSource) image_source = NULL;
+ 
+   if (!flatpak_remote_state_ensure_summary (self, error))
+     return NULL;
+@@ -1065,13 +1068,13 @@ flatpak_remote_state_new_oci_registry (FlatpakRemoteState *self,
+   if (registry_uri == NULL)
+     return NULL;
+ 
+-  registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, error);
+-  if (registry == NULL)
++  image_source = flatpak_image_source_new_remote (registry_uri, oci_repository, digest, NULL, error);
++  if (image_source == NULL)
+     return NULL;
+ 
+-  flatpak_oci_registry_set_token (registry, token);
++  flatpak_image_source_set_token (image_source, token);
+ 
+-  return g_steal_pointer (&registry);
++  return g_steal_pointer (&image_source);
+ }
+ 
+ static GVariant *
+@@ -1083,9 +1086,7 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+                                               GCancellable *cancellable,
+                                               GError      **error)
+ {
+-  g_autoptr(FlatpakOciRegistry) registry = NULL;
+-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
+-  g_autoptr(FlatpakOciImage) image_config = NULL;
++  g_autoptr(FlatpakImageSource) image_source = NULL;
+   g_autofree char *oci_digest = NULL;
+   g_autofree char *latest_rev = NULL;
+   VarRefInfoRef latest_rev_info;
+@@ -1100,10 +1101,6 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+   g_autoptr(GVariant) metadata_v = NULL;
+ 
+-  registry = flatpak_remote_state_new_oci_registry (self, token, cancellable, error);
+-  if (registry == NULL)
+-    return NULL;
+-
+   /* We extract the rev info from the latest, even if we don't use the latest digest, assuming refs don't move */
+   if (!flatpak_remote_state_lookup_ref (self, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
+     return NULL;
+@@ -1121,25 +1118,11 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+ 
+   oci_digest = g_strconcat ("sha256:", checksum, NULL);
+ 
+-  versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
+-                                                   NULL, NULL, cancellable, error);
+-  if (versioned == NULL)
+-    return NULL;
+-
+-  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
+-    {
+-      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
+-      return NULL;
+-    }
+-
+-  image_config = flatpak_oci_registry_load_image_config (registry, oci_repository,
+-                                                         FLATPAK_OCI_MANIFEST (versioned)->config.digest,
+-                                                         (const char **)FLATPAK_OCI_MANIFEST (versioned)->config.urls,
+-                                                         NULL, cancellable, error);
+-  if (image_config == NULL)
++  image_source = flatpak_remote_state_new_image_source (self, oci_repository, oci_digest, token, cancellable, error);
++  if (image_source == NULL)
+     return NULL;
+ 
+-  labels = flatpak_oci_image_get_labels (image_config);
++  labels = flatpak_image_source_get_labels (image_source);
+   if (labels)
+     flatpak_oci_parse_commit_labels (labels, &timestamp,
+                                      &subject, &body,
+@@ -5935,7 +5918,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
+                         GCancellable        *cancellable,
+                         GError             **error)
+ {
+-  g_autoptr(FlatpakOciRegistry) registry = NULL;
++  g_autoptr(FlatpakImageSource) image_source = NULL;
+   g_autofree char *oci_digest = NULL;
+   g_autofree char *latest_rev = NULL;
+   VarRefInfoRef latest_rev_info;
+@@ -5968,15 +5951,15 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
+ 
+   oci_digest = g_strconcat ("sha256:", rev, NULL);
+ 
+-  registry = flatpak_remote_state_new_oci_registry (state, token, cancellable, error);
+-  if (registry == NULL)
++  image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
++  if (image_source == NULL)
+     return FALSE;
+ 
+   flatpak_progress_start_oci_pull (progress);
+ 
+   g_info ("Mirroring OCI image %s", oci_digest);
+ 
+-  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_repository, oci_digest, state->remote_name, ref, delta_url, self->repo, oci_pull_progress_cb,
++  res = flatpak_mirror_image_from_oci (dst_registry, image_source, state->remote_name, ref, delta_url, self->repo, oci_pull_progress_cb,
+                                        progress, cancellable, error);
+ 
+   if (!res)
+@@ -5998,9 +5981,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
+                       GCancellable        *cancellable,
+                       GError             **error)
+ {
+-  g_autoptr(FlatpakOciRegistry) registry = NULL;
+-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
+-  g_autoptr(FlatpakOciImage) image_config = NULL;
++  g_autoptr(FlatpakImageSource) image_source = NULL;
++  FlatpakOciRegistry *registry = NULL;
+   const char *oci_repository = NULL;
+   const char *delta_url = NULL;
+   g_autofree char *oci_digest = NULL;
+@@ -6031,23 +6013,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
+   if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
+     return TRUE;
+ 
+-  registry = flatpak_remote_state_new_oci_registry (state, token, cancellable, error);
+-  if (registry == NULL)
+-    return FALSE;
+-
+-  versioned = flatpak_oci_registry_load_versioned (registry, oci_repository, oci_digest,
+-                                                   NULL, NULL, cancellable, error);
+-  if (versioned == NULL)
+-    return FALSE;
+-
+-  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
+-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
+-
+-  image_config = flatpak_oci_registry_load_image_config (registry, oci_repository,
+-                                                         FLATPAK_OCI_MANIFEST (versioned)->config.digest,
+-                                                         (const char **)FLATPAK_OCI_MANIFEST (versioned)->config.urls,
+-                                                         NULL, cancellable, error);
+-  if (image_config == NULL)
++  image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
++  if (image_source == NULL)
+     return FALSE;
+ 
+   if (repo == NULL)
+@@ -6057,7 +6024,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
+ 
+   g_info ("Pulling OCI image %s", oci_digest);
+ 
+-  checksum = flatpak_pull_from_oci (repo, registry, oci_repository, oci_digest, delta_url, FLATPAK_OCI_MANIFEST (versioned), image_config,
++  checksum = flatpak_pull_from_oci (repo, image_source, delta_url,
+                                     state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
+ 
+   if (checksum == NULL)
+@@ -6073,6 +6040,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
+       name = g_file_get_path (file);
+     }
+ 
++  registry = flatpak_image_source_get_registry (image_source);
+   (flatpak_dir_log) (self, __FILE__, __LINE__, __FUNCTION__, name,
+                      "pull oci", flatpak_oci_registry_get_uri (registry), ref, NULL, NULL, NULL,
+                      "Pulled %s from %s", ref, flatpak_oci_registry_get_uri (registry));
+diff --git a/common/flatpak-image-source-private.h b/common/flatpak-image-source-private.h
+new file mode 100644
+index 00000000..ebd856a4
+--- /dev/null
++++ b/common/flatpak-image-source-private.h
+@@ -0,0 +1,57 @@
++/*
++ * Copyright © 2024 Red Hat, Inc
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
++ *
++ * Authors:
++ *       Owen Taylor <otaylor@redhat.com>
++ */
++
++#ifndef __FLATPAK_IMAGE_SOURCE_H__
++#define __FLATPAK_IMAGE_SOURCE_H__
++
++#include <glib.h>
++#include <gio/gio.h>
++
++#include <flatpak-common-types-private.h>
++
++#define FLATPAK_TYPE_IMAGE_SOURCE flatpak_image_source_get_type ()
++G_DECLARE_FINAL_TYPE (FlatpakImageSource,
++                      flatpak_image_source,
++                      FLATPAK, IMAGE_SOURCE,
++                      GObject)
++
++FlatpakImageSource *flatpak_image_source_new_local (GFile        *file,
++                                                    const char   *reference,
++                                                    GCancellable *cancellable,
++                                                    GError      **error);
++FlatpakImageSource *flatpak_image_source_new_remote (const char   *uri,
++                                                     const char   *oci_repository,
++                                                     const char   *digest,
++                                                     GCancellable *cancellable,
++                                                     GError      **error);
++
++void flatpak_image_source_set_token (FlatpakImageSource *self,
++                                     const char         *token);
++
++FlatpakOciRegistry *flatpak_image_source_get_registry       (FlatpakImageSource *self);
++const char         *flatpak_image_source_get_oci_repository (FlatpakImageSource *self);
++const char         *flatpak_image_source_get_digest         (FlatpakImageSource *self);
++FlatpakOciManifest *flatpak_image_source_get_manifest       (FlatpakImageSource *self);
++size_t              flatpak_image_source_get_manifest_size  (FlatpakImageSource *self);
++FlatpakOciImage    *flatpak_image_source_get_image_config   (FlatpakImageSource *self);
++
++GHashTable *flatpak_image_source_get_labels (FlatpakImageSource *self);
++
++#endif /* __FLATPAK_IMAGE_SOURCE_H__ */
+diff --git a/common/flatpak-image-source.c b/common/flatpak-image-source.c
+new file mode 100644
+index 00000000..22497ccf
+--- /dev/null
++++ b/common/flatpak-image-source.c
+@@ -0,0 +1,227 @@
++/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
++ * Copyright © 2024 Red Hat, Inc
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
++ *
++ * Authors:
++ *       Owen Taylor <otaylor@redhat.com>
++ */
++
++#include <glib/gi18n-lib.h>
++
++#include "flatpak-image-source-private.h"
++#include "flatpak-oci-registry-private.h"
++
++struct _FlatpakImageSource
++{
++  GObject parent;
++
++  FlatpakOciRegistry *registry;
++  char *repository;
++  char *digest;
++
++  FlatpakOciManifest *manifest;
++  size_t manifest_size;
++  FlatpakOciImage *image_config;
++};
++
++G_DEFINE_TYPE (FlatpakImageSource, flatpak_image_source, G_TYPE_OBJECT)
++
++static void
++flatpak_image_source_finalize (GObject *object)
++{
++  FlatpakImageSource *self = FLATPAK_IMAGE_SOURCE (object);
++
++  g_clear_object (&self->registry);
++  g_clear_pointer (&self->repository, g_free);
++  g_clear_pointer (&self->digest, g_free);
++  g_clear_object (&self->manifest);
++  g_clear_object (&self->image_config);
++
++  G_OBJECT_CLASS (flatpak_image_source_parent_class)->finalize (object);
++}
++
++static void
++flatpak_image_source_class_init (FlatpakImageSourceClass *klass)
++{
++  GObjectClass *object_class = G_OBJECT_CLASS (klass);
++
++  object_class->finalize = flatpak_image_source_finalize;
++}
++
++static void
++flatpak_image_source_init (FlatpakImageSource *self)
++{
++}
++
++static FlatpakImageSource *
++flatpak_image_source_new (FlatpakOciRegistry *registry,
++                          const char         *repository,
++                          const char         *digest,
++                          GCancellable       *cancellable,
++                          GError            **error)
++{
++  g_autoptr(FlatpakImageSource) self = NULL;
++  g_autoptr(FlatpakOciVersioned) versioned = NULL;
++  GHashTable *labels;
++
++  self = g_object_new (FLATPAK_TYPE_IMAGE_SOURCE, NULL);
++  self->registry = g_object_ref (registry);
++  self->repository = g_strdup (repository);
++  self->digest = g_strdup (digest);
++
++  versioned = flatpak_oci_registry_load_versioned (self->registry, self->repository,
++                                                   self->digest, NULL, &self->manifest_size,
++                                                   cancellable, error);
++  if (versioned == NULL)
++    return NULL;
++
++  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
++    {
++      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
++      return NULL;
++    }
++
++  self->manifest = FLATPAK_OCI_MANIFEST (g_steal_pointer (&versioned));
++
++  if (self->manifest->config.digest == NULL)
++    {
++      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
++      return NULL;
++    }
++
++  self->image_config = flatpak_oci_registry_load_image_config (self->registry, self->repository,
++                                                                self->manifest->config.digest, NULL,
++                                                                NULL, cancellable, error);
++  if (self->image_config == NULL)
++    return NULL;
++
++  labels = flatpak_image_source_get_labels (self);
++  if (!g_hash_table_contains (labels, "org.flatpak.ref"))
++    {
++      flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No org.flatpak.ref found in image"));
++      return NULL;
++    }
++
++  return g_steal_pointer (&self);
++}
++
++FlatpakImageSource *
++flatpak_image_source_new_local (GFile        *file,
++                                const char   *reference,
++                                GCancellable *cancellable,
++                                GError      **error)
++{
++  g_autofree char *dir_uri = NULL;
++  g_autofree char *target_ref = NULL;
++  g_autoptr(FlatpakImageSource) image_source = NULL;
++  g_autoptr(FlatpakOciRegistry) registry = NULL;
++  g_autoptr(FlatpakOciIndex) index = NULL;
++  const FlatpakOciManifestDescriptor *desc;
++
++  dir_uri = g_file_get_uri (file);
++  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
++  if (registry == NULL)
++    return NULL;
++
++  index = flatpak_oci_registry_load_index (registry, cancellable, error);
++  if (index == NULL)
++    return NULL;
++
++  if (reference)
++    {
++      desc = flatpak_oci_index_get_manifest (index, reference);
++      if (desc == NULL)
++        {
++          flatpak_fail (error, _("Ref '%s' not found in registry"), reference);
++          return NULL;
++        }
++    }
++  else
++    {
++      desc = flatpak_oci_index_get_only_manifest (index);
++      if (desc == NULL)
++        {
++          flatpak_fail (error, _("Multiple images in registry, specify a ref with --ref"));
++          return NULL;
++        }
++    }
++
++  return flatpak_image_source_new (registry, NULL, desc->parent.digest, cancellable, error);
++}
++
++FlatpakImageSource *
++flatpak_image_source_new_remote (const char   *uri,
++                                 const char   *oci_repository,
++                                 const char   *digest,
++                                 GCancellable *cancellable,
++                                 GError      **error)
++{
++  g_autoptr(FlatpakOciRegistry) registry = NULL;
++
++  registry = flatpak_oci_registry_new (uri, FALSE, -1, cancellable, error);
++  if (!registry)
++    return NULL;
++
++  return flatpak_image_source_new (registry, oci_repository, digest, cancellable, error);
++}
++
++void
++flatpak_image_source_set_token (FlatpakImageSource *self,
++                                const char            *token)
++{
++  flatpak_oci_registry_set_token (self->registry, token);
++}
++
++FlatpakOciRegistry *
++flatpak_image_source_get_registry (FlatpakImageSource *self)
++{
++  return self->registry;
++}
++
++const char *
++flatpak_image_source_get_oci_repository (FlatpakImageSource *self)
++{
++  return self->repository;
++}
++
++const char *
++flatpak_image_source_get_digest (FlatpakImageSource *self)
++{
++  return self->digest;
++}
++
++FlatpakOciManifest *
++flatpak_image_source_get_manifest (FlatpakImageSource *self)
++{
++  return self->manifest;
++}
++
++size_t
++flatpak_image_source_get_manifest_size (FlatpakImageSource *self)
++{
++  return self->manifest_size;
++}
++
++FlatpakOciImage *
++flatpak_image_source_get_image_config (FlatpakImageSource *self)
++{
++  return self->image_config;
++}
++
++GHashTable *
++flatpak_image_source_get_labels (FlatpakImageSource *self)
++{
++  return flatpak_oci_image_get_labels (self->image_config);
++}
+diff --git a/common/flatpak-oci-registry-private.h b/common/flatpak-oci-registry-private.h
+index 2c0608dc..47ffc7be 100644
+--- a/common/flatpak-oci-registry-private.h
++++ b/common/flatpak-oci-registry-private.h
+@@ -183,6 +183,7 @@ GBytes *flatpak_oci_index_make_appstream (FlatpakHttpSession  *http_session,
+                                           GCancellable        *cancellable,
+                                           GError             **error);
+ 
++
+ typedef void (*FlatpakOciPullProgress) (guint64  total_size,
+                                         guint64  pulled_size,
+                                         guint32  n_layers,
+@@ -190,12 +191,8 @@ typedef void (*FlatpakOciPullProgress) (guint64  total_size,
+                                         gpointer data);
+ 
+ char * flatpak_pull_from_oci (OstreeRepo            *repo,
+-                              FlatpakOciRegistry    *registry,
+-                              const char            *oci_repository,
+-                              const char            *digest,
++                              FlatpakImageSource    *image_source,
+                               const char            *delta_url,
+-                              FlatpakOciManifest    *manifest,
+-                              FlatpakOciImage       *image_config,
+                               const char            *remote,
+                               const char            *ref,
+                               FlatpakPullFlags       flags,
+@@ -205,9 +202,7 @@ char * flatpak_pull_from_oci (OstreeRepo            *repo,
+                               GError               **error);
+ 
+ gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+-                                        FlatpakOciRegistry    *registry,
+-                                        const char            *oci_repository,
+-                                        const char            *digest,
++                                        FlatpakImageSource    *image_source,
+                                         const char            *remote,
+                                         const char            *ref,
+                                         const char            *delta_url,
+diff --git a/common/flatpak-oci-registry.c b/common/flatpak-oci-registry.c
+index 6d36de2a..11b5f98d 100644
+--- a/common/flatpak-oci-registry.c
++++ b/common/flatpak-oci-registry.c
+@@ -28,6 +28,7 @@
+ 
+ #include <archive.h>
+ #include <gpgme.h>
++#include "flatpak-image-source-private.h"
+ #include "flatpak-oci-registry-private.h"
+ #include "flatpak-repo-utils-private.h"
+ #include "flatpak-utils-base-private.h"
+@@ -3454,9 +3455,7 @@ oci_layer_progress (guint64  downloaded_bytes,
+ 
+ gboolean
+ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+-                               FlatpakOciRegistry    *registry,
+-                               const char            *oci_repository,
+-                               const char            *digest,
++                               FlatpakImageSource    *image_source,
+                                const char            *remote,
+                                const char            *ref,
+                                const char            *delta_url,
+@@ -3467,8 +3466,11 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+                                GError               **error)
+ {
+   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
+-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
+-  FlatpakOciManifest *manifest = NULL;
++  FlatpakOciRegistry *registry = flatpak_image_source_get_registry (image_source);
++  const char *oci_repository = flatpak_image_source_get_oci_repository (image_source);
++  const char *digest = flatpak_image_source_get_digest (image_source);
++  FlatpakOciManifest *manifest = flatpak_image_source_get_manifest (image_source);
++  FlatpakOciImage *image_config = flatpak_image_source_get_image_config (image_source);
+   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
+   g_autoptr(FlatpakOciManifest) delta_manifest = NULL;
+   g_autofree char *old_checksum = NULL;
+@@ -3476,36 +3478,16 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+   g_autoptr(GFile) old_root = NULL;
+   OstreeRepoCommitState old_state = 0;
+   g_autofree char *old_diffid = NULL;
+-  gsize versioned_size;
+   g_autoptr(FlatpakOciIndex) index = NULL;
+-  g_autoptr(FlatpakOciImage) image_config = NULL;
+   int n_layers;
+   int i;
+ 
+   if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, TRUE, digest, NULL, NULL, NULL, cancellable, error))
+     return FALSE;
+ 
+-  versioned = flatpak_oci_registry_load_versioned (dst_registry, NULL, digest, NULL, &versioned_size, cancellable, error);
+-  if (versioned == NULL)
+-    return FALSE;
+-
+-  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
+-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
+-
+-  manifest = FLATPAK_OCI_MANIFEST (versioned);
+-
+-  if (manifest->config.digest == NULL)
+-    return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Image is not a manifest"));
+-
+   if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, oci_repository, FALSE, manifest->config.digest, (const char **)manifest->config.urls, NULL, NULL, cancellable, error))
+     return FALSE;
+ 
+-  image_config = flatpak_oci_registry_load_image_config (dst_registry, NULL,
+-                                                         manifest->config.digest, NULL,
+-                                                         NULL, cancellable, error);
+-  if (image_config == NULL)
+-    return FALSE;
+-
+   /* For deltas we ensure that the diffid and regular layers exists and match up */
+   n_layers = flatpak_oci_manifest_get_n_layers (manifest);
+   if (n_layers == 0 || n_layers != flatpak_oci_image_get_n_layers (image_config))
+@@ -3589,7 +3571,8 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+   if (index == NULL)
+     index = flatpak_oci_index_new ();
+ 
+-  manifest_desc = flatpak_oci_descriptor_new (versioned->mediatype, digest, versioned_size);
++  manifest_desc = flatpak_oci_descriptor_new (manifest->parent.mediatype, digest,
++                                              flatpak_image_source_get_manifest_size (image_source));
+ 
+   flatpak_oci_index_add_manifest (index, ref, manifest_desc);
+ 
+@@ -3601,12 +3584,8 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+ 
+ char *
+ flatpak_pull_from_oci (OstreeRepo            *repo,
+-                       FlatpakOciRegistry    *registry,
+-                       const char            *oci_repository,
+-                       const char            *digest,
++                       FlatpakImageSource    *image_source,
+                        const char            *delta_url,
+-                       FlatpakOciManifest    *manifest,
+-                       FlatpakOciImage       *image_config,
+                        const char            *remote,
+                        const char            *ref,
+                        FlatpakPullFlags       flags,
+@@ -3615,6 +3594,11 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
+                        GCancellable          *cancellable,
+                        GError               **error)
+ {
++  FlatpakOciRegistry *registry = flatpak_image_source_get_registry (image_source);
++  const char *oci_repository = flatpak_image_source_get_oci_repository (image_source);
++  const char *digest = flatpak_image_source_get_digest (image_source);
++  FlatpakOciManifest *manifest = flatpak_image_source_get_manifest (image_source);
++  FlatpakOciImage *image_config = flatpak_image_source_get_image_config (image_source);
+   gboolean force_disable_deltas = (flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
+   g_autoptr(OstreeMutableTree) archive_mtree = NULL;
+   g_autoptr(GFile) archive_root = NULL;
+diff --git a/common/meson.build b/common/meson.build
+index bd5dbf3d..beed1f06 100644
+--- a/common/meson.build
++++ b/common/meson.build
+@@ -172,6 +172,7 @@ sources = [
+   'flatpak-error.c',
+   'flatpak-exports.c',
+   'flatpak-glib-backports.c',
++  'flatpak-image-source.c',
+   'flatpak-installation.c',
+   'flatpak-installed-ref.c',
+   'flatpak-instance.c',
+diff --git a/doc/reference/meson.build b/doc/reference/meson.build
+index a881b0cb..92f1482e 100644
+--- a/doc/reference/meson.build
++++ b/doc/reference/meson.build
+@@ -46,6 +46,7 @@ gnome.gtkdoc(
+     'flatpak-document-dbus-generated.h',
+     'flatpak-enum-types.h',
+     'flatpak-exports-private.h',
++    'flatpak-image-source-private.h',
+     'flatpak-installed-ref-private.h',
+     'flatpak-json-oci-private.h',
+     'flatpak-json-private.h',
+diff --git a/system-helper/flatpak-system-helper.c b/system-helper/flatpak-system-helper.c
+index a58ab2c6..a4d9708b 100644
+--- a/system-helper/flatpak-system-helper.c
++++ b/system-helper/flatpak-system-helper.c
+@@ -39,6 +39,7 @@
+ #include "flatpak-dbus-generated.h"
+ #include "flatpak-dir-private.h"
+ #include "flatpak-error.h"
++#include "flatpak-image-source-private.h"
+ #include "flatpak-oci-registry-private.h"
+ #include "flatpak-progress-private.h"
+ #include "flatpak-system-helper.h"
+@@ -528,15 +529,11 @@ handle_deploy (FlatpakSystemHelper   *object,
+   if (strlen (arg_repo_path) > 0 && is_oci)
+     {
+       g_autoptr(GFile) registry_file = g_file_new_for_path (arg_repo_path);
+-      g_autofree char *registry_uri = g_file_get_uri (registry_file);
+-      g_autoptr(FlatpakOciRegistry) registry = NULL;
+-      g_autoptr(FlatpakOciIndex) index = NULL;
+-      const FlatpakOciManifestDescriptor *desc;
+-      g_autoptr(FlatpakOciVersioned) versioned = NULL;
+-      g_autoptr(FlatpakOciImage) image_config = NULL;
++      g_autoptr(FlatpakImageSource) image_source = NULL;
+       g_autoptr(FlatpakRemoteState) state = NULL;
+       g_autoptr(GHashTable) remote_refs = NULL;
+       g_autofree char *checksum = NULL;
++      const char *image_source_digest;
+       const char *verified_digest;
+       g_autofree char *upstream_url = NULL;
+ 
+@@ -552,50 +549,14 @@ handle_deploy (FlatpakSystemHelper   *object,
+           return G_DBUS_METHOD_INVOCATION_HANDLED;
+         }
+ 
+-      registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
+-      if (registry == NULL)
++      image_source = flatpak_image_source_new_local (registry_file, arg_ref, NULL, &error);
++      if (image_source == NULL)
+         {
+           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                  "Can't open child OCI registry: %s", error->message);
+           return G_DBUS_METHOD_INVOCATION_HANDLED;
+         }
+ 
+-      index = flatpak_oci_registry_load_index (registry, NULL, &error);
+-      if (index == NULL)
+-        {
+-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+-                                                 "Can't open child OCI registry index: %s", error->message);
+-          return G_DBUS_METHOD_INVOCATION_HANDLED;
+-        }
+-
+-      desc = flatpak_oci_index_get_manifest (index, arg_ref);
+-      if (desc == NULL)
+-        {
+-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+-                                                 "Can't find ref %s in child OCI registry index", arg_ref);
+-          return G_DBUS_METHOD_INVOCATION_HANDLED;
+-        }
+-
+-      versioned = flatpak_oci_registry_load_versioned (registry, NULL, desc->parent.digest, (const char **)desc->parent.urls, NULL,
+-                                                       NULL, &error);
+-      if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
+-        {
+-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+-                                                 "Can't open child manifest");
+-          return G_DBUS_METHOD_INVOCATION_HANDLED;
+-        }
+-
+-      image_config = flatpak_oci_registry_load_image_config (registry, NULL,
+-                                                             FLATPAK_OCI_MANIFEST (versioned)->config.digest,
+-                                                             (const char **)FLATPAK_OCI_MANIFEST (versioned)->config.urls,
+-                                                             NULL, NULL, &error);
+-      if (image_config == NULL)
+-        {
+-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+-                                                 "Can't open child image config");
+-          return G_DBUS_METHOD_INVOCATION_HANDLED;
+-        }
+-
+       state = flatpak_dir_get_remote_state (system, arg_origin, FALSE, NULL, &error);
+       if (state == NULL)
+         {
+@@ -622,15 +583,17 @@ handle_deploy (FlatpakSystemHelper   *object,
+           return G_DBUS_METHOD_INVOCATION_HANDLED;
+         }
+ 
+-      if (!g_str_has_prefix (desc->parent.digest, "sha256:") ||
+-          strcmp (desc->parent.digest + strlen ("sha256:"), verified_digest) != 0)
++      image_source_digest = flatpak_image_source_get_digest (image_source);
++
++      if (!g_str_has_prefix (image_source_digest, "sha256:") ||
++          strcmp (image_source_digest + strlen ("sha256:"), verified_digest) != 0)
+         {
+           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                  "%s: manifest hash in downloaded content does not match ref %s", arg_origin, arg_ref);
+           return G_DBUS_METHOD_INVOCATION_HANDLED;
+         }
+ 
+-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, NULL, desc->parent.digest, NULL, FLATPAK_OCI_MANIFEST (versioned), image_config,
++      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source, NULL,
+                                         arg_origin, arg_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, NULL, &error);
+       if (checksum == NULL)
+         {
+-- 
+2.47.1
+
+From 5e0cfa2e33b9d99992047a14650784e5fd4c0c05 Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Mon, 28 Oct 2024 12:35:33 -0400
+Subject: [PATCH 02/12]image-source: Replace flatpak_oci_parse_commit_labels
+ with getters
+
+Instead of having one function with a pile of out arguments in
+arbitrary order, add getters to FlatpakImageSource.
+---
+ app/flatpak-builtins-build-import-bundle.c | 18 ++--
+ common/flatpak-dir.c                       | 25 ++----
+ common/flatpak-image-source-private.h      | 11 ++-
+ common/flatpak-image-source.c              | 96 ++++++++++++++++++++--
+ common/flatpak-json-oci-private.h          |  8 --
+ common/flatpak-json-oci.c                  | 66 ---------------
+ common/flatpak-oci-registry.c              | 28 +++----
+ 7 files changed, 125 insertions(+), 127 deletions(-)
+
+diff --git a/app/flatpak-builtins-build-import-bundle.c b/app/flatpak-builtins-build-import-bundle.c
+index f3508709..d79fbbde 100644
+--- a/app/flatpak-builtins-build-import-bundle.c
++++ b/app/flatpak-builtins-build-import-bundle.c
+@@ -59,30 +59,22 @@ import_oci (OstreeRepo *repo, GFile *file,
+             GCancellable *cancellable, GError **error)
+ {
+   g_autofree char *commit_checksum = NULL;
+-  g_autofree char *target_ref = NULL;
+   g_autoptr(FlatpakImageSource) image_source = NULL;
+-  GHashTable *labels;
++  const char *ref;
+ 
+   image_source = flatpak_image_source_new_local (file, opt_ref, cancellable, error);
+   if (image_source == NULL)
+     return NULL;
+ 
+-  labels = flatpak_image_source_get_labels (image_source);
+-  flatpak_oci_parse_commit_labels (labels, NULL, NULL, NULL,
+-                                   &target_ref, NULL, NULL, NULL);
+-  if (target_ref == NULL)
+-    {
+-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+-                   "The OCI image didn't specify a ref, use --ref to specify one");
+-      return NULL;
+-    }
++  ref = flatpak_image_source_get_ref (image_source);
+ 
+   commit_checksum = flatpak_pull_from_oci (repo, image_source, NULL,
+-                                           NULL, target_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, cancellable, error);
++                                           NULL, ref, FLATPAK_PULL_FLAGS_NONE,
++                                           NULL, NULL, cancellable, error);
+   if (commit_checksum == NULL)
+     return NULL;
+ 
+-  g_print (_("Importing %s (%s)\n"), target_ref, commit_checksum);
++  g_print (_("Importing %s (%s)\n"), ref, commit_checksum);
+ 
+   return g_strdup (commit_checksum);
+ }
+diff --git a/common/flatpak-dir.c b/common/flatpak-dir.c
+index b0c29a70..e1224170 100644
+--- a/common/flatpak-dir.c
++++ b/common/flatpak-dir.c
+@@ -1092,12 +1092,7 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+   VarRefInfoRef latest_rev_info;
+   VarMetadataRef metadata;
+   const char *oci_repository = NULL;
+-  GHashTable *labels;
+-  g_autofree char *subject = NULL;
+-  g_autofree char *body = NULL;
+-  g_autofree char *manifest_ref = NULL;
+-  g_autofree char *parent = NULL;
+-  guint64 timestamp = 0;
++  const char *parent = NULL;
+   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+   g_autoptr(GVariant) metadata_v = NULL;
+ 
+@@ -1122,30 +1117,26 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+   if (image_source == NULL)
+     return NULL;
+ 
+-  labels = flatpak_image_source_get_labels (image_source);
+-  if (labels)
+-    flatpak_oci_parse_commit_labels (labels, &timestamp,
+-                                     &subject, &body,
+-                                     &manifest_ref, NULL, &parent,
+-                                     metadata_builder);
+-
+-
+-  if (g_strcmp0 (manifest_ref, ref) != 0)
++  if (g_strcmp0 (flatpak_image_source_get_ref (image_source), ref) != 0)
+     {
+       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Commit has no requested ref ‘%s’ in ref binding metadata"),  ref);
+       return NULL;
+     }
+ 
++  flatpak_image_source_build_commit_metadata (image_source, metadata_builder);
+   metadata_v = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
+ 
++  parent = flatpak_image_source_get_parent_commit (image_source);
++
+   /* This isn't going to be exactly the same as the reconstructed one from the pull, because we don't have the contents, but its useful to get metadata */
+   return
+     g_variant_ref_sink (g_variant_new ("(@a{sv}@ay@a(say)sst@ay@ay)",
+                                        metadata_v,
+                                        parent ? ostree_checksum_to_bytes_v (parent) :  g_variant_new_from_data (G_VARIANT_TYPE ("ay"), NULL, 0, FALSE, NULL, NULL),
+                                        g_variant_new_array (G_VARIANT_TYPE ("(say)"), NULL, 0),
+-                                       subject, body,
+-                                       GUINT64_TO_BE (timestamp),
++                                       flatpak_image_source_get_commit_subject (image_source),
++                                       flatpak_image_source_get_commit_body (image_source),
++                                       GUINT64_TO_BE (flatpak_image_source_get_commit_timestamp (image_source)),
+                                        ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000"),
+                                        ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000")));
+ }
+diff --git a/common/flatpak-image-source-private.h b/common/flatpak-image-source-private.h
+index ebd856a4..fe8f02ba 100644
+--- a/common/flatpak-image-source-private.h
++++ b/common/flatpak-image-source-private.h
+@@ -52,6 +52,15 @@ FlatpakOciManifest *flatpak_image_source_get_manifest       (FlatpakImageSource
+ size_t              flatpak_image_source_get_manifest_size  (FlatpakImageSource *self);
+ FlatpakOciImage    *flatpak_image_source_get_image_config   (FlatpakImageSource *self);
+ 
+-GHashTable *flatpak_image_source_get_labels (FlatpakImageSource *self);
++const char *flatpak_image_source_get_ref              (FlatpakImageSource *self);
++const char *flatpak_image_source_get_metadata         (FlatpakImageSource *self);
++const char *flatpak_image_source_get_commit           (FlatpakImageSource *self);
++const char *flatpak_image_source_get_parent_commit    (FlatpakImageSource *self);
++guint64     flatpak_image_source_get_commit_timestamp (FlatpakImageSource *self);
++const char *flatpak_image_source_get_commit_subject   (FlatpakImageSource *self);
++const char *flatpak_image_source_get_commit_body      (FlatpakImageSource *self);
++
++void flatpak_image_source_build_commit_metadata (FlatpakImageSource *self,
++                                                 GVariantBuilder    *metadata_builder);
+ 
+ #endif /* __FLATPAK_IMAGE_SOURCE_H__ */
+diff --git a/common/flatpak-image-source.c b/common/flatpak-image-source.c
+index 22497ccf..feb4fe27 100644
+--- a/common/flatpak-image-source.c
++++ b/common/flatpak-image-source.c
+@@ -74,7 +74,6 @@ flatpak_image_source_new (FlatpakOciRegistry *registry,
+ {
+   g_autoptr(FlatpakImageSource) self = NULL;
+   g_autoptr(FlatpakOciVersioned) versioned = NULL;
+-  GHashTable *labels;
+ 
+   self = g_object_new (FLATPAK_TYPE_IMAGE_SOURCE, NULL);
+   self->registry = g_object_ref (registry);
+@@ -107,8 +106,7 @@ flatpak_image_source_new (FlatpakOciRegistry *registry,
+   if (self->image_config == NULL)
+     return NULL;
+ 
+-  labels = flatpak_image_source_get_labels (self);
+-  if (!g_hash_table_contains (labels, "org.flatpak.ref"))
++  if (flatpak_image_source_get_ref (self) == NULL)
+     {
+       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("No org.flatpak.ref found in image"));
+       return NULL;
+@@ -220,8 +218,94 @@ flatpak_image_source_get_image_config (FlatpakImageSource *self)
+   return self->image_config;
+ }
+ 
+-GHashTable *
+-flatpak_image_source_get_labels (FlatpakImageSource *self)
++const char *
++flatpak_image_source_get_ref (FlatpakImageSource *self)
++{
++  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
++
++  return g_hash_table_lookup (labels, "org.flatpak.ref");
++}
++
++const char *
++flatpak_image_source_get_metadata (FlatpakImageSource *self)
++{
++  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
++
++  return g_hash_table_lookup (labels, "org.flatpak.metadata");
++}
++
++const char *
++flatpak_image_source_get_commit (FlatpakImageSource *self)
++{
++  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
++
++  return g_hash_table_lookup (labels, "org.flatpak.commit");
++}
++
++const char *
++flatpak_image_source_get_parent_commit (FlatpakImageSource *self)
++{
++  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
++
++  return g_hash_table_lookup (labels, "org.flatpak.parent-commit");
++}
++
++guint64
++flatpak_image_source_get_commit_timestamp (FlatpakImageSource *self)
+ {
+-  return flatpak_oci_image_get_labels (self->image_config);
++  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
++  const char *oci_timestamp = g_hash_table_lookup (labels, "org.flatpak.timestamp");
++
++  if (oci_timestamp != NULL)
++    return g_ascii_strtoull (oci_timestamp, NULL, 10);
++  else
++    return 0;
++}
++
++const char *
++flatpak_image_source_get_commit_subject (FlatpakImageSource *self)
++{
++  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
++
++  return g_hash_table_lookup (labels, "org.flatpak.subject");
++}
++
++const char *
++flatpak_image_source_get_commit_body (FlatpakImageSource *self)
++{
++  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
++
++  return g_hash_table_lookup (labels, "org.flatpak.body");
++}
++
++void
++flatpak_image_source_build_commit_metadata (FlatpakImageSource *self,
++                                            GVariantBuilder    *metadata_builder)
++{
++  GHashTable *labels = flatpak_oci_image_get_labels (self->image_config);
++  GHashTableIter iter;
++  const char *key;
++  const char *value;
++
++  g_hash_table_iter_init (&iter, labels);
++  while (g_hash_table_iter_next (&iter, (gpointer *)&key, (gpointer *)&value))
++    {
++      g_autoptr(GVariant) data = NULL;
++      uint8_t *bin;
++      size_t bin_len;
++
++      if (!g_str_has_prefix (key, "org.flatpak.commit-metadata."))
++        continue;
++
++      key += strlen ("org.flatpak.commit-metadata.");
++
++      bin = g_base64_decode (value, &bin_len);
++      data = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("v"),
++                                                          bin,
++                                                          bin_len,
++                                                          FALSE,
++                                                          g_free,
++                                                          bin));
++      g_variant_builder_add (metadata_builder, "{s@v}", key, data);
++    }
+ }
+diff --git a/common/flatpak-json-oci-private.h b/common/flatpak-json-oci-private.h
+index edb22eeb..87573c17 100644
+--- a/common/flatpak-json-oci-private.h
++++ b/common/flatpak-json-oci-private.h
+@@ -246,14 +246,6 @@ void flatpak_oci_add_labels_for_commit (GHashTable *labels,
+                                         const char *ref,
+                                         const char *commit,
+                                         GVariant   *commit_data);
+-void flatpak_oci_parse_commit_labels (GHashTable      *labels,
+-                                      guint64         *out_timestamp,
+-                                      char           **out_subject,
+-                                      char           **out_body,
+-                                      char           **out_ref,
+-                                      char           **out_commit,
+-                                      char           **out_parent_commit,
+-                                      GVariantBuilder *metadata_builder);
+ 
+ #define FLATPAK_TYPE_OCI_SIGNATURE flatpak_oci_signature_get_type ()
+ G_DECLARE_FINAL_TYPE (FlatpakOciSignature, flatpak_oci_signature, FLATPAK, OCI_SIGNATURE, FlatpakJson)
+diff --git a/common/flatpak-json-oci.c b/common/flatpak-json-oci.c
+index 42647d11..2b55b9de 100644
+--- a/common/flatpak-json-oci.c
++++ b/common/flatpak-json-oci.c
+@@ -927,72 +927,6 @@ flatpak_oci_add_labels_for_commit (GHashTable *labels,
+     }
+ }
+ 
+-void
+-flatpak_oci_parse_commit_labels (GHashTable      *labels,
+-                                 guint64         *out_timestamp,
+-                                 char           **out_subject,
+-                                 char           **out_body,
+-                                 char           **out_ref,
+-                                 char           **out_commit,
+-                                 char           **out_parent_commit,
+-                                 GVariantBuilder *metadata_builder)
+-{
+-  const char *oci_timestamp, *oci_subject, *oci_body, *oci_parent_commit, *oci_commit, *oci_ref;
+-  GHashTableIter iter;
+-  gpointer _key, _value;
+-
+-  oci_ref = g_hash_table_lookup (labels, "org.flatpak.ref");
+-
+-  /* Early return if this is not a flatpak manifest  */
+-  if (oci_ref == NULL)
+-    return;
+-
+-  if (oci_ref != NULL && out_ref != NULL && *out_ref == NULL)
+-    *out_ref = g_strdup (oci_ref);
+-
+-  oci_commit = g_hash_table_lookup (labels, "org.flatpak.commit");
+-  if (oci_commit != NULL && out_commit != NULL && *out_commit == NULL)
+-    *out_commit = g_strdup (oci_commit);
+-
+-  oci_parent_commit = g_hash_table_lookup (labels, "org.flatpak.parent-commit");
+-  if (oci_parent_commit != NULL && out_parent_commit != NULL && *out_parent_commit == NULL)
+-    *out_parent_commit = g_strdup (oci_parent_commit);
+-
+-  oci_timestamp = g_hash_table_lookup (labels, "org.flatpak.timestamp");
+-  if (oci_timestamp != NULL && out_timestamp != NULL && *out_timestamp == 0)
+-    *out_timestamp = g_ascii_strtoull (oci_timestamp, NULL, 10);
+-
+-  oci_subject = g_hash_table_lookup (labels, "org.flatpak.subject");
+-  if (oci_subject != NULL && out_subject != NULL && *out_subject == NULL)
+-    *out_subject = g_strdup (oci_subject);
+-
+-  oci_body = g_hash_table_lookup (labels, "org.flatpak.body");
+-  if (oci_body != NULL && out_body != NULL && *out_body == NULL)
+-    *out_body = g_strdup (oci_body);
+-
+-  if (metadata_builder)
+-    {
+-      g_hash_table_iter_init (&iter, labels);
+-      while (g_hash_table_iter_next (&iter, &_key, &_value))
+-        {
+-          const char *key = _key;
+-          const char *value = _value;
+-          guchar *bin;
+-          gsize bin_len;
+-          g_autoptr(GVariant) data = NULL;
+-
+-          if (!g_str_has_prefix (key, "org.flatpak.commit-metadata."))
+-            continue;
+-          key += strlen ("org.flatpak.commit-metadata.");
+-
+-          bin = g_base64_decode (value, &bin_len);
+-          data = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("v"), bin, bin_len, FALSE,
+-                                                              g_free, bin));
+-          g_variant_builder_add (metadata_builder, "{s@v}", key, data);
+-        }
+-    }
+-}
+-
+ 
+ G_DEFINE_TYPE (FlatpakOciSignature, flatpak_oci_signature, FLATPAK_TYPE_JSON);
+ 
+diff --git a/common/flatpak-oci-registry.c b/common/flatpak-oci-registry.c
+index 11b5f98d..ad05c9f0 100644
+--- a/common/flatpak-oci-registry.c
++++ b/common/flatpak-oci-registry.c
+@@ -3610,28 +3610,18 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
+   g_autofree char *old_diffid = NULL;
+   g_autofree char *commit_checksum = NULL;
+   const char *parent = NULL;
+-  g_autofree char *subject = NULL;
+-  g_autofree char *body = NULL;
+-  g_autofree char *manifest_ref = NULL;
++  const char *manifest_ref = NULL;
+   g_autofree char *full_ref = NULL;
+   const char *diffid;
+-  guint64 timestamp = 0;
+   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
+   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+   g_autoptr(GVariant) metadata = NULL;
+-  GHashTable *labels;
+   int n_layers;
+   int i;
+ 
+-  g_assert (ref != NULL);
+   g_assert (g_str_has_prefix (digest, "sha256:"));
+ 
+-  labels = flatpak_oci_image_get_labels (image_config);
+-  if (labels)
+-    flatpak_oci_parse_commit_labels (labels, &timestamp,
+-                                     &subject, &body,
+-                                     &manifest_ref, NULL, NULL,
+-                                     metadata_builder);
++  manifest_ref = flatpak_image_source_get_ref (image_source);
+ 
+   if (manifest_ref == NULL)
+     {
+@@ -3639,12 +3629,18 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
+       return NULL;
+     }
+ 
+-  if (strcmp (manifest_ref, ref) != 0)
++  if (ref == NULL)
++    {
++      ref = manifest_ref;
++    }
++  else if (g_strcmp0 (manifest_ref, ref) != 0)
+     {
+       flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA, _("Wrong ref (%s) specified for OCI image %s, expected %s"), manifest_ref, digest, ref);
+       return NULL;
+     }
+ 
++  flatpak_image_source_build_commit_metadata (image_source, metadata_builder);
++
+   g_variant_builder_add (metadata_builder, "{s@v}", "xa.alt-id",
+                          g_variant_new_variant (g_variant_new_string (digest + strlen ("sha256:"))));
+ 
+@@ -3818,11 +3814,11 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
+   metadata = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
+   if (!ostree_repo_write_commit_with_time (repo,
+                                            parent,
+-                                           subject,
+-                                           body,
++                                           flatpak_image_source_get_commit_subject (image_source),
++                                           flatpak_image_source_get_commit_body (image_source),
+                                            metadata,
+                                            OSTREE_REPO_FILE (archive_root),
+-                                           timestamp,
++                                           flatpak_image_source_get_commit_timestamp (image_source),
+                                            &commit_checksum,
+                                            cancellable, error))
+     goto error;
+-- 
+2.47.1
+
+From c13709a1e320b9f7e5ff31b2284e372ba6ee08f4 Mon Sep 17 00:00:00 2001
+From: Sebastian Wick <sebastian.wick@redhat.com>
+Date: Wed, 18 Dec 2024 00:32:32 +0100
+Subject: [PATCH 03/12]transaction: Typedef structs directly
+
+---
+ common/flatpak-transaction.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/common/flatpak-transaction.c b/common/flatpak-transaction.c
+index 7339acab..8a16cc1e 100644
+--- a/common/flatpak-transaction.c
++++ b/common/flatpak-transaction.c
+@@ -138,15 +138,11 @@ struct _FlatpakTransactionOperation
+   GPtrArray                      *related_to_ops;  /* (element-type FlatpakTransactionOperation) (nullable) */
+ };
+ 
+-typedef struct _FlatpakTransactionPrivate FlatpakTransactionPrivate;
+-
+-typedef struct _BundleData                BundleData;
+-
+-struct _BundleData
++typedef struct _BundleData
+ {
+   GFile  *file;
+   GBytes *gpg_data;
+-};
++} BundleData;
+ 
+ typedef struct {
+   FlatpakTransaction *transaction;
+@@ -157,7 +153,7 @@ typedef struct {
+   GVariant *results;
+ } RequestData;
+ 
+-struct _FlatpakTransactionPrivate
++typedef struct _FlatpakTransactionPrivate
+ {
+   GObject                      parent;
+ 
+@@ -198,7 +194,7 @@ struct _FlatpakTransactionPrivate
+ 
+   gboolean                     needs_resolve;
+   gboolean                     needs_tokens;
+-};
++} FlatpakTransactionPrivate;
+ 
+ enum {
+   NEW_OPERATION,
+-- 
+2.47.1
+
+From 8d6959c27c5b992750cbcc2fefb016a3d58db58c Mon Sep 17 00:00:00 2001
+From: Sebastian Wick <sebastian.wick@redhat.com>
+Date: Wed, 18 Dec 2024 00:38:15 +0100
+Subject: [PATCH 04/12]transaction: Use g_clear_pointer/object functions for
+ op finalize
+
+---
+ common/flatpak-transaction.c | 45 +++++++++++++++---------------------
+ 1 file changed, 18 insertions(+), 27 deletions(-)
+
+diff --git a/common/flatpak-transaction.c b/common/flatpak-transaction.c
+index 8a16cc1e..7039d86e 100644
+--- a/common/flatpak-transaction.c
++++ b/common/flatpak-transaction.c
+@@ -593,34 +593,25 @@ flatpak_transaction_operation_finalize (GObject *object)
+ {
+   FlatpakTransactionOperation *self = (FlatpakTransactionOperation *) object;
+ 
+-  g_free (self->remote);
+-  flatpak_decomposed_unref (self->ref);
+-  g_free (self->commit);
+-  g_strfreev (self->subpaths);
++  g_clear_pointer (&self->remote, g_free);
++  g_clear_pointer (&self->ref, flatpak_decomposed_unref);
++  g_clear_pointer (&self->commit, g_free);
++  g_clear_pointer (&self->subpaths, g_strfreev);
+   g_clear_object (&self->bundle);
+-  g_free (self->eol);
+-  g_free (self->eol_rebase);
+-  if (self->previous_ids)
+-    g_strfreev (self->previous_ids);
+-  if (self->external_metadata)
+-    g_bytes_unref (self->external_metadata);
+-  g_free (self->resolved_commit);
+-  if (self->resolved_sideload_path)
+-    g_object_unref (self->resolved_sideload_path);
+-  if (self->resolved_metadata)
+-    g_bytes_unref (self->resolved_metadata);
+-  if (self->resolved_metakey)
+-    g_key_file_unref (self->resolved_metakey);
+-  if (self->resolved_old_metadata)
+-    g_bytes_unref (self->resolved_old_metadata);
+-  if (self->resolved_old_metakey)
+-    g_key_file_unref (self->resolved_old_metakey);
+-  g_free (self->resolved_token);
+-  g_list_free (self->run_before_ops);
+-  if (self->related_to_ops)
+-    g_ptr_array_unref (self->related_to_ops);
+-  if (self->summary_metadata)
+-    g_variant_unref (self->summary_metadata);
++  g_clear_pointer (&self->eol, g_free);
++  g_clear_pointer (&self->eol_rebase, g_free);
++  g_clear_pointer (&self->previous_ids, g_strfreev);
++  g_clear_pointer (&self->external_metadata, g_bytes_unref);
++  g_clear_pointer (&self->resolved_commit, g_free);
++  g_clear_object (&self->resolved_sideload_path);
++  g_clear_pointer (&self->resolved_metadata, g_bytes_unref);
++  g_clear_pointer (&self->resolved_metakey, g_key_file_unref);
++  g_clear_pointer (&self->resolved_old_metadata, g_bytes_unref);
++  g_clear_pointer (&self->resolved_old_metakey, g_key_file_unref);
++  g_clear_pointer (&self->resolved_token, g_free);
++  g_clear_pointer (&self->run_before_ops, g_list_free);
++  g_clear_pointer (&self->related_to_ops, g_ptr_array_unref);
++  g_clear_pointer (&self->summary_metadata, g_variant_unref);
+ 
+   G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
+ }
+-- 
+2.47.1
+
+From b235bb419e87d2a9c13e29a55f9cd32a3089f15a Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Wed, 18 Dec 2024 00:46:33 +0100
+Subject: [PATCH 05/12]image-source: Add flatpak_image_source_new_for_location
+
+Which allows one to create an image source from a container location.
+
+It also adds a new FlatpakDockerReference to access different parts of a
+docker reference and changes to FlatpakOciIndex to get a manifest for a
+specific architecture.
+
+This will become useful in the next commit when we're going to add
+support for installing OCI images.
+---
+ common/flatpak-docker-reference-private.h |  20 ++++
+ common/flatpak-docker-reference.c         | 140 ++++++++++++++++++++++
+ common/flatpak-image-source-private.h     |   3 +
+ common/flatpak-image-source.c             | 122 +++++++++++++++++++
+ common/flatpak-json-oci-private.h         |   4 +-
+ common/flatpak-json-oci.c                 |  21 ++++
+ common/meson.build                        |   1 +
+ 7 files changed, 310 insertions(+), 1 deletion(-)
+ create mode 100644 common/flatpak-docker-reference-private.h
+ create mode 100644 common/flatpak-docker-reference.c
+
+diff --git a/common/flatpak-docker-reference-private.h b/common/flatpak-docker-reference-private.h
+new file mode 100644
+index 00000000..8205064c
+--- /dev/null
++++ b/common/flatpak-docker-reference-private.h
+@@ -0,0 +1,20 @@
++#ifndef __FLATPAK_DOCKER_REFERENCE_H__
++#define __FLATPAK_DOCKER_REFERENCE_H__
++
++#include <glib.h>
++
++typedef struct _FlatpakDockerReference FlatpakDockerReference;
++
++FlatpakDockerReference *flatpak_docker_reference_parse (const char *reference_str,
++                                                        GError    **error);
++
++const char *flatpak_docker_reference_get_uri        (FlatpakDockerReference *reference);
++const char *flatpak_docker_reference_get_repository (FlatpakDockerReference *reference);
++const char *flatpak_docker_reference_get_tag        (FlatpakDockerReference *reference);
++const char *flatpak_docker_reference_get_digest     (FlatpakDockerReference *reference);
++
++void flatpak_docker_reference_free (FlatpakDockerReference *reference);
++
++G_DEFINE_AUTOPTR_CLEANUP_FUNC(FlatpakDockerReference, flatpak_docker_reference_free);
++
++#endif /* __FLATPAK_DOCKER_REFERENCE_H__ */
+diff --git a/common/flatpak-docker-reference.c b/common/flatpak-docker-reference.c
+new file mode 100644
+index 00000000..6df3011f
+--- /dev/null
++++ b/common/flatpak-docker-reference.c
+@@ -0,0 +1,140 @@
++/* vi:set et sw=2 sts=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e-s:
++ * Copyright © 2024 Red Hat, Inc
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
++ *
++ * Authors:
++ *       Owen Taylor <otaylor@redhat.com>
++ */
++
++#include "flatpak-docker-reference-private.h"
++#include "flatpak-utils-private.h"
++
++struct _FlatpakDockerReference
++{
++    char *uri;
++    char *repository;
++    char *tag;
++    char *digest;
++};
++
++/*
++ * Parsing here is loosely based off:
++ *
++ *   https://github.com/containers/image/tree/main/docker/reference
++ *
++ * The major simplification is that we require a domain component, and
++ * don't have any default domain. This removes ambiguity between domains and paths
++ * and makes parsing much simpler. We also don't normalize single component
++ * paths (e.g. ubuntu => library/ubuntu.)
++ */
++
++#define TAG "[0-9A-Za-z_][0-9A-Za-z_-]{0,127}"
++#define DIGEST "[A-Za-z][A-Za-z0-9]*(?:[-_+.][A-Za-z][A-Za-z0-9]*)*[:][[:xdigit:]]{32,}"
++#define REMAINDER_TAG_AND_DIGEST_RE "^(.*?)(:" TAG ")?" "(@" DIGEST ")?$"
++
++static GRegex *
++get_remainder_tag_and_digest_regex (void)
++{
++  static gsize regex = 0;
++
++  if (g_once_init_enter (&regex))
++    {
++      g_autoptr(GRegex) compiled = g_regex_new (REMAINDER_TAG_AND_DIGEST_RE,
++                                                G_REGEX_DEFAULT,
++                                                G_REGEX_MATCH_DEFAULT,
++                                                NULL);
++      g_once_init_leave (&regex, (gsize)g_steal_pointer (&compiled));
++    }
++
++  return (GRegex *)regex;
++}
++
++FlatpakDockerReference *
++flatpak_docker_reference_parse (const char *reference_str,
++                                GError    **error)
++{
++  g_autoptr(FlatpakDockerReference) reference = g_new0 (FlatpakDockerReference, 1);
++  GRegex *regex = get_remainder_tag_and_digest_regex ();
++  g_autoptr(GMatchInfo) match_info = NULL;
++  g_autofree char *tag_match = NULL;
++  g_autofree char *digest_match = NULL;
++  g_autofree char *remainder = NULL;
++  g_autofree char *domain = NULL;
++  gboolean matched;
++  const char *slash;
++
++  matched = g_regex_match (regex, reference_str, G_REGEX_MATCH_DEFAULT, &match_info);
++  g_assert (matched);
++
++  tag_match = g_match_info_fetch (match_info, 2);
++  if (tag_match[0] == '\0')
++    reference->tag = NULL;
++  else
++    reference->tag = g_strdup (tag_match + 1);
++
++  digest_match = g_match_info_fetch (match_info, 3);
++  if (digest_match[0] == '\0')
++    reference->digest = NULL;
++  else
++    reference->digest = g_strdup (digest_match + 1);
++
++  remainder = g_match_info_fetch (match_info, 1);
++  slash = strchr (remainder, '/');
++  if (slash == NULL || slash == reference_str || *slash == '\0')
++    {
++      flatpak_fail(error, "Can't parse %s into <domain>/<repository>", remainder);
++      return NULL;
++    }
++
++  domain = g_strndup (remainder, slash - remainder);
++  reference->uri = g_strconcat ("https://", domain, NULL);
++  reference->repository = g_strdup (slash + 1);
++
++  return g_steal_pointer (&reference);
++}
++
++const char *
++flatpak_docker_reference_get_uri (FlatpakDockerReference *reference)
++{
++  return reference->uri;
++}
++
++const char *
++flatpak_docker_reference_get_repository (FlatpakDockerReference *reference)
++{
++  return reference->repository;
++}
++
++const char *
++flatpak_docker_reference_get_tag (FlatpakDockerReference *reference)
++{
++  return reference->tag;
++}
++
++const char *
++flatpak_docker_reference_get_digest (FlatpakDockerReference *reference)
++{
++  return reference->digest;
++}
++
++void
++flatpak_docker_reference_free (FlatpakDockerReference *reference)
++{
++  g_clear_pointer (&reference->uri, g_free);
++  g_clear_pointer (&reference->repository, g_free);
++  g_clear_pointer (&reference->tag, g_free);
++  g_clear_pointer (&reference->digest, g_free);
++  g_free (reference);
++}
+diff --git a/common/flatpak-image-source-private.h b/common/flatpak-image-source-private.h
+index fe8f02ba..b1e5d2fa 100644
+--- a/common/flatpak-image-source-private.h
++++ b/common/flatpak-image-source-private.h
+@@ -41,6 +41,9 @@ FlatpakImageSource *flatpak_image_source_new_remote (const char   *uri,
+                                                      const char   *digest,
+                                                      GCancellable *cancellable,
+                                                      GError      **error);
++FlatpakImageSource *flatpak_image_source_new_for_location (const char   *location,
++                                                           GCancellable *cancellable,
++                                                           GError      **error);
+ 
+ void flatpak_image_source_set_token (FlatpakImageSource *self,
+                                      const char         *token);
+diff --git a/common/flatpak-image-source.c b/common/flatpak-image-source.c
+index feb4fe27..0503de5d 100644
+--- a/common/flatpak-image-source.c
++++ b/common/flatpak-image-source.c
+@@ -20,6 +20,7 @@
+ 
+ #include <glib/gi18n-lib.h>
+ 
++#include "flatpak-docker-reference-private.h"
+ #include "flatpak-image-source-private.h"
+ #include "flatpak-oci-registry-private.h"
+ 
+@@ -175,6 +176,127 @@ flatpak_image_source_new_remote (const char   *uri,
+   return flatpak_image_source_new (registry, oci_repository, digest, cancellable, error);
+ }
+ 
++/* Parse an oci: or oci-archive: image location into a path
++ * and an optional reference
++ */
++static void
++get_path_and_reference (const char *image_location,
++                        GFile     **path,
++                        char      **reference)
++{
++  g_autofree char *path_str = NULL;
++  const char *bare;
++  const char *colon;
++
++  colon = strchr (image_location, ':');
++  g_assert (colon != NULL);
++
++  bare = colon + 1;
++  colon = strchr (bare, ':');
++ if (colon)
++     {
++      path_str = g_strndup (bare, colon - bare);
++      *reference = g_strdup (colon + 1);
++    }
++  else
++    {
++      path_str = g_strdup (bare);
++      *reference = NULL;
++    }
++
++  *path = g_file_new_for_path (path_str);
++}
++
++FlatpakImageSource *
++flatpak_image_source_new_for_location (const char   *location,
++                                       GCancellable *cancellable,
++                                       GError      **error)
++{
++  if (g_str_has_prefix (location, "oci:"))
++    {
++      g_autoptr(GFile) path = NULL;
++      g_autofree char *reference = NULL;
++
++      get_path_and_reference (location, &path, &reference);
++
++      return flatpak_image_source_new_local (path, reference, cancellable, error);
++    }
++  else if (g_str_has_prefix (location, "docker:"))
++    {
++      g_autoptr(FlatpakOciRegistry) registry = NULL;
++      g_autoptr(FlatpakDockerReference) docker_reference = NULL;
++      g_autofree char *local_digest = NULL;
++      const char *repository = NULL;
++
++      if (!g_str_has_prefix (location, "docker://"))
++        {
++          flatpak_fail (error, "docker: location must start docker://");
++          return NULL;
++        }
++
++      docker_reference = flatpak_docker_reference_parse (location + 9, error);
++      if (docker_reference == NULL)
++        return NULL;
++
++      registry = flatpak_oci_registry_new (flatpak_docker_reference_get_uri (docker_reference),
++                                           FALSE, -1, cancellable, error);
++      if (registry == NULL)
++        return NULL;
++
++      repository = flatpak_docker_reference_get_repository (docker_reference);
++
++      local_digest = g_strdup (flatpak_docker_reference_get_digest (docker_reference));
++      if (local_digest == NULL)
++        {
++          g_autoptr(GBytes) bytes = NULL;
++          g_autoptr(FlatpakOciVersioned) versioned = NULL;
++          const char *tag = flatpak_docker_reference_get_tag (docker_reference);
++
++          if (tag == NULL)
++            tag = "latest";
++
++          bytes = flatpak_oci_registry_load_blob (registry, repository, TRUE, tag,
++                                                  NULL, NULL, cancellable, error);
++          if (!bytes)
++            return NULL;
++
++          versioned = flatpak_oci_versioned_from_json (bytes, NULL, error);
++          if (!versioned)
++            return NULL;
++
++          if (FLATPAK_IS_OCI_MANIFEST (versioned))
++            {
++              g_autofree char *checksum = NULL;
++
++              checksum = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
++              local_digest = g_strconcat ("sha256:", checksum, NULL);
++            }
++          else if (FLATPAK_IS_OCI_INDEX (versioned))
++            {
++              const char *oci_arch = flatpak_arch_to_oci_arch (flatpak_get_arch ());
++              FlatpakOciManifestDescriptor *descriptor;
++
++              descriptor = flatpak_oci_index_get_manifest_for_arch (FLATPAK_OCI_INDEX (versioned), oci_arch);
++              if (descriptor == NULL)
++                {
++                  flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
++                                      "Can't find manifest for %s in image index", oci_arch);
++                  return NULL;
++                }
++
++              local_digest = g_strdup (descriptor->parent.digest);
++            }
++        }
++
++      return flatpak_image_source_new (registry, repository, local_digest, cancellable, error);
++    }
++  else
++    {
++      flatpak_fail (error, "unsupported image location: %s", location);
++      return NULL;
++    }
++}
++
+ void
+ flatpak_image_source_set_token (FlatpakImageSource *self,
+                                 const char            *token)
+diff --git a/common/flatpak-json-oci-private.h b/common/flatpak-json-oci-private.h
+index 87573c17..e8924ee4 100644
+--- a/common/flatpak-json-oci-private.h
++++ b/common/flatpak-json-oci-private.h
+@@ -166,8 +166,10 @@ gboolean                      flatpak_oci_index_remove_manifest (FlatpakOciIndex
+ FlatpakOciManifestDescriptor *flatpak_oci_index_get_manifest (FlatpakOciIndex *self,
+                                                               const char      *ref);
+ FlatpakOciManifestDescriptor *flatpak_oci_index_get_only_manifest (FlatpakOciIndex *self);
+-int                           flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self);
++FlatpakOciManifestDescriptor *flatpak_oci_index_get_manifest_for_arch (FlatpakOciIndex *self,
++                                                                       const char      *oci_arch);
+ 
++int                           flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self);
+ /* Only useful for delta index */
+ FlatpakOciDescriptor *flatpak_oci_index_find_delta_for (FlatpakOciIndex *delta_index,
+                                                         const char      *for_digest);
+diff --git a/common/flatpak-json-oci.c b/common/flatpak-json-oci.c
+index 2b55b9de..3a339a02 100644
+--- a/common/flatpak-json-oci.c
++++ b/common/flatpak-json-oci.c
+@@ -577,6 +577,27 @@ flatpak_oci_index_get_only_manifest (FlatpakOciIndex *self)
+   return NULL;
+ }
+ 
++FlatpakOciManifestDescriptor *
++flatpak_oci_index_get_manifest_for_arch (FlatpakOciIndex *self,
++                                         const char      *oci_arch)
++{
++  int i, found = -1;
++
++  if (self->manifests == NULL)
++    return NULL;
++
++  for (i = 0; self->manifests[i] != NULL; i++)
++    {
++      if (strcmp (self->manifests[i]->platform.architecture, oci_arch) == 0)
++        return self->manifests[i];
++    }
++
++  if (found >= 0)
++    return self->manifests[found];
++
++  return NULL;
++}
++
+ gboolean
+ flatpak_oci_index_remove_manifest (FlatpakOciIndex *self,
+                                    const char      *ref)
+diff --git a/common/meson.build b/common/meson.build
+index beed1f06..c14337be 100644
+--- a/common/meson.build
++++ b/common/meson.build
+@@ -169,6 +169,7 @@ sources = [
+   'flatpak-context.c',
+   'flatpak-dir.c',
+   'flatpak-dir-utils.c',
++  'flatpak-docker-reference.c',
+   'flatpak-error.c',
+   'flatpak-exports.c',
+   'flatpak-glib-backports.c',
+-- 
+2.47.1
+
+From c9b992fda4ac3cd53c2f315d135823ac6929ad17 Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Wed, 18 Dec 2024 00:52:27 +0100
+Subject: [PATCH 06/12]common: Add OCI image installation support
+
+---
+ common/flatpak-dir-private.h          |   3 +
+ common/flatpak-dir.c                  | 131 ++++++++++--------
+ common/flatpak-installation.c         |   4 +-
+ common/flatpak-transaction.c          | 183 +++++++++++++++++++++++---
+ common/flatpak-transaction.h          |   4 +
+ system-helper/flatpak-system-helper.c |   6 +-
+ 6 files changed, 252 insertions(+), 79 deletions(-)
+
+diff --git a/common/flatpak-dir-private.h b/common/flatpak-dir-private.h
+index 871f40b6..539476b8 100644
+--- a/common/flatpak-dir-private.h
++++ b/common/flatpak-dir-private.h
+@@ -574,6 +574,7 @@ gboolean              flatpak_dir_pull                                      (Fla
+                                                                              const char                    *opt_rev,
+                                                                              const char                   **subpaths,
+                                                                              GFile                         *sideload_repo,
++                                                                             FlatpakImageSource            *image_source,
+                                                                              GBytes                        *require_metadata,
+                                                                              const char                    *token,
+                                                                              OstreeRepo                    *repo,
+@@ -694,6 +695,7 @@ gboolean              flatpak_dir_install                                   (Fla
+                                                                              const char                   **subpaths,
+                                                                              const char                   **previous_ids,
+                                                                              GFile                         *sideload_repo,
++                                                                             FlatpakImageSource            *image_source,
+                                                                              GBytes                        *require_metadata,
+                                                                              const char                    *token,
+                                                                              FlatpakProgress               *progress,
+@@ -740,6 +742,7 @@ gboolean              flatpak_dir_update                                    (Fla
+                                                                              const char                   **opt_subpaths,
+                                                                              const char                   **opt_previous_ids,
+                                                                              GFile                         *sideload_repo,
++                                                                             FlatpakImageSource            *image_source,
+                                                                              GBytes                        *require_metadata,
+                                                                              const char                    *token,
+                                                                              FlatpakProgress               *progress,
+diff --git a/common/flatpak-dir.c b/common/flatpak-dir.c
+index e1224170..e8ff645b 100644
+--- a/common/flatpak-dir.c
++++ b/common/flatpak-dir.c
+@@ -123,7 +123,7 @@ static gboolean flatpak_dir_mirror_oci (FlatpakDir          *self,
+                                         FlatpakRemoteState  *state,
+                                         const char          *ref,
+                                         const char          *opt_rev,
+-                                        const char          *skip_if_current_is,
++                                        FlatpakImageSource  *opt_image_source,
+                                         const char          *token,
+                                         FlatpakProgress     *progress,
+                                         GCancellable        *cancellable,
+@@ -5307,7 +5307,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
+           if (child_repo == NULL)
+             return FALSE;
+ 
+-          if (!flatpak_dir_pull (self, state, used_branch, appstream_commit, NULL, appstream_sideload_path, NULL, NULL,
++          if (!flatpak_dir_pull (self, state, used_branch, appstream_commit, NULL, appstream_sideload_path, NULL, NULL, NULL,
+                                  child_repo, FLATPAK_PULL_FLAGS_NONE, 0,
+                                  progress, cancellable, error))
+             {
+@@ -5351,7 +5351,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
+     }
+ 
+ 
+-  if (!flatpak_dir_pull (self, state, used_branch, appstream_commit, NULL, appstream_sideload_path, NULL, NULL, NULL,
++  if (!flatpak_dir_pull (self, state, used_branch, appstream_commit, NULL, appstream_sideload_path, NULL, NULL, NULL, NULL,
+                          FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_NONE, progress,
+                          cancellable, error))
+     {
+@@ -5903,7 +5903,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
+                         FlatpakRemoteState  *state,
+                         const char          *ref,
+                         const char          *opt_rev,
+-                        const char          *skip_if_current_is,
++                        FlatpakImageSource  *opt_image_source,
+                         const char          *token,
+                         FlatpakProgress     *progress,
+                         GCancellable        *cancellable,
+@@ -5911,40 +5911,42 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
+ {
+   g_autoptr(FlatpakImageSource) image_source = NULL;
+   g_autofree char *oci_digest = NULL;
+-  g_autofree char *latest_rev = NULL;
+-  VarRefInfoRef latest_rev_info;
+-  VarMetadataRef metadata;
+-  const char *oci_repository = NULL;
+   const char *delta_url = NULL;
+-  const char *rev;
+   gboolean res;
+ 
+-  /* We use the summary so that we can reuse any cached json */
+-  if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
+-    return FALSE;
+-  if (latest_rev == NULL)
+-    return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+-                               _("Couldn't find latest checksum for ref %s in remote %s"),
+-                               ref, state->remote_name);
+-
+-  rev = opt_rev != NULL ? opt_rev : latest_rev;
+-
+-  if (skip_if_current_is != NULL && strcmp (rev, skip_if_current_is) == 0)
++  if (opt_image_source)
+     {
+-      return flatpak_fail_error (error, FLATPAK_ERROR_ALREADY_INSTALLED,
+-                                 _("%s commit %s already installed"),
+-                                 ref, rev);
++      image_source = g_object_ref (opt_image_source);
++      oci_digest = g_strdup (flatpak_image_source_get_digest (image_source));
+     }
++  else
++    {
++      g_autofree char *latest_rev = NULL;
++      VarRefInfoRef latest_rev_info;
++      VarMetadataRef metadata;
++        const char *oci_repository = NULL;
++      const char *rev;
+ 
+-  metadata = var_ref_info_get_metadata (latest_rev_info);
+-  oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
+-  delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
++      /* We use the summary so that we can reuse any cached json */
++      if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
++        return FALSE;
++      if (latest_rev == NULL)
++        return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
++                                  _("Couldn't find latest checksum for ref %s in remote %s"),
++                                  ref, state->remote_name);
+ 
+-  oci_digest = g_strconcat ("sha256:", rev, NULL);
++      rev = opt_rev != NULL ? opt_rev : latest_rev;
+ 
+-  image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
+-  if (image_source == NULL)
+-    return FALSE;
++      metadata = var_ref_info_get_metadata (latest_rev_info);
++      oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
++      delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
++
++      oci_digest = g_strconcat ("sha256:", rev, NULL);
++
++      image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
++      if (image_source == NULL)
++        return FALSE;
++    }
+ 
+   flatpak_progress_start_oci_pull (progress);
+ 
+@@ -5964,6 +5966,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
+                       FlatpakRemoteState  *state,
+                       const char          *ref,
+                       const char          *opt_rev,
++                      FlatpakImageSource  *opt_image_source,
+                       OstreeRepo          *repo,
+                       FlatpakPullFlags     flatpak_flags,
+                       OstreeRepoPullFlags  flags,
+@@ -5974,40 +5977,49 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
+ {
+   g_autoptr(FlatpakImageSource) image_source = NULL;
+   FlatpakOciRegistry *registry = NULL;
+-  const char *oci_repository = NULL;
+   const char *delta_url = NULL;
+   g_autofree char *oci_digest = NULL;
+   g_autofree char *checksum = NULL;
+-  VarRefInfoRef latest_rev_info;
+   g_autofree char *latest_alt_commit = NULL;
+-  VarMetadataRef metadata;
+-  g_autofree char *latest_rev = NULL;
+   G_GNUC_UNUSED g_autofree char *latest_commit =
+     flatpak_dir_read_latest (self, state->remote_name, ref, &latest_alt_commit, cancellable, NULL);
+   g_autofree char *name = NULL;
+ 
+-  /* We use the summary so that we can reuse any cached json */
+-  if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
+-    return FALSE;
+-  if (latest_rev == NULL)
+-    return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+-                               _("Couldn't find latest checksum for ref %s in remote %s"),
+-                               ref, state->remote_name);
++  if (opt_image_source)
++    {
++      image_source = g_object_ref (opt_image_source);
++      oci_digest = g_strdup (flatpak_image_source_get_digest (image_source));
++    }
++  else
++    {
++      VarMetadataRef metadata;
++      VarRefInfoRef latest_rev_info;
++      const char *oci_repository = NULL;
++      g_autofree char *latest_rev = NULL;
+ 
+-  metadata = var_ref_info_get_metadata (latest_rev_info);
+-  oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
+-  delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
++      /* We use the summary so that we can reuse any cached json */
++      if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
++        return FALSE;
++      if (latest_rev == NULL)
++        return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
++                                  _("Couldn't find latest checksum for ref %s in remote %s"),
++                                  ref, state->remote_name);
++
++      metadata = var_ref_info_get_metadata (latest_rev_info);
++      oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
++      delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
++
++      oci_digest = g_strconcat ("sha256:", opt_rev != NULL ? opt_rev : latest_rev, NULL);
+ 
+-  oci_digest = g_strconcat ("sha256:", opt_rev != NULL ? opt_rev : latest_rev, NULL);
++      image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
++      if (image_source == NULL)
++        return FALSE;
++    }
+ 
+   /* Short circuit if we've already got this commit */
+   if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
+     return TRUE;
+ 
+-  image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
+-  if (image_source == NULL)
+-    return FALSE;
+-
+   if (repo == NULL)
+     repo = self->repo;
+ 
+@@ -6046,6 +6058,7 @@ flatpak_dir_pull (FlatpakDir                           *self,
+                   const char                           *opt_rev,
+                   const char                          **subpaths,
+                   GFile                                *sideload_repo,
++                  FlatpakImageSource                   *image_source,
+                   GBytes                               *require_metadata,
+                   const char                           *token,
+                   OstreeRepo                           *repo,
+@@ -6076,8 +6089,8 @@ flatpak_dir_pull (FlatpakDir                           *self,
+   if (repo == NULL && !flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
+     return FALSE;
+ 
+-  if (flatpak_dir_get_remote_oci (self, state->remote_name))
+-    return flatpak_dir_pull_oci (self, state, ref, opt_rev, repo, flatpak_flags,
++  if (image_source || flatpak_dir_get_remote_oci (self, state->remote_name))
++    return flatpak_dir_pull_oci (self, state, ref, opt_rev, image_source, repo, flatpak_flags,
+                                  flags, token, progress, cancellable, error);
+ 
+   if (!ostree_repo_remote_get_url (self->repo,
+@@ -9838,6 +9851,7 @@ flatpak_dir_install (FlatpakDir          *self,
+                      const char         **opt_subpaths,
+                      const char         **opt_previous_ids,
+                      GFile               *sideload_repo,
++                     FlatpakImageSource  *image_source,
+                      GBytes              *require_metadata,
+                      const char          *token,
+                      FlatpakProgress     *progress,
+@@ -9902,7 +9916,8 @@ flatpak_dir_install (FlatpakDir          *self,
+ 
+           child_repo_path = g_file_get_path (registry_file);
+ 
+-          if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref), opt_commit, NULL, token, progress, cancellable, error))
++          if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref),
++                                       opt_commit, image_source, token, progress, cancellable, error))
+             return FALSE;
+         }
+       else if (!gpg_verify_summary || !gpg_verify)
+@@ -9996,7 +10011,7 @@ flatpak_dir_install (FlatpakDir          *self,
+ 
+           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
+ 
+-          if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, subpaths, sideload_repo, require_metadata, token,
++          if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, subpaths, sideload_repo, NULL, require_metadata, token,
+                                  child_repo,
+                                  flatpak_flags,
+                                  0,
+@@ -10071,7 +10086,8 @@ flatpak_dir_install (FlatpakDir          *self,
+ 
+   if (!no_pull)
+     {
+-      if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, opt_subpaths, sideload_repo, require_metadata, token, NULL,
++      if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref), opt_commit, opt_subpaths,
++                             sideload_repo, image_source, require_metadata, token, NULL,
+                              flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
+                              progress, cancellable, error))
+         return FALSE;
+@@ -10518,6 +10534,7 @@ flatpak_dir_update (FlatpakDir                           *self,
+                     const char                          **opt_subpaths,
+                     const char                          **opt_previous_ids,
+                     GFile                                *sideload_repo,
++                    FlatpakImageSource                   *image_source,
+                     GBytes                               *require_metadata,
+                     const char                           *token,
+                     FlatpakProgress                      *progress,
+@@ -10605,7 +10622,7 @@ flatpak_dir_update (FlatpakDir                           *self,
+           child_repo_path = g_file_get_path (registry_file);
+ 
+           if (!flatpak_dir_mirror_oci (self, registry, state, flatpak_decomposed_get_ref (ref),
+-                                       commit, NULL, token, progress, cancellable, error))
++                                       commit, image_source, token, progress, cancellable, error))
+             return FALSE;
+         }
+       else if (!gpg_verify_summary || !gpg_verify)
+@@ -10685,7 +10702,7 @@ flatpak_dir_update (FlatpakDir                           *self,
+ 
+           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
+           if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref),
+-                                 commit, subpaths, sideload_repo, require_metadata, token,
++                                 commit, subpaths, sideload_repo, NULL, require_metadata, token,
+                                  child_repo,
+                                  flatpak_flags, 0,
+                                  progress, cancellable, error))
+@@ -10751,7 +10768,7 @@ flatpak_dir_update (FlatpakDir                           *self,
+   if (!no_pull)
+     {
+       if (!flatpak_dir_pull (self, state, flatpak_decomposed_get_ref (ref),
+-                             commit, subpaths, sideload_repo, require_metadata, token,
++                             commit, subpaths, sideload_repo, image_source, require_metadata, token,
+                              NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
+                              progress, cancellable, error))
+         return FALSE;
+diff --git a/common/flatpak-installation.c b/common/flatpak-installation.c
+index c7d2e1dd..3a8677e8 100644
+--- a/common/flatpak-installation.c
++++ b/common/flatpak-installation.c
+@@ -1930,7 +1930,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
+                             (flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0,
+                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
+                             FALSE, FALSE, FALSE, state,
+-                            ref, NULL, (const char **) subpaths, NULL, NULL, NULL, NULL,
++                            ref, NULL, (const char **) subpaths, NULL, NULL, NULL, NULL, NULL,
+                             progress, cancellable, error))
+     return NULL;
+ 
+@@ -2098,7 +2098,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
+                            (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
+                            FALSE, FALSE, FALSE, state,
+                            ref, target_commit,
+-                           (const char **) subpaths, NULL, NULL, NULL, NULL,
++                           (const char **) subpaths, NULL, NULL, NULL, NULL, NULL,
+                            progress, cancellable, error))
+     return NULL;
+ 
+diff --git a/common/flatpak-transaction.c b/common/flatpak-transaction.c
+index 7039d86e..ffee385e 100644
+--- a/common/flatpak-transaction.c
++++ b/common/flatpak-transaction.c
+@@ -26,7 +26,9 @@
+ #include "flatpak-auth-private.h"
+ #include "flatpak-dir-private.h"
+ #include "flatpak-error.h"
++#include "flatpak-image-source-private.h"
+ #include "flatpak-installation-private.h"
++#include "flatpak-oci-registry-private.h"
+ #include "flatpak-progress-private.h"
+ #include "flatpak-repo-utils-private.h"
+ #include "flatpak-transaction-private.h"
+@@ -103,6 +105,7 @@ struct _FlatpakTransactionOperation
+   char                          **subpaths;
+   char                          **previous_ids;
+   char                           *commit;
++  FlatpakImageSource             *image_source;
+   GFile                          *bundle;
+   GBytes                         *external_metadata;
+   FlatpakTransactionOperationType kind;
+@@ -115,6 +118,7 @@ struct _FlatpakTransactionOperation
+   gboolean                        resolved;
+   char                           *resolved_commit;
+   GFile                          *resolved_sideload_path;
++  FlatpakImageSource             *resolved_image_source;
+   GBytes                         *resolved_metadata;
+   GKeyFile                       *resolved_metakey;
+   GBytes                         *resolved_old_metadata;
+@@ -144,6 +148,11 @@ typedef struct _BundleData
+   GBytes *gpg_data;
+ } BundleData;
+ 
++typedef struct _ImageData
++{
++  char *image_location;
++} ImageData;
++
+ typedef struct {
+   FlatpakTransaction *transaction;
+   const char *remote;
+@@ -168,6 +177,7 @@ typedef struct _FlatpakTransactionPrivate
+ 
+   GList                       *flatpakrefs; /* GKeyFiles */
+   GList                       *bundles; /* BundleData */
++  GList                       *images; /* ImageData */
+ 
+   guint                        next_request_id;
+   guint                        active_request_id;
+@@ -260,6 +270,23 @@ bundle_data_free (BundleData *data)
+   g_free (data);
+ }
+ 
++static ImageData *
++image_data_new (const char *image_location)
++{
++  ImageData *data = g_new0 (ImageData, 1);
++
++  data->image_location = g_strdup (image_location);
++
++  return data;
++}
++
++static void
++image_data_free (ImageData *data)
++{
++  g_clear_pointer (&data->image_location, g_free);
++  g_free (data);
++}
++
+ static guint progress_signals[LAST_SIGNAL] = { 0 };
+ 
+ /**
+@@ -612,6 +639,8 @@ flatpak_transaction_operation_finalize (GObject *object)
+   g_clear_pointer (&self->run_before_ops, g_list_free);
+   g_clear_pointer (&self->related_to_ops, g_ptr_array_unref);
+   g_clear_pointer (&self->summary_metadata, g_variant_unref);
++  g_clear_object (&self->image_source);
++  g_clear_object (&self->resolved_image_source);
+ 
+   G_OBJECT_CLASS (flatpak_transaction_operation_parent_class)->finalize (object);
+ }
+@@ -993,6 +1022,7 @@ flatpak_transaction_finalize (GObject *object)
+   g_free (priv->parent_window);
+   g_list_free_full (priv->flatpakrefs, (GDestroyNotify) g_key_file_unref);
+   g_list_free_full (priv->bundles, (GDestroyNotify) bundle_data_free);
++  g_list_free_full (priv->images, (GDestroyNotify) image_data_free);
+   g_free (priv->default_arch);
+   g_hash_table_unref (priv->last_op_for_ref);
+   g_hash_table_unref (priv->remote_states);
+@@ -2603,6 +2633,7 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
+                              const char                     *commit,
+                              FlatpakTransactionOperationType kind,
+                              GFile                          *bundle,
++                             FlatpakImageSource             *image_source,
+                              const char                     *external_metadata,
+                              gboolean                        pin_on_deploy,
+                              FlatpakTransactionOperation   **out_op,
+@@ -2730,6 +2761,9 @@ flatpak_transaction_add_ref (FlatpakTransaction             *self,
+   op = flatpak_transaction_add_op (self, remote, ref, subpaths, previous_ids,
+                                    commit, bundle, kind, pin_on_deploy);
+ 
++  if (image_source)
++    op->image_source = g_object_ref (image_source);
++
+   if (external_metadata)
+     op->external_metadata = g_bytes_new (external_metadata, strlen (external_metadata));
+ 
+@@ -2783,7 +2817,7 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
+ 
+   if (!flatpak_transaction_add_ref (self, remote, decomposed, subpaths, NULL, NULL,
+                                     FLATPAK_TRANSACTION_OPERATION_INSTALL,
+-                                    NULL, NULL, pin_on_deploy, NULL, error))
++                                    NULL, NULL, NULL, pin_on_deploy, NULL, error))
+     return FALSE;
+ 
+   return TRUE;
+@@ -2843,7 +2877,7 @@ flatpak_transaction_add_rebase (FlatpakTransaction *self,
+   if (dir_ref_is_installed (priv->dir, decomposed, &installed_origin, NULL))
+     remote = installed_origin;
+ 
+-  return flatpak_transaction_add_ref (self, remote, decomposed, subpaths, previous_ids, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, NULL, NULL, FALSE, NULL, error);
++  return flatpak_transaction_add_ref (self, remote, decomposed, subpaths, previous_ids, NULL, FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE, NULL, NULL, NULL, FALSE, NULL, error);
+ }
+ 
+ /**
+@@ -2919,12 +2953,12 @@ flatpak_transaction_add_rebase_and_uninstall (FlatpakTransaction  *self,
+   if (!flatpak_transaction_add_ref (self, remote, new_decomposed, subpaths,
+                                     previous_ids, NULL,
+                                     FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
+-                                    NULL, NULL, FALSE, &rebase_op, error))
++                                    NULL, NULL, NULL, FALSE, &rebase_op, error))
+     return FALSE;
+ 
+   if (!flatpak_transaction_add_ref (self, NULL, old_decomposed, NULL, NULL, NULL,
+                                     FLATPAK_TRANSACTION_OPERATION_UNINSTALL,
+-                                    NULL, NULL, FALSE, &uninstall_op, &local_error))
++                                    NULL, NULL, NULL, FALSE, &uninstall_op, &local_error))
+     {
+       /* If the user is trying to install an eol-rebased app from scratch, the
+        * @old_ref can’t be uninstalled because it’s not installed already.
+@@ -2980,6 +3014,36 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
+   return TRUE;
+ }
+ 
++/**
++ * flatpak_transaction_add_install_image:
++ * @self: a #FlatpakTransaction
++ * @image_location: (nullable): location string to install from.
++ * @error: return location for a #GError
++ *
++ * Install a Flatpak from a container image. The image is specified
++ *
++ * If the reference from the image was previously installed, then
++ * that remote will be used as the remote for the newly installed image. If the
++ * reference was not previously installed, then a remote will be created for the
++ * reference.
++ *
++ * @image_location is specified in containers-transports(5) form. Only a subset
++ * of transports are supported: oci: and docker:.
++ *
++ * Returns: %TRUE on success; %FALSE with @error set on failure.
++ */
++gboolean
++flatpak_transaction_add_install_image (FlatpakTransaction *self,
++                                       const char         *image_location,
++                                       GError            **error)
++{
++  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
++
++  priv->images = g_list_append (priv->images, image_data_new (image_location));
++
++  return TRUE;
++}
++
+ /**
+  * flatpak_transaction_add_install_flatpakref:
+  * @self: a #FlatpakTransaction
+@@ -3046,7 +3110,7 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
+     return FALSE;
+ 
+   /* Note: we implement the merge when subpaths == NULL in flatpak_transaction_add_ref() */
+-  return flatpak_transaction_add_ref (self, NULL, decomposed, subpaths, NULL, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, FALSE, NULL, error);
++  return flatpak_transaction_add_ref (self, NULL, decomposed, subpaths, NULL, commit, FLATPAK_TRANSACTION_OPERATION_UPDATE, NULL, NULL, NULL, FALSE, NULL, error);
+ }
+ 
+ /**
+@@ -3073,7 +3137,7 @@ flatpak_transaction_add_uninstall (FlatpakTransaction *self,
+   if (decomposed == NULL)
+     return FALSE;
+ 
+-  return flatpak_transaction_add_ref (self, NULL, decomposed, NULL, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, FALSE, NULL, error);
++  return flatpak_transaction_add_ref (self, NULL, decomposed, NULL, NULL, NULL, FLATPAK_TRANSACTION_OPERATION_UNINSTALL, NULL, NULL, NULL, FALSE, NULL, error);
+ }
+ 
+ static gboolean
+@@ -3185,7 +3249,7 @@ flatpak_transaction_add_auto_install (FlatpakTransaction *self,
+ 
+                   if (!flatpak_transaction_add_ref (self, remote, auto_install_ref, NULL, NULL, NULL,
+                                                     FLATPAK_TRANSACTION_OPERATION_INSTALL_OR_UPDATE,
+-                                                    NULL, NULL, FALSE, NULL,
++                                                    NULL, NULL, NULL, FALSE, NULL,
+                                                     &local_error))
+                     g_info ("Failed to add auto-install ref %s: %s", flatpak_decomposed_get_ref (auto_install_ref),
+                              local_error->message);
+@@ -3283,6 +3347,7 @@ static gboolean
+ mark_op_resolved (FlatpakTransactionOperation *op,
+                   const char                  *commit,
+                   GFile                       *sideload_path,
++                  FlatpakImageSource          *image_source,
+                   GBytes                      *metadata,
+                   GBytes                      *old_metadata,
+                   GError                     **error)
+@@ -3291,7 +3356,7 @@ mark_op_resolved (FlatpakTransactionOperation *op,
+ 
+   g_assert (op != NULL);
+ 
+-  g_assert (commit != NULL);
++  g_assert (commit != NULL || image_source != NULL);
+ 
+   op->resolved = TRUE;
+ 
+@@ -3304,6 +3369,9 @@ mark_op_resolved (FlatpakTransactionOperation *op,
+   if (sideload_path)
+     op->resolved_sideload_path = g_object_ref (sideload_path);
+ 
++  if (image_source)
++    op->resolved_image_source = g_object_ref (image_source);
++
+   if (metadata)
+     {
+       g_autoptr(GKeyFile) metakey = g_key_file_new ();
+@@ -3337,13 +3405,14 @@ resolve_op_end (FlatpakTransaction *self,
+                 FlatpakTransactionOperation *op,
+                 const char *checksum,
+                 GFile *sideload_path,
++                FlatpakImageSource *image_source,
+                 GBytes *metadata_bytes,
+                 GError **error)
+ {
+   g_autoptr(GBytes) old_metadata_bytes = NULL;
+ 
+   old_metadata_bytes = load_deployed_metadata (self, op->ref, NULL, NULL);
+-  if (!mark_op_resolved (op, checksum, sideload_path, metadata_bytes, old_metadata_bytes, error))
++  if (!mark_op_resolved (op, checksum, sideload_path, image_source, metadata_bytes, old_metadata_bytes, error))
+     return FALSE;
+   emit_eol_and_maybe_skip (self, op);
+   return TRUE;
+@@ -3394,7 +3463,7 @@ resolve_op_from_commit (FlatpakTransaction *self,
+                                    flatpak_decomposed_get_ref (eolr_decomposed));
+     }
+ 
+-  return resolve_op_end (self, op, checksum, sideload_path, metadata_bytes, error);
++  return resolve_op_end (self, op, checksum, sideload_path, NULL, metadata_bytes, error);
+ }
+ 
+ /* NOTE: In case of non-available summary this returns FALSE with a
+@@ -3459,7 +3528,7 @@ try_resolve_op_from_metadata (FlatpakTransaction *self,
+         }
+     }
+ 
+-  return resolve_op_end (self, op, checksum, sideload_path, metadata_bytes, error);
++  return resolve_op_end (self, op, checksum, sideload_path, NULL, metadata_bytes, error);
+ }
+ 
+ static gboolean
+@@ -3502,7 +3571,7 @@ resolve_ops (FlatpakTransaction *self,
+            * checksum we got was the version already installed.
+            */
+           g_assert (op->resolved_commit != NULL);
+-          if (!mark_op_resolved (op, op->resolved_commit, NULL, NULL, NULL, error))
++          if (!mark_op_resolved (op, op->resolved_commit, NULL, NULL, NULL, NULL, error))
+             return FALSE;
+           continue;
+         }
+@@ -3517,7 +3586,7 @@ resolve_ops (FlatpakTransaction *self,
+               op->skip = TRUE;
+               continue;
+             }
+-          if (!mark_op_resolved (op, checksum, NULL, metadata_bytes, NULL, error))
++          if (!mark_op_resolved (op, checksum, NULL, NULL, metadata_bytes, NULL, error))
+             return FALSE;
+           continue;
+         }
+@@ -3525,7 +3594,7 @@ resolve_ops (FlatpakTransaction *self,
+       if (op->kind == FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE)
+         {
+           g_assert (op->commit != NULL);
+-          if (!mark_op_resolved (op, op->commit, NULL, op->external_metadata, NULL, error))
++          if (!mark_op_resolved (op, op->commit, NULL, NULL, op->external_metadata, NULL, error))
+             return FALSE;
+           continue;
+         }
+@@ -3549,8 +3618,13 @@ resolve_ops (FlatpakTransaction *self,
+       if (state == NULL)
+         return FALSE;
+ 
++      if (op->image_source)
++        {
++          if (!mark_op_resolved (op, NULL, NULL, op->image_source, op->external_metadata, NULL, error))
++            return FALSE;
++        }
+       /* Should we use local state */
+-      if (transaction_is_local_only (self, op->kind))
++      else if (transaction_is_local_only (self, op->kind))
+         {
+           g_autoptr(GVariant) commit_data = flatpak_dir_read_latest_commit (priv->dir, op->remote, op->ref,
+                                                                             &checksum, NULL, error);
+@@ -4688,7 +4762,74 @@ flatpak_transaction_resolve_bundles (FlatpakTransaction *self,
+ 
+       if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, commit,
+                                         FLATPAK_TRANSACTION_OPERATION_INSTALL_BUNDLE,
+-                                        data->file, metadata, FALSE, NULL, error))
++                                        data->file, NULL, metadata, FALSE, NULL, error))
++        return FALSE;
++    }
++
++  return TRUE;
++}
++
++static gboolean
++flatpak_transaction_resolve_images (FlatpakTransaction *self,
++                                    GCancellable       *cancellable,
++                                    GError            **error)
++{
++  FlatpakTransactionPrivate *priv = flatpak_transaction_get_instance_private (self);
++  GList *l;
++
++  for (l = priv->images; l != NULL; l = l->next)
++    {
++      ImageData *data = l->data;
++      g_autoptr(FlatpakImageSource) image_source = NULL;
++      g_autofree char *remote = NULL;
++      g_autoptr(FlatpakDecomposed) ref = NULL;
++      const char *ref_label;
++      const char *metadata_label;
++      FlatpakTransactionOperation *op;
++      g_autoptr(GBytes) deploy_data = NULL;
++
++      image_source = flatpak_image_source_new_for_location (data->image_location,
++                                                            cancellable, error);
++      if (!image_source)
++        return FALSE;
++
++      ref_label = flatpak_image_source_get_ref (image_source);
++      ref = flatpak_decomposed_new_from_ref (ref_label, error);
++      if (ref == NULL)
++        {
++          g_prefix_error (error, "Cannot parse org.flatpak.ref label: ");
++          return FALSE;
++        }
++
++      metadata_label = flatpak_image_source_get_metadata (image_source);
++      if (metadata_label == NULL)
++        return flatpak_fail_error (error, FLATPAK_ERROR_INVALID_DATA,
++                                   "Image does not have org.flatpak.metadata label");
++
++      deploy_data = flatpak_dir_get_deploy_data (priv->dir, ref, FLATPAK_DEPLOY_VERSION_ANY, cancellable, NULL);
++      if (deploy_data != NULL)
++        remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
++
++      if (remote == NULL)
++        {
++          gboolean created_remote;
++          g_autofree char *id = flatpak_decomposed_dup_id (ref);
++
++          remote = flatpak_dir_create_origin_remote (priv->dir, NULL /* url */, id,
++                                                     NULL /* title */, ref_label,
++                                                     NULL /* gpg_data */, NULL /* collection_id */,
++                                                     &created_remote,
++                                                     cancellable, error);
++          if (!remote)
++            return FALSE;
++
++          if (created_remote)
++            flatpak_installation_drop_caches (priv->installation, NULL, NULL);
++        }
++
++      if (!flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, NULL,
++                                        FLATPAK_TRANSACTION_OPERATION_INSTALL,
++                                        NULL, image_source, metadata_label, FALSE, &op, error))
+         return FALSE;
+     }
+ 
+@@ -4747,7 +4888,7 @@ _run_op_kind (FlatpakTransaction           *self,
+ 
+       emit_new_op (self, op, progress);
+ 
+-      g_assert (op->resolved_commit != NULL); /* We resolved this before */
++      g_assert (op->resolved_commit != NULL || op->resolved_image_source != NULL); /* We resolved this before */
+ 
+       if (op->resolved_metakey && !flatpak_check_required_version (flatpak_decomposed_get_ref (op->ref),
+                                                                    op->resolved_metakey, &local_error))
+@@ -4765,6 +4906,7 @@ _run_op_kind (FlatpakTransaction           *self,
+                                    (const char **) op->subpaths,
+                                    (const char **) op->previous_ids,
+                                    op->resolved_sideload_path,
++                                   op->resolved_image_source,
+                                    op->resolved_metadata,
+                                    op->resolved_token,
+                                    progress->progress_obj,
+@@ -4838,6 +4980,7 @@ _run_op_kind (FlatpakTransaction           *self,
+                                       (const char **) op->subpaths,
+                                       (const char **) op->previous_ids,
+                                       op->resolved_sideload_path,
++                                      op->resolved_image_source,
+                                       op->resolved_metadata,
+                                       op->resolved_token,
+                                       progress->progress_obj,
+@@ -5149,6 +5292,12 @@ flatpak_transaction_real_run (FlatpakTransaction *self,
+       return FALSE;
+     }
+ 
++  if (!flatpak_transaction_resolve_images (self, cancellable, error))
++    {
++      g_assert (error == NULL || *error != NULL);
++      return FALSE;
++    }
++
+   /* Resolve initial ops */
+   if (!resolve_all_ops (self, cancellable, error))
+     {
+diff --git a/common/flatpak-transaction.h b/common/flatpak-transaction.h
+index 0b8f2de8..3d3f4ce8 100644
+--- a/common/flatpak-transaction.h
++++ b/common/flatpak-transaction.h
+@@ -326,6 +326,10 @@ gboolean            flatpak_transaction_add_install_bundle (FlatpakTransaction *
+                                                             GBytes             *gpg_data,
+                                                             GError            **error);
+ FLATPAK_EXTERN
++gboolean            flatpak_transaction_add_install_image (FlatpakTransaction *self,
++                                                           const char         *image_location,
++                                                           GError            **error);
++FLATPAK_EXTERN
+ gboolean            flatpak_transaction_add_install_flatpakref (FlatpakTransaction *self,
+                                                                 GBytes             *flatpakref_data,
+                                                                 GError            **error);
+diff --git a/system-helper/flatpak-system-helper.c b/system-helper/flatpak-system-helper.c
+index a4d9708b..2740b299 100644
+--- a/system-helper/flatpak-system-helper.c
++++ b/system-helper/flatpak-system-helper.c
+@@ -640,7 +640,7 @@ handle_deploy (FlatpakSystemHelper   *object,
+           return G_DBUS_METHOD_INVOCATION_HANDLED;
+         }
+ 
+-      if (!flatpak_dir_pull (system, state, arg_ref, NULL, (const char **) arg_subpaths, NULL, NULL, NULL, NULL,
++      if (!flatpak_dir_pull (system, state, arg_ref, NULL, (const char **) arg_subpaths, NULL, NULL, NULL, NULL, NULL,
+                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, NULL,
+                              NULL, &error))
+         {
+@@ -874,11 +874,11 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
+           return G_DBUS_METHOD_INVOCATION_HANDLED;
+         }
+ 
+-      if (!flatpak_dir_pull (system, state, new_branch, NULL, NULL, NULL, NULL, NULL, NULL,
++      if (!flatpak_dir_pull (system, state, new_branch, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                              FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, NULL,
+                              NULL, &first_error))
+         {
+-          if (!flatpak_dir_pull (system, state, old_branch, NULL, NULL, NULL, NULL, NULL, NULL,
++          if (!flatpak_dir_pull (system, state, old_branch, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                                  FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, NULL,
+                                  NULL, &second_error))
+             {
+-- 
+2.47.1
+
+From 7ef02411fc7209bd1072c13d0e08b95a9c579b0f Mon Sep 17 00:00:00 2001
+From: Sebastian Wick <sebastian.wick@redhat.com>
+Date: Wed, 18 Dec 2024 00:40:45 +0100
+Subject: [PATCH 07/12]builtins/install: Create install transaction in common
+ function
+
+---
+ app/flatpak-builtins-install.c | 85 +++++++++++++---------------------
+ 1 file changed, 33 insertions(+), 52 deletions(-)
+
+diff --git a/app/flatpak-builtins-install.c b/app/flatpak-builtins-install.c
+index d4d9ae30..c5132da6 100644
+--- a/app/flatpak-builtins-install.c
++++ b/app/flatpak-builtins-install.c
+@@ -129,6 +129,36 @@ read_gpg_data (GCancellable *cancellable,
+   return flatpak_read_stream (source_stream, FALSE, error);
+ }
+ 
++static FlatpakTransaction *
++create_install_transaction (FlatpakDir  *dir,
++                            GError     **error)
++{
++  g_autoptr(FlatpakTransaction) transaction = NULL;
++
++  if (opt_noninteractive)
++    transaction = flatpak_quiet_transaction_new (dir, error);
++  else
++    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
++
++  if (transaction == NULL)
++    return NULL;
++
++  flatpak_transaction_set_no_pull (transaction, opt_no_pull);
++  flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
++  flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
++  flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
++  flatpak_transaction_set_disable_related (transaction, opt_no_related);
++  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
++  flatpak_transaction_set_reinstall (transaction, opt_reinstall);
++  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
++  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
++
++  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
++    flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
++
++  return g_steal_pointer (&transaction);
++}
++
+ static gboolean
+ install_bundle (FlatpakDir *dir,
+                 GOptionContext *context,
+@@ -162,26 +192,10 @@ install_bundle (FlatpakDir *dir,
+         return FALSE;
+     }
+ 
+-  if (opt_noninteractive)
+-    transaction = flatpak_quiet_transaction_new (dir, error);
+-  else
+-    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
++  transaction = create_install_transaction (dir, error);
+   if (transaction == NULL)
+     return FALSE;
+ 
+-  flatpak_transaction_set_no_pull (transaction, opt_no_pull);
+-  flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
+-  flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
+-  flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
+-  flatpak_transaction_set_disable_related (transaction, opt_no_related);
+-  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
+-  flatpak_transaction_set_reinstall (transaction, opt_reinstall);
+-  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
+-  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
+-
+-  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+-    flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
+-
+   if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
+     return FALSE;
+ 
+@@ -241,27 +255,10 @@ install_from (FlatpakDir *dir,
+       file_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
+     }
+ 
+-  if (opt_noninteractive)
+-    transaction = flatpak_quiet_transaction_new (dir, error);
+-  else
+-    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
++  transaction = create_install_transaction (dir, error);
+   if (transaction == NULL)
+     return FALSE;
+ 
+-  flatpak_transaction_set_no_pull (transaction, opt_no_pull);
+-  flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
+-  flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
+-  flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
+-  flatpak_transaction_set_disable_related (transaction, opt_no_related);
+-  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
+-  flatpak_transaction_set_reinstall (transaction, opt_reinstall);
+-  flatpak_transaction_set_default_arch (transaction, opt_arch);
+-  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
+-  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
+-
+-  for (int i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+-    flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
+-
+   if (!flatpak_transaction_add_install_flatpakref (transaction, file_data, error))
+     return FALSE;
+ 
+@@ -485,26 +482,10 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
+ 
+   default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
+ 
+-  if (opt_noninteractive)
+-    transaction = flatpak_quiet_transaction_new (dir, error);
+-  else
+-    transaction = flatpak_cli_transaction_new (dir, opt_yes, TRUE, opt_arch != NULL, error);
++  transaction = create_install_transaction (dir, error);
+   if (transaction == NULL)
+     return FALSE;
+ 
+-  flatpak_transaction_set_no_pull (transaction, opt_no_pull);
+-  flatpak_transaction_set_no_deploy (transaction, opt_no_deploy);
+-  flatpak_transaction_set_disable_static_deltas (transaction, opt_no_static_deltas);
+-  flatpak_transaction_set_disable_dependencies (transaction, opt_no_deps);
+-  flatpak_transaction_set_disable_related (transaction, opt_no_related);
+-  flatpak_transaction_set_disable_auto_pin (transaction, opt_no_auto_pin);
+-  flatpak_transaction_set_reinstall (transaction, opt_reinstall);
+-  flatpak_transaction_set_auto_install_sdk (transaction, opt_include_sdk);
+-  flatpak_transaction_set_auto_install_debug (transaction, opt_include_debug);
+-
+-  for (i = 0; opt_sideload_repos != NULL && opt_sideload_repos[i] != NULL; i++)
+-    flatpak_transaction_add_sideload_repo (transaction, opt_sideload_repos[i]);
+-
+   for (i = 0; i < n_prefs; i++)
+     {
+       const char *pref = prefs[i];
+-- 
+2.47.1
+
+From 920b48c7a53b9bff543827309c974a9c7824068f Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Wed, 18 Dec 2024 00:53:59 +0100
+Subject: [PATCH 08/12]builtins/install: Allow direct installation from OCI
+ images
+
+Similar to bundle installs, add:
+
+ flatpak install [--image] docker://registry.example.com/image:latest
+ flatpak install [--image] oci:/path/to/image
+
+These is useful for testing purposes and in certain cases when installing
+Flatpaks on disconnected systems.
+---
+ app/flatpak-builtins-install.c | 60 ++++++++++++++++++++++++++++++++--
+ app/flatpak-cli-transaction.c  |  2 +-
+ doc/flatpak-install.xml        | 24 ++++++++++----
+ tests/test-oci-registry.sh     | 33 ++++++++++++++++++-
+ tests/test-oci.sh              | 22 ++++++++++++-
+ 5 files changed, 129 insertions(+), 12 deletions(-)
+
+diff --git a/app/flatpak-builtins-install.c b/app/flatpak-builtins-install.c
+index c5132da6..70474bbe 100644
+--- a/app/flatpak-builtins-install.c
++++ b/app/flatpak-builtins-install.c
+@@ -56,6 +56,7 @@ static gboolean opt_include_sdk;
+ static gboolean opt_include_debug;
+ static gboolean opt_bundle;
+ static gboolean opt_from;
++static gboolean opt_image;
+ static gboolean opt_yes;
+ static gboolean opt_reinstall;
+ static gboolean opt_noninteractive;
+@@ -76,6 +77,7 @@ static GOptionEntry options[] = {
+   { "include-debug", 0, 0, G_OPTION_ARG_NONE, &opt_include_debug, N_("Additionally install the debug info for the given refs and their dependencies") },
+   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Assume LOCATION is a .flatpak single-file bundle"), NULL },
+   { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Assume LOCATION is a .flatpakref application description"), NULL },
++  { "image", 0, 0, G_OPTION_ARG_NONE, &opt_image, N_("Assume LOCATION is containers-transports(5) reference to an OCI image"), NULL },
+   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
+   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
+   { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
+@@ -273,6 +275,52 @@ install_from (FlatpakDir *dir,
+   return TRUE;
+ }
+ 
++static gboolean
++install_image (FlatpakDir      *dir,
++               GOptionContext  *context,
++               int              argc,
++               char           **argv,
++               GCancellable    *cancellable,
++               GError         **error)
++{
++  const char *location;
++  g_autoptr(GBytes) gpg_data = NULL;
++  g_autoptr(FlatpakTransaction) transaction = NULL;
++
++  if (argc < 2)
++    return usage_error (context, _("Image location must be specified"), error);
++
++  if (argc > 2)
++    return usage_error (context, _("Too many arguments"), error);
++
++  location = argv[1];
++
++  if (opt_gpg_file != NULL)
++    {
++      /* Override gpg_data from file */
++      gpg_data = read_gpg_data (cancellable, error);
++      if (gpg_data == NULL)
++        return FALSE;
++    }
++
++  transaction = create_install_transaction (dir, error);
++  if (transaction == NULL)
++    return FALSE;
++
++  if (!flatpak_transaction_add_install_image (transaction, location, error))
++    return FALSE;
++
++  if (!flatpak_transaction_run (transaction, cancellable, error))
++    {
++      if (g_error_matches (*error, FLATPAK_ERROR, FLATPAK_ERROR_ABORTED))
++        g_clear_error (error); /* Don't report on stderr */
++
++      return FALSE;
++    }
++
++  return TRUE;
++}
++
+ gboolean
+ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
+ {
+@@ -301,11 +349,14 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
+   /* Start with the default or specified dir, this is fine for opt_bundle or opt_from */
+   dir = g_object_ref (g_ptr_array_index (dirs, 0));
+ 
+-  if (!opt_bundle && !opt_from && argc >= 2)
++  if (!opt_bundle && !opt_from && !opt_image && argc >= 2)
+     {
+-      if (flatpak_file_arg_has_suffix (argv[1], ".flatpakref"))
++      if (g_str_has_prefix (argv[1], "oci:") ||
++          g_str_has_prefix (argv[1], "docker:"))
++        opt_image = TRUE;
++      else if (flatpak_file_arg_has_suffix (argv[1], ".flatpakref"))
+         opt_from = TRUE;
+-      if (flatpak_file_arg_has_suffix (argv[1], ".flatpak"))
++      else if (flatpak_file_arg_has_suffix (argv[1], ".flatpak"))
+         opt_bundle = TRUE;
+     }
+ 
+@@ -315,6 +366,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
+   if (opt_from)
+     return install_from (dir, context, argc, argv, cancellable, error);
+ 
++  if (opt_image)
++    return install_image (dir, context, argc, argv, cancellable, error);
++
+   if (argc < 2)
+     return usage_error (context, _("At least one REF must be specified"), error);
+ 
+diff --git a/app/flatpak-cli-transaction.c b/app/flatpak-cli-transaction.c
+index e7c8c90f..8c02c552 100644
+--- a/app/flatpak-cli-transaction.c
++++ b/app/flatpak-cli-transaction.c
+@@ -1350,7 +1350,7 @@ transaction_ready_pre_auth (FlatpakTransaction *transaction)
+   GList *l;
+   int i;
+   FlatpakTablePrinter *printer;
+-  const char *op_shorthand[] = { "i", "u", "i", "r" };
++  const char *op_shorthand[] = { "i", "u", "i", "r", "i" };
+ 
+   /* These caches may no longer be valid once the transaction runs */
+   g_clear_pointer (&self->runtime_app_map, g_hash_table_unref);
+diff --git a/doc/flatpak-install.xml b/doc/flatpak-install.xml
+index ab4bb1fb..f75dedae 100644
+--- a/doc/flatpak-install.xml
++++ b/doc/flatpak-install.xml
+@@ -38,7 +38,7 @@
+             <cmdsynopsis>
+                 <command>flatpak install</command>
+                 <arg choice="opt" rep="repeat">OPTION</arg>
+-                <arg choice="opt">--from|--bundle</arg>
++                <arg choice="opt">--from|--bundle|--image</arg>
+                 <arg choice="plain">LOCATION</arg>
+             </cmdsynopsis>
+     </refsynopsisdiv>
+@@ -85,11 +85,11 @@
+           <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+         </para>
+         <para>
+-          The alternative form of the command (with <option>--from</option> or
+-          <option>--bundle</option>) allows to install directly from a source such as a
+-          <filename>.flatpak</filename> single-file bundle or a <filename>.flatpakref</filename>
+-          application description. The options are optional if the first argument has the expected
+-          filename extension.
++          The alternative form of the command (with <option>--from</option>, <option>--bundle</option>,
++          or <option>--image</option>) allows to install directly from a source. The source can be a
++          <filename>.flatpak</filename> single-file bundle, <filename>.flatpakref</filename>
++          application description, or a reference to an OCI image. The options are optional if the
++          first argument has the expected filename extension or prefix.
+         </para>
+         <para>
+           Note that flatpak allows to have multiple branches of an application and runtimes
+@@ -139,6 +139,18 @@
+                 </para></listitem>
+             </varlistentry>
+ 
++            <varlistentry>
++                <term><option>--image</option></term>
++                <listitem><para>
++                  Treat <arg choice="plain">LOCATION</arg> as the location of a Flatpak in
++                  OCI image format. <arg choice="plan>">LOCATION</arg> is in the format of
++                  <citerefentry><refentrytitle>containers-transports</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
++                  Supported schemes are <literal>docker://</literal> and <literal>oci:</literal>.
++                  This is assumed if the argument starts
++                  with one of these schemes.
++                </para></listitem>
++            </varlistentry>
++
+             <varlistentry>
+                 <term><option>--reinstall</option></term>
+ 
+diff --git a/tests/test-oci-registry.sh b/tests/test-oci-registry.sh
+index da234ded..9503656b 100755
+--- a/tests/test-oci-registry.sh
++++ b/tests/test-oci-registry.sh
+@@ -23,7 +23,7 @@ set -euo pipefail
+ 
+ skip_without_bwrap
+ 
+-echo "1..14"
++echo "1..16"
+ 
+ # Start the fake registry server
+ 
+@@ -315,3 +315,34 @@ assert_file_has_content remotes-list "^hello-origin.*[ 	]${scheme}://127\.0\.0\.
+ assert_not_has_file $base/oci/hello-origin.index.gz
+ 
+ ok "change remote origin via bundle"
++
++${FLATPAK} ${U} -y uninstall org.test.Hello >&2
++${FLATPAK} ${U} -y uninstall org.test.Platform >&2
++
++${FLATPAK} ${U} list --columns=application,origin > flatpak-list
++assert_not_file_has_content flatpak-list 'org.test.Platform'
++assert_not_file_has_content flatpak-list 'org.test.Hello'
++
++${FLATPAK} ${U} remotes --show-disabled > remotes-list
++assert_not_file_has_content remotes-list '^platform-origin'
++assert_not_file_has_content remotes-list '^hello-origin'
++
++ok "clean up"
++
++# Install from registry via a docker:// location
++# TODO: docker:// locations only support HTTPS
++# This needs https://github.com/flatpak/flatpak/pull/5916
++
++if false && [ x${USE_SYSTEMDIR-} != xyes ]; then
++    $FLATPAK --user -y install docker://127.0.0.1/platform-image:latest >&2
++
++    ${FLATPAK} ${U} list --columns=application,origin > flatpak-list
++    assert_file_has_content flatpak-list '^org.test.Platform	*platform-origin$'
++
++    ${FLATPAK} ${U} remotes --show-disabled > remotes-list
++    assert_file_has_content remotes-list '^platform-origin'
++
++    ok "install image from registry"
++else
++    ok "install image from registry # skip  Not supported"
++fi
+diff --git a/tests/test-oci.sh b/tests/test-oci.sh
+index a7baf887..431fa6d6 100755
+--- a/tests/test-oci.sh
++++ b/tests/test-oci.sh
+@@ -23,7 +23,7 @@ set -euo pipefail
+ 
+ skip_without_bwrap
+ 
+-echo "1..2"
++echo "1..3"
+ 
+ setup_repo_no_add oci
+ 
+@@ -66,3 +66,23 @@ assert_has_file checked-out/files/bin/hello.sh
+ assert_has_file checked-out/metadata
+ 
+ ok "import oci"
++
++# Trying installing the bundle directly
++
++${FLATPAK} build-bundle --runtime --oci $FL_GPGARGS repos/oci oci/platform-image org.test.Platform >&2
++
++${FLATPAK} --user list --columns=application,origin > flatpak-list
++assert_not_file_has_content flatpak-list 'org.test.Platform'
++
++${FLATPAK} --user remotes --show-disabled > remotes-list
++assert_not_file_has_content remotes-list '^platform-origin'
++
++$FLATPAK --user -y install oci:oci/platform-image >&2
++
++${FLATPAK} --user list --columns=application,origin > flatpak-list
++assert_file_has_content flatpak-list '^org.test.Platform	*platform-origin$'
++
++${FLATPAK} --user remotes --show-disabled > remotes-list
++assert_file_has_content remotes-list '^platform-origin'
++
++ok "install oci"
+-- 
+2.47.1
+
+From 3996759b7553c41bea63fb282cbf3fa0f9a78e4e Mon Sep 17 00:00:00 2001
+From: Sebastian Wick <sebastian.wick@redhat.com>
+Date: Fri, 20 Dec 2024 00:25:55 +0100
+Subject: [PATCH 09/12]oci-registry: Remove a bunch of double newlines
+
+---
+ common/flatpak-oci-registry-private.h | 1 -
+ common/flatpak-oci-registry.c         | 6 ------
+ 2 files changed, 7 deletions(-)
+
+diff --git a/common/flatpak-oci-registry-private.h b/common/flatpak-oci-registry-private.h
+index 47ffc7be..a051b0a6 100644
+--- a/common/flatpak-oci-registry-private.h
++++ b/common/flatpak-oci-registry-private.h
+@@ -183,7 +183,6 @@ GBytes *flatpak_oci_index_make_appstream (FlatpakHttpSession  *http_session,
+                                           GCancellable        *cancellable,
+                                           GError             **error);
+ 
+-
+ typedef void (*FlatpakOciPullProgress) (guint64  total_size,
+                                         guint64  pulled_size,
+                                         guint32  n_layers,
+diff --git a/common/flatpak-oci-registry.c b/common/flatpak-oci-registry.c
+index ad05c9f0..e104ab40 100644
+--- a/common/flatpak-oci-registry.c
++++ b/common/flatpak-oci-registry.c
+@@ -255,7 +255,6 @@ flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
+                                          0, NULL, NULL);
+ }
+ 
+-
+ FlatpakOciRegistry *
+ flatpak_oci_registry_new (const char   *uri,
+                           gboolean      for_write,
+@@ -830,7 +829,6 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
+             return -1;
+         }
+ 
+-
+       if (!flatpak_open_in_tmpdir_at (self->tmp_dfd, 0600, tmpfile_name,
+                                       &out_stream, cancellable, error))
+         return -1;
+@@ -1357,7 +1355,6 @@ flatpak_oci_layer_writer_reset (FlatpakOciLayerWriter *self)
+   g_clear_object (&self->compressor);
+ }
+ 
+-
+ static void
+ flatpak_oci_layer_writer_finalize (GObject *object)
+ {
+@@ -1725,7 +1722,6 @@ delta_read_byte (GInputStream   *in,
+   return TRUE;
+ }
+ 
+-
+ static gboolean
+ delta_read_varuint (GInputStream   *in,
+                     guint64        *out,
+@@ -2731,7 +2727,6 @@ get_image_metadata (FlatpakOciIndexImage *img, const char *key)
+   return NULL;
+ }
+ 
+-
+ static const char *
+ get_image_ref (FlatpakOciIndexImage *img)
+ {
+@@ -2838,7 +2833,6 @@ flatpak_oci_index_ensure_cached (FlatpakHttpSession *http_session,
+ 
+   oci_arch = flatpak_arch_to_oci_arch (flatpak_get_arch ());
+ 
+-
+   query = g_string_new (NULL);
+   flatpak_uri_encode_query_arg (query, "label:org.flatpak.ref:exists", "1");
+   flatpak_uri_encode_query_arg (query, "architecture", oci_arch);
+-- 
+2.47.1
+
+From fcad7d86d287d164421d62589a70bb9699a66f08 Mon Sep 17 00:00:00 2001
+From: Sebastian Wick <sebastian.wick@redhat.com>
+Date: Fri, 20 Dec 2024 00:27:29 +0100
+Subject: [PATCH 10/12]oci-registry: Allow passing a NULL URI
+
+---
+ common/flatpak-oci-registry.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/common/flatpak-oci-registry.c b/common/flatpak-oci-registry.c
+index e104ab40..a4b914a0 100644
+--- a/common/flatpak-oci-registry.c
++++ b/common/flatpak-oci-registry.c
+@@ -142,10 +142,13 @@ flatpak_oci_registry_set_property (GObject      *object,
+     case PROP_URI:
+       /* Ensure the base uri ends with a / so relative urls work */
+       uri = g_value_get_string (value);
+-      if (g_str_has_suffix (uri, "/"))
+-        self->uri = g_strdup (uri);
+-      else
+-        self->uri = g_strconcat (uri, "/", NULL);
++      if (uri)
++        {
++        if (g_str_has_suffix (uri, "/"))
++          self->uri = g_strdup (uri);
++        else
++          self->uri = g_strconcat (uri, "/", NULL);
++        }
+       break;
+ 
+     case PROP_FOR_WRITE:
+-- 
+2.47.1
+
+From 96b50f2f632b57c9f6608a7820d282225afef46b Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Wed, 18 Dec 2024 00:53:59 +0100
+Subject: [PATCH 11/12]image-source: Support `oci-archive:` image sources
+
+Add support for `oci-archive:` image sources by temporarily
+unpacking the archive using libarchive.
+
+Co-authored-by: Sebastian Wick <sebastian.wick@redhat.com>
+---
+ app/flatpak-builtins-install.c        |   1 +
+ common/flatpak-image-source.c         |  50 ++++--
+ common/flatpak-oci-registry-private.h |  14 +-
+ common/flatpak-oci-registry.c         | 247 +++++++++++++++++++++++---
+ common/flatpak-transaction.c          |   2 +-
+ doc/flatpak-install.xml               |   4 +-
+ tests/test-oci.sh                     |  24 ++-
+ 7 files changed, 297 insertions(+), 45 deletions(-)
+
+diff --git a/app/flatpak-builtins-install.c b/app/flatpak-builtins-install.c
+index 70474bbe..e1f7f312 100644
+--- a/app/flatpak-builtins-install.c
++++ b/app/flatpak-builtins-install.c
+@@ -352,6 +352,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
+   if (!opt_bundle && !opt_from && !opt_image && argc >= 2)
+     {
+       if (g_str_has_prefix (argv[1], "oci:") ||
++          g_str_has_prefix (argv[1], "oci-archive:") ||
+           g_str_has_prefix (argv[1], "docker:"))
+         opt_image = TRUE;
+       else if (flatpak_file_arg_has_suffix (argv[1], ".flatpakref"))
+diff --git a/common/flatpak-image-source.c b/common/flatpak-image-source.c
+index 0503de5d..20c94b63 100644
+--- a/common/flatpak-image-source.c
++++ b/common/flatpak-image-source.c
+@@ -116,24 +116,15 @@ flatpak_image_source_new (FlatpakOciRegistry *registry,
+   return g_steal_pointer (&self);
+ }
+ 
+-FlatpakImageSource *
+-flatpak_image_source_new_local (GFile        *file,
+-                                const char   *reference,
+-                                GCancellable *cancellable,
+-                                GError      **error)
++static FlatpakImageSource *
++flatpak_image_source_new_local_for_registry (FlatpakOciRegistry *registry,
++                                             const char         *reference,
++                                             GCancellable       *cancellable,
++                                             GError            **error)
+ {
+-  g_autofree char *dir_uri = NULL;
+-  g_autofree char *target_ref = NULL;
+-  g_autoptr(FlatpakImageSource) image_source = NULL;
+-  g_autoptr(FlatpakOciRegistry) registry = NULL;
+   g_autoptr(FlatpakOciIndex) index = NULL;
+   const FlatpakOciManifestDescriptor *desc;
+ 
+-  dir_uri = g_file_get_uri (file);
+-  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
+-  if (registry == NULL)
+-    return NULL;
+-
+   index = flatpak_oci_registry_load_index (registry, cancellable, error);
+   if (index == NULL)
+     return NULL;
+@@ -160,6 +151,23 @@ flatpak_image_source_new_local (GFile        *file,
+   return flatpak_image_source_new (registry, NULL, desc->parent.digest, cancellable, error);
+ }
+ 
++FlatpakImageSource *
++flatpak_image_source_new_local (GFile        *file,
++                                const char   *reference,
++                                GCancellable *cancellable,
++                                GError      **error)
++{
++  g_autofree char *dir_uri = NULL;
++  g_autoptr(FlatpakOciRegistry) registry = NULL;
++
++  dir_uri = g_file_get_uri (file);
++  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
++  if (registry == NULL)
++    return NULL;
++
++  return flatpak_image_source_new_local_for_registry (registry, reference, cancellable, error);
++}
++
+ FlatpakImageSource *
+ flatpak_image_source_new_remote (const char   *uri,
+                                  const char   *oci_repository,
+@@ -221,6 +229,20 @@ flatpak_image_source_new_for_location (const char   *location,
+ 
+       return flatpak_image_source_new_local (path, reference, cancellable, error);
+     }
++  else if (g_str_has_prefix (location, "oci-archive:"))
++    {
++      g_autoptr(FlatpakOciRegistry) registry = NULL;
++      g_autoptr(GFile) path = NULL;
++      g_autofree char *reference = NULL;
++
++      get_path_and_reference (location, &path, &reference);
++
++      registry = flatpak_oci_registry_new_for_archive (path, cancellable, error);
++      if (registry == NULL)
++        return NULL;
++
++      return flatpak_image_source_new_local_for_registry (registry, reference, cancellable, error);
++    }
+   else if (g_str_has_prefix (location, "docker:"))
+     {
+       g_autoptr(FlatpakOciRegistry) registry = NULL;
+diff --git a/common/flatpak-oci-registry-private.h b/common/flatpak-oci-registry-private.h
+index a051b0a6..d48c8ed4 100644
+--- a/common/flatpak-oci-registry-private.h
++++ b/common/flatpak-oci-registry-private.h
+@@ -50,11 +50,15 @@ typedef struct FlatpakOciLayerWriter FlatpakOciLayerWriter;
+ 
+ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciLayerWriter, g_object_unref)
+ 
+-FlatpakOciRegistry  *  flatpak_oci_registry_new (const char           *uri,
+-                                                 gboolean for_write,
+-                                                 int tmp_dfd,
+-                                                 GCancellable         * cancellable,
+-                                                 GError              **error);
++
++FlatpakOciRegistry  *  flatpak_oci_registry_new (const char    *uri,
++                                                 gboolean       for_write,
++                                                 int            tmp_dfd,
++                                                 GCancellable  *cancellable,
++                                                 GError       **error);
++FlatpakOciRegistry *   flatpak_oci_registry_new_for_archive (GFile        *archive,
++                                                             GCancellable *cancellable,
++                                                             GError      **error);
+ void                   flatpak_oci_registry_set_token (FlatpakOciRegistry *self,
+                                                        const char *token);
+ gboolean               flatpak_oci_registry_is_local (FlatpakOciRegistry *self);
+diff --git a/common/flatpak-oci-registry.c b/common/flatpak-oci-registry.c
+index a4b914a0..ebf000f8 100644
+--- a/common/flatpak-oci-registry.c
++++ b/common/flatpak-oci-registry.c
+@@ -27,6 +27,7 @@
+ #include "libglnx.h"
+ 
+ #include <archive.h>
++#include <archive_entry.h>
+ #include <gpgme.h>
+ #include "flatpak-image-source-private.h"
+ #include "flatpak-oci-registry-private.h"
+@@ -69,11 +70,13 @@ struct FlatpakOciRegistry
+   gboolean valid;
+   gboolean is_docker;
+   char    *uri;
++  GFile   *archive;
+   int      tmp_dfd;
+   char    *token;
+ 
+   /* Local repos */
+   int dfd;
++  GLnxTmpDir *tmp_dir;
+ 
+   /* Remote repos */
+   FlatpakHttpSession *http_session;
+@@ -90,6 +93,7 @@ enum {
+   PROP_0,
+ 
+   PROP_URI,
++  PROP_ARCHIVE,
+   PROP_FOR_WRITE,
+   PROP_TMP_DFD,
+ };
+@@ -98,6 +102,14 @@ G_DEFINE_TYPE_WITH_CODE (FlatpakOciRegistry, flatpak_oci_registry, G_TYPE_OBJECT
+                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE,
+                                                 flatpak_oci_registry_initable_iface_init))
+ 
++static void
++glnx_tmpdir_free (GLnxTmpDir *tmpf)
++{
++  (void)glnx_tmpdir_delete (tmpf, NULL, NULL);
++  g_free (tmpf);
++}
++G_DEFINE_AUTOPTR_CLEANUP_FUNC(GLnxTmpDir, glnx_tmpdir_free)
++
+ static gchar *
+ parse_relative_uri (GUri *base_uri,
+                     const char *subpath,
+@@ -124,6 +136,8 @@ flatpak_oci_registry_finalize (GObject *object)
+   g_clear_pointer (&self->base_uri, g_uri_unref);
+   g_free (self->uri);
+   g_free (self->token);
++  g_clear_object (&self->archive);
++  g_clear_pointer (&self->tmp_dir, glnx_tmpdir_free);
+ 
+   G_OBJECT_CLASS (flatpak_oci_registry_parent_class)->finalize (object);
+ }
+@@ -151,6 +165,10 @@ flatpak_oci_registry_set_property (GObject      *object,
+         }
+       break;
+ 
++    case PROP_ARCHIVE:
++      self->archive = g_value_dup_object (value);
++      break;
++
+     case PROP_FOR_WRITE:
+       self->for_write = g_value_get_boolean (value);
+       break;
+@@ -179,6 +197,10 @@ flatpak_oci_registry_get_property (GObject    *object,
+       g_value_set_string (value, self->uri);
+       break;
+ 
++    case PROP_ARCHIVE:
++      g_value_set_object (value, self->archive);
++      break;
++
+     case PROP_FOR_WRITE:
+       g_value_set_boolean (value, self->for_write);
+       break;
+@@ -209,6 +231,13 @@ flatpak_oci_registry_class_init (FlatpakOciRegistryClass *klass)
+                                                         "",
+                                                         NULL,
+                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
++  g_object_class_install_property (object_class,
++                                   PROP_ARCHIVE,
++                                   g_param_spec_object ("archive",
++                                                        "",
++                                                        "",
++                                                        G_TYPE_FILE,
++                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+   g_object_class_install_property (object_class,
+                                    PROP_TMP_DFD,
+                                    g_param_spec_int ("tmp-dfd",
+@@ -277,6 +306,21 @@ flatpak_oci_registry_new (const char   *uri,
+   return oci_registry;
+ }
+ 
++FlatpakOciRegistry *
++flatpak_oci_registry_new_for_archive (GFile        *archive,
++                                      GCancellable *cancellable,
++                                      GError      **error)
++{
++  FlatpakOciRegistry *oci_registry;
++
++  oci_registry = g_initable_new (FLATPAK_TYPE_OCI_REGISTRY,
++                                 cancellable, error,
++                                 "archive", archive,
++                                 NULL);
++
++  return oci_registry;
++}
++
+ static int
+ local_open_file (int           dfd,
+                  const char   *subpath,
+@@ -457,13 +501,164 @@ verify_oci_version (GBytes *oci_layout_bytes, gboolean *not_json, GCancellable *
+   return TRUE;
+ }
+ 
++/*
++ * Code to extract an archive such as a tarfile into a temporary directory
++ *
++ * Based on: https://github.com/libarchive/libarchive/wiki/Examples#A_Complete_Extractor
++ *
++ * We treat ARCHIVE_WARNING as fatal - while this might be too strict, it
++ * will avoid surprises.
++ */
++
++static gboolean
++propagate_libarchive_error (GError         **error,
++                            struct archive  *a)
++{
++  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
++               "%s", archive_error_string (a));
++  return FALSE;
++}
++
++static gboolean
++copy_data (struct archive  *ar,
++           struct archive  *aw,
++           GError         **error)
++{
++  int r;
++  const void *buff;
++  size_t size;
++  gint64 offset;
++
++  while (TRUE)
++    {
++      r = archive_read_data_block (ar, &buff, &size, &offset);
++
++      if (r == ARCHIVE_EOF)
++        return TRUE;
++
++      if (r == ARCHIVE_RETRY)
++        continue;
++
++      if (r != ARCHIVE_OK)
++        return propagate_libarchive_error (error, ar);
++
++      while (TRUE)
++        {
++          r = archive_write_data_block (aw, buff, size, offset);
++
++          if (r == ARCHIVE_RETRY)
++            continue;
++
++          if (r == ARCHIVE_OK)
++            break;
++
++          return propagate_libarchive_error (error, aw);
++        }
++    }
++}
++
++static gboolean
++unpack_archive (GFile   *archive,
++                char    *destination,
++                GError **error)
++{
++  g_autoptr(FlatpakAutoArchiveRead) a = NULL;
++  g_autoptr(FlatpakAutoArchiveWrite) ext = NULL;
++  int flags;
++  int r;
++
++  flags = 0;
++  flags |= ARCHIVE_EXTRACT_SECURE_NODOTDOT;
++  flags |= ARCHIVE_EXTRACT_SECURE_SYMLINKS;
++
++  a = archive_read_new ();
++  archive_read_support_format_all (a);
++  archive_read_support_filter_all (a);
++
++  ext = archive_write_disk_new ();
++  archive_write_disk_set_options (ext, flags);
++  archive_write_disk_set_standard_lookup (ext);
++
++  r = archive_read_open_filename (a, g_file_get_path(archive), 10240);
++  if (r != ARCHIVE_OK)
++    return propagate_libarchive_error (error, a);
++
++  while (TRUE)
++    {
++      g_autofree char *target_path = NULL;
++      struct archive_entry *entry;
++
++      r = archive_read_next_header (a, &entry);
++      if (r == ARCHIVE_EOF)
++        break;
++
++      if (r != ARCHIVE_OK)
++        return propagate_libarchive_error (error, a);
++
++      target_path = g_build_filename (destination, archive_entry_pathname (entry), NULL);
++      archive_entry_set_pathname (entry, target_path);
++
++      r = archive_write_header (ext, entry);
++      if (r != ARCHIVE_OK)
++        return propagate_libarchive_error (error, ext);
++
++      if (archive_entry_size (entry) > 0)
++        {
++          if (!copy_data (a, ext, error))
++            return FALSE;
++        }
++
++      r = archive_write_finish_entry (ext);
++      if (r != ARCHIVE_OK)
++        return propagate_libarchive_error (error, ext);
++    }
++
++  r = archive_read_close (a);
++  if (r != ARCHIVE_OK)
++    return propagate_libarchive_error (error, a);
++
++  r = archive_write_close (ext);
++  if (r != ARCHIVE_OK)
++    return propagate_libarchive_error (error, ext);
++
++  return TRUE;
++}
++
++static const char *
++get_download_tmpdir (void)
++{
++  /* We don't use TMPDIR because the downloaded artifacts can be
++   * very big, and we want to prefer /var/tmp to /tmp.
++   */
++  const char *tmpdir = g_getenv ("FLATPAK_DOWNLOAD_TMPDIR");
++  if (tmpdir)
++    return tmpdir;
++
++  return "/var/tmp";
++}
++
++static GLnxTmpDir *
++download_tmpdir_new (GError **error)
++{
++  g_autoptr(GLnxTmpDir) tmp_dir = g_new0 (GLnxTmpDir, 1);
++  glnx_autofd int base_dfd = -1;
++
++  if (!glnx_opendirat (AT_FDCWD, get_download_tmpdir (), TRUE, &base_dfd, error))
++    return NULL;
++
++  if (!glnx_mkdtempat (base_dfd, "oci-XXXXXX", 0700, tmp_dir, error))
++    return NULL;
++
++  return g_steal_pointer (&tmp_dir);
++}
++
+ static gboolean
+ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
+                                    gboolean            for_write,
+                                    GCancellable       *cancellable,
+                                    GError            **error)
+ {
+-  g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
++  g_autoptr(GLnxTmpDir) local_tmp_dir = NULL;
+   glnx_autofd int local_dfd = -1;
+   int dfd;
+   g_autoptr(GError) local_error = NULL;
+@@ -472,9 +667,28 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
+   gboolean not_json;
+ 
+   if (self->dfd != -1)
+-    dfd = self->dfd;
++    {
++      dfd = self->dfd;
++    }
++  else if (self->archive)
++    {
++      local_tmp_dir = download_tmpdir_new (error);
++      if (!local_tmp_dir)
++        return FALSE;
++
++      if (!unpack_archive (self->archive, local_tmp_dir->path, error))
++        return FALSE;
++
++      if (!glnx_opendirat (AT_FDCWD, local_tmp_dir->path,
++                           TRUE, &local_dfd, error))
++        return FALSE;
++
++      dfd = local_dfd;
++    }
+   else
+     {
++      g_autoptr(GFile) dir = g_file_new_for_uri (self->uri);
++
+       if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (dir),
+                            TRUE, &local_dfd, &local_error))
+         {
+@@ -537,8 +751,11 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
+         self->token = g_strndup (g_bytes_get_data (token_bytes, NULL), g_bytes_get_size (token_bytes));
+     }
+ 
+-  if (self->dfd == -1 && local_dfd != -1)
+-    self->dfd = g_steal_fd (&local_dfd);
++  if (self->dfd == -1)
++    {
++      self->dfd = g_steal_fd (&local_dfd);
++      self->tmp_dir = g_steal_pointer (&local_tmp_dir);
++    }
+ 
+   return TRUE;
+ }
+@@ -589,20 +806,15 @@ flatpak_oci_registry_initable_init (GInitable    *initable,
+   FlatpakOciRegistry *self = FLATPAK_OCI_REGISTRY (initable);
+   gboolean res;
+ 
++  g_warn_if_fail (self->archive || self->uri);
++
+   if (self->tmp_dfd == -1)
+     {
+-      /* We don't use TMPDIR because the downloaded artifacts can be
+-       * very big, and we want to prefer /var/tmp to /tmp.
+-       */
+-      const char *tmpdir = g_getenv ("FLATPAK_DOWNLOAD_TMPDIR");
+-      if (tmpdir == NULL)
+-        tmpdir = "/var/tmp";
+-
+-      if (!glnx_opendirat (AT_FDCWD, tmpdir, TRUE, &self->tmp_dfd, error))
++      if (!glnx_opendirat (AT_FDCWD, get_download_tmpdir (), TRUE, &self->tmp_dfd, error))
+         return FALSE;
+     }
+ 
+-  if (g_str_has_prefix (self->uri, "file:/"))
++  if (self->archive || g_str_has_prefix (self->uri, "file:/"))
+     res = flatpak_oci_registry_ensure_local (self, self->for_write, cancellable, error);
+   else
+     res = flatpak_oci_registry_ensure_remote (self, self->for_write, cancellable, error);
+@@ -1332,15 +1544,6 @@ typedef struct
+ 
+ G_DEFINE_TYPE (FlatpakOciLayerWriter, flatpak_oci_layer_writer, G_TYPE_OBJECT)
+ 
+-static gboolean
+-propagate_libarchive_error (GError        **error,
+-                            struct archive *a)
+-{
+-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+-               "%s", archive_error_string (a));
+-  return FALSE;
+-}
+-
+ static void
+ flatpak_oci_layer_writer_reset (FlatpakOciLayerWriter *self)
+ {
+diff --git a/common/flatpak-transaction.c b/common/flatpak-transaction.c
+index ffee385e..1aba1daa 100644
+--- a/common/flatpak-transaction.c
++++ b/common/flatpak-transaction.c
+@@ -3028,7 +3028,7 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
+  * reference.
+  *
+  * @image_location is specified in containers-transports(5) form. Only a subset
+- * of transports are supported: oci: and docker:.
++ * of transports are supported: oci:, oci-archive:, and docker:.
+  *
+  * Returns: %TRUE on success; %FALSE with @error set on failure.
+  */
+diff --git a/doc/flatpak-install.xml b/doc/flatpak-install.xml
+index f75dedae..99aa5469 100644
+--- a/doc/flatpak-install.xml
++++ b/doc/flatpak-install.xml
+@@ -145,8 +145,8 @@
+                   Treat <arg choice="plain">LOCATION</arg> as the location of a Flatpak in
+                   OCI image format. <arg choice="plan>">LOCATION</arg> is in the format of
+                   <citerefentry><refentrytitle>containers-transports</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+-                  Supported schemes are <literal>docker://</literal> and <literal>oci:</literal>.
+-                  This is assumed if the argument starts
++                  Supported schemes are <literal>docker://</literal>, <literal>oci:</literal>,
++                  and <literal>oci-archive:</literal>. This is assumed if the argument starts
+                   with one of these schemes.
+                 </para></listitem>
+             </varlistentry>
+diff --git a/tests/test-oci.sh b/tests/test-oci.sh
+index 431fa6d6..861310a5 100755
+--- a/tests/test-oci.sh
++++ b/tests/test-oci.sh
+@@ -23,7 +23,7 @@ set -euo pipefail
+ 
+ skip_without_bwrap
+ 
+-echo "1..3"
++echo "1..4"
+ 
+ setup_repo_no_add oci
+ 
+@@ -85,4 +85,26 @@ assert_file_has_content flatpak-list '^org.test.Platform	*platform-origin$'
+ ${FLATPAK} --user remotes --show-disabled > remotes-list
+ assert_file_has_content remotes-list '^platform-origin'
+ 
++${FLATPAK} ${U} -y uninstall org.test.Platform >&2
++
+ ok "install oci"
++
++# Trying installing an OCI archive bundle
++
++(cd oci/platform-image && tar cf - .) > oci/platform-image.tar
++
++${FLATPAK} --user list --columns=application,origin > flatpak-list
++assert_not_file_has_content flatpak-list 'org.test.Platform'
++
++${FLATPAK} --user remotes --show-disabled > remotes-list
++assert_not_file_has_content remotes-list '^platform-origin'
++
++$FLATPAK --user -y install oci-archive:oci/platform-image.tar >&2
++
++${FLATPAK} --user list --columns=application,origin > flatpak-list
++assert_file_has_content flatpak-list '^org.test.Platform	*platform-origin$'
++
++${FLATPAK} --user remotes --show-disabled > remotes-list
++assert_file_has_content remotes-list '^platform-origin'
++
++ok "install oci archive"
+-- 
+2.47.1
+
+From a2fbcf5d1db3ef69b04e7f0e4bc64c0e51dd7ffb Mon Sep 17 00:00:00 2001
+From: "Owen W. Taylor" <otaylor@fishsoup.net>
+Date: Tue, 29 Oct 2024 16:59:40 -0400
+Subject: [PATCH 12/12]common: Move delta_url into the FlatpakImageSource
+
+Instead of passing the delta URL along with the image source, when
+we create an image source for a remote registry, if we find a delta
+URL in the metadata, set it on the FlatpakImageSource for later use.
+
+Centralize duplicated code for creating an image source for a remote
+repository based on a summary lookup into one place.
+---
+ app/flatpak-builtins-build-import-bundle.c |   2 +-
+ common/flatpak-dir.c                       | 131 +++++++--------------
+ common/flatpak-image-source-private.h      |   4 +
+ common/flatpak-image-source.c              |  41 +++++++
+ common/flatpak-oci-registry-private.h      |   2 -
+ common/flatpak-oci-registry.c              |   4 +-
+ system-helper/flatpak-system-helper.c      |   2 +-
+ 7 files changed, 89 insertions(+), 97 deletions(-)
+
+diff --git a/app/flatpak-builtins-build-import-bundle.c b/app/flatpak-builtins-build-import-bundle.c
+index d79fbbde..d623386f 100644
+--- a/app/flatpak-builtins-build-import-bundle.c
++++ b/app/flatpak-builtins-build-import-bundle.c
+@@ -69,7 +69,7 @@ import_oci (OstreeRepo *repo, GFile *file,
+   ref = flatpak_image_source_get_ref (image_source);
+ 
+   commit_checksum = flatpak_pull_from_oci (repo, image_source, NULL,
+-                                           NULL, ref, FLATPAK_PULL_FLAGS_NONE,
++                                           ref, FLATPAK_PULL_FLAGS_NONE,
+                                            NULL, NULL, cancellable, error);
+   if (commit_checksum == NULL)
+     return NULL;
+diff --git a/common/flatpak-dir.c b/common/flatpak-dir.c
+index e8ff645b..9f398252 100644
+--- a/common/flatpak-dir.c
++++ b/common/flatpak-dir.c
+@@ -1077,14 +1077,14 @@ flatpak_remote_state_new_image_source (FlatpakRemoteState *self,
+   return g_steal_pointer (&image_source);
+ }
+ 
+-static GVariant *
+-flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+-                                              FlatpakDir   *dir,
+-                                              const char   *ref,
+-                                              const char   *checksum,
+-                                              const char   *token,
+-                                              GCancellable *cancellable,
+-                                              GError      **error)
++static FlatpakImageSource *
++flatpak_remote_state_fetch_image_source (FlatpakRemoteState *self,
++                                         FlatpakDir         *dir,
++                                         const char         *ref,
++                                         const char         *opt_rev,
++                                         const char         *token,
++                                         GCancellable       *cancellable,
++                                         GError            **error)
+ {
+   g_autoptr(FlatpakImageSource) image_source = NULL;
+   g_autofree char *oci_digest = NULL;
+@@ -1092,9 +1092,7 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+   VarRefInfoRef latest_rev_info;
+   VarMetadataRef metadata;
+   const char *oci_repository = NULL;
+-  const char *parent = NULL;
+-  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+-  g_autoptr(GVariant) metadata_v = NULL;
++  const char *delta_url = NULL;
+ 
+   /* We extract the rev info from the latest, even if we don't use the latest digest, assuming refs don't move */
+   if (!flatpak_remote_state_lookup_ref (self, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
+@@ -1110,8 +1108,9 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+ 
+   metadata = var_ref_info_get_metadata (latest_rev_info);
+   oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
++  delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
+ 
+-  oci_digest = g_strconcat ("sha256:", checksum, NULL);
++  oci_digest = g_strconcat ("sha256:", opt_rev ? opt_rev : latest_rev, NULL);
+ 
+   image_source = flatpak_remote_state_new_image_source (self, oci_repository, oci_digest, token, cancellable, error);
+   if (image_source == NULL)
+@@ -1123,22 +1122,28 @@ flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
+       return NULL;
+     }
+ 
+-  flatpak_image_source_build_commit_metadata (image_source, metadata_builder);
+-  metadata_v = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
++  flatpak_image_source_set_delta_url (image_source, delta_url);
++
++  return g_steal_pointer (&image_source);
++}
++
+ 
+-  parent = flatpak_image_source_get_parent_commit (image_source);
++static GVariant *
++flatpak_remote_state_fetch_commit_object_oci (FlatpakRemoteState *self,
++                                              FlatpakDir   *dir,
++                                              const char   *ref,
++                                              const char   *checksum,
++                                              const char   *token,
++                                              GCancellable *cancellable,
++                                              GError      **error)
++{
++  g_autoptr(FlatpakImageSource) image_source = NULL;
++
++  image_source = flatpak_remote_state_fetch_image_source (self, dir, ref, checksum, token, cancellable, error);
++  if (image_source == NULL)
++    return NULL;
+ 
+-  /* This isn't going to be exactly the same as the reconstructed one from the pull, because we don't have the contents, but its useful to get metadata */
+-  return
+-    g_variant_ref_sink (g_variant_new ("(@a{sv}@ay@a(say)sst@ay@ay)",
+-                                       metadata_v,
+-                                       parent ? ostree_checksum_to_bytes_v (parent) :  g_variant_new_from_data (G_VARIANT_TYPE ("ay"), NULL, 0, FALSE, NULL, NULL),
+-                                       g_variant_new_array (G_VARIANT_TYPE ("(say)"), NULL, 0),
+-                                       flatpak_image_source_get_commit_subject (image_source),
+-                                       flatpak_image_source_get_commit_body (image_source),
+-                                       GUINT64_TO_BE (flatpak_image_source_get_commit_timestamp (image_source)),
+-                                       ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000"),
+-                                       ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000")));
++  return flatpak_image_source_make_fake_commit (image_source);
+ }
+ 
+ static GVariant *
+@@ -5910,49 +5915,18 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
+                         GError             **error)
+ {
+   g_autoptr(FlatpakImageSource) image_source = NULL;
+-  g_autofree char *oci_digest = NULL;
+-  const char *delta_url = NULL;
+   gboolean res;
+ 
+   if (opt_image_source)
+-    {
+-      image_source = g_object_ref (opt_image_source);
+-      oci_digest = g_strdup (flatpak_image_source_get_digest (image_source));
+-    }
++    image_source = g_object_ref (opt_image_source);
+   else
+-    {
+-      g_autofree char *latest_rev = NULL;
+-      VarRefInfoRef latest_rev_info;
+-      VarMetadataRef metadata;
+-        const char *oci_repository = NULL;
+-      const char *rev;
+-
+-      /* We use the summary so that we can reuse any cached json */
+-      if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
+-        return FALSE;
+-      if (latest_rev == NULL)
+-        return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+-                                  _("Couldn't find latest checksum for ref %s in remote %s"),
+-                                  ref, state->remote_name);
+-
+-      rev = opt_rev != NULL ? opt_rev : latest_rev;
+-
+-      metadata = var_ref_info_get_metadata (latest_rev_info);
+-      oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
+-      delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
+-
+-      oci_digest = g_strconcat ("sha256:", rev, NULL);
+-
+-      image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
+-      if (image_source == NULL)
+-        return FALSE;
+-    }
++    image_source = flatpak_remote_state_fetch_image_source (state, self, ref, opt_rev, token, cancellable, error);
+ 
+   flatpak_progress_start_oci_pull (progress);
+ 
+-  g_info ("Mirroring OCI image %s", oci_digest);
++  g_info ("Mirroring OCI image %s", flatpak_image_source_get_digest (image_source));
+ 
+-  res = flatpak_mirror_image_from_oci (dst_registry, image_source, state->remote_name, ref, delta_url, self->repo, oci_pull_progress_cb,
++  res = flatpak_mirror_image_from_oci (dst_registry, image_source, state->remote_name, ref, self->repo, oci_pull_progress_cb,
+                                        progress, cancellable, error);
+ 
+   if (!res)
+@@ -5977,8 +5951,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
+ {
+   g_autoptr(FlatpakImageSource) image_source = NULL;
+   FlatpakOciRegistry *registry = NULL;
+-  const char *delta_url = NULL;
+-  g_autofree char *oci_digest = NULL;
++  const char *oci_digest = NULL;
+   g_autofree char *checksum = NULL;
+   g_autofree char *latest_alt_commit = NULL;
+   G_GNUC_UNUSED g_autofree char *latest_commit =
+@@ -5986,35 +5959,11 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
+   g_autofree char *name = NULL;
+ 
+   if (opt_image_source)
+-    {
+-      image_source = g_object_ref (opt_image_source);
+-      oci_digest = g_strdup (flatpak_image_source_get_digest (image_source));
+-    }
++    image_source = g_object_ref (opt_image_source);
+   else
+-    {
+-      VarMetadataRef metadata;
+-      VarRefInfoRef latest_rev_info;
+-      const char *oci_repository = NULL;
+-      g_autofree char *latest_rev = NULL;
++    image_source = flatpak_remote_state_fetch_image_source (state, self, ref, opt_rev, token, cancellable, error);
+ 
+-      /* We use the summary so that we can reuse any cached json */
+-      if (!flatpak_remote_state_lookup_ref (state, ref, &latest_rev, NULL, &latest_rev_info, NULL, error))
+-        return FALSE;
+-      if (latest_rev == NULL)
+-        return flatpak_fail_error (error, FLATPAK_ERROR_REF_NOT_FOUND,
+-                                  _("Couldn't find latest checksum for ref %s in remote %s"),
+-                                  ref, state->remote_name);
+-
+-      metadata = var_ref_info_get_metadata (latest_rev_info);
+-      oci_repository = var_metadata_lookup_string (metadata, "xa.oci-repository", NULL);
+-      delta_url = var_metadata_lookup_string (metadata, "xa.delta-url", NULL);
+-
+-      oci_digest = g_strconcat ("sha256:", opt_rev != NULL ? opt_rev : latest_rev, NULL);
+-
+-      image_source = flatpak_remote_state_new_image_source (state, oci_repository, oci_digest, token, cancellable, error);
+-      if (image_source == NULL)
+-        return FALSE;
+-    }
++  oci_digest = flatpak_image_source_get_digest (image_source);
+ 
+   /* Short circuit if we've already got this commit */
+   if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
+@@ -6027,7 +5976,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
+ 
+   g_info ("Pulling OCI image %s", oci_digest);
+ 
+-  checksum = flatpak_pull_from_oci (repo, image_source, delta_url,
++  checksum = flatpak_pull_from_oci (repo, image_source,
+                                     state->remote_name, ref, flatpak_flags, oci_pull_progress_cb, progress, cancellable, error);
+ 
+   if (checksum == NULL)
+diff --git a/common/flatpak-image-source-private.h b/common/flatpak-image-source-private.h
+index b1e5d2fa..94e4cc1a 100644
+--- a/common/flatpak-image-source-private.h
++++ b/common/flatpak-image-source-private.h
+@@ -47,10 +47,13 @@ FlatpakImageSource *flatpak_image_source_new_for_location (const char   *locatio
+ 
+ void flatpak_image_source_set_token (FlatpakImageSource *self,
+                                      const char         *token);
++void flatpak_image_source_set_delta_url (FlatpakImageSource *self,
++                                         const char         *delta_url);
+ 
+ FlatpakOciRegistry *flatpak_image_source_get_registry       (FlatpakImageSource *self);
+ const char         *flatpak_image_source_get_oci_repository (FlatpakImageSource *self);
+ const char         *flatpak_image_source_get_digest         (FlatpakImageSource *self);
++const char         *flatpak_image_source_get_delta_url      (FlatpakImageSource *self);
+ FlatpakOciManifest *flatpak_image_source_get_manifest       (FlatpakImageSource *self);
+ size_t              flatpak_image_source_get_manifest_size  (FlatpakImageSource *self);
+ FlatpakOciImage    *flatpak_image_source_get_image_config   (FlatpakImageSource *self);
+@@ -66,4 +69,5 @@ const char *flatpak_image_source_get_commit_body      (FlatpakImageSource *self)
+ void flatpak_image_source_build_commit_metadata (FlatpakImageSource *self,
+                                                  GVariantBuilder    *metadata_builder);
+ 
++GVariant *flatpak_image_source_make_fake_commit      (FlatpakImageSource *image_source);
+ #endif /* __FLATPAK_IMAGE_SOURCE_H__ */
+diff --git a/common/flatpak-image-source.c b/common/flatpak-image-source.c
+index 20c94b63..9d13cf0d 100644
+--- a/common/flatpak-image-source.c
++++ b/common/flatpak-image-source.c
+@@ -31,6 +31,7 @@ struct _FlatpakImageSource
+   FlatpakOciRegistry *registry;
+   char *repository;
+   char *digest;
++  char *delta_url;
+ 
+   FlatpakOciManifest *manifest;
+   size_t manifest_size;
+@@ -47,6 +48,7 @@ flatpak_image_source_finalize (GObject *object)
+   g_clear_object (&self->registry);
+   g_clear_pointer (&self->repository, g_free);
+   g_clear_pointer (&self->digest, g_free);
++  g_clear_pointer (&self->delta_url, g_free);
+   g_clear_object (&self->manifest);
+   g_clear_object (&self->image_config);
+ 
+@@ -326,6 +328,20 @@ flatpak_image_source_set_token (FlatpakImageSource *self,
+   flatpak_oci_registry_set_token (self->registry, token);
+ }
+ 
++void
++flatpak_image_source_set_delta_url (FlatpakImageSource *self,
++                                    const char         *delta_url)
++{
++  g_free (self->delta_url);
++  self->delta_url = g_strdup (delta_url);
++}
++
++const char *
++flatpak_image_source_get_delta_url (FlatpakImageSource *self)
++{
++  return self->delta_url;
++}
++
+ FlatpakOciRegistry *
+ flatpak_image_source_get_registry (FlatpakImageSource *self)
+ {
+@@ -453,3 +469,28 @@ flatpak_image_source_build_commit_metadata (FlatpakImageSource *self,
+       g_variant_builder_add (metadata_builder, "{s@v}", key, data);
+     }
+ }
++
++GVariant *
++flatpak_image_source_make_fake_commit (FlatpakImageSource *self)
++{
++  const char *parent = NULL;
++  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
++  g_autoptr(GVariant) metadata_v = NULL;
++
++  flatpak_image_source_build_commit_metadata (self, metadata_builder);
++  metadata_v = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
++
++  parent = flatpak_image_source_get_parent_commit (self);
++
++  /* This isn't going to be exactly the same as the reconstructed one from the pull, because we don't have the contents, but its useful to get metadata */
++  return
++    g_variant_ref_sink (g_variant_new ("(@a{sv}@ay@a(say)sst@ay@ay)",
++                                       metadata_v,
++                                       parent ? ostree_checksum_to_bytes_v (parent) :  g_variant_new_from_data (G_VARIANT_TYPE ("ay"), NULL, 0, FALSE, NULL, NULL),
++                                       g_variant_new_array (G_VARIANT_TYPE ("(say)"), NULL, 0),
++                                       flatpak_image_source_get_commit_subject (self),
++                                       flatpak_image_source_get_commit_body (self),
++                                       GUINT64_TO_BE (flatpak_image_source_get_commit_timestamp (self)),
++                                       ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000"),
++                                       ostree_checksum_to_bytes_v ("0000000000000000000000000000000000000000000000000000000000000000")));
++}
+diff --git a/common/flatpak-oci-registry-private.h b/common/flatpak-oci-registry-private.h
+index d48c8ed4..7867c761 100644
+--- a/common/flatpak-oci-registry-private.h
++++ b/common/flatpak-oci-registry-private.h
+@@ -195,7 +195,6 @@ typedef void (*FlatpakOciPullProgress) (guint64  total_size,
+ 
+ char * flatpak_pull_from_oci (OstreeRepo            *repo,
+                               FlatpakImageSource    *image_source,
+-                              const char            *delta_url,
+                               const char            *remote,
+                               const char            *ref,
+                               FlatpakPullFlags       flags,
+@@ -208,7 +207,6 @@ gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+                                         FlatpakImageSource    *image_source,
+                                         const char            *remote,
+                                         const char            *ref,
+-                                        const char            *delta_url,
+                                         OstreeRepo            *repo,
+                                         FlatpakOciPullProgress progress_cb,
+                                         gpointer               progress_data,
+diff --git a/common/flatpak-oci-registry.c b/common/flatpak-oci-registry.c
+index ebf000f8..c3dff5d6 100644
+--- a/common/flatpak-oci-registry.c
++++ b/common/flatpak-oci-registry.c
+@@ -3658,7 +3658,6 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+                                FlatpakImageSource    *image_source,
+                                const char            *remote,
+                                const char            *ref,
+-                               const char            *delta_url,
+                                OstreeRepo            *repo,
+                                FlatpakOciPullProgress progress_cb,
+                                gpointer               progress_user_data,
+@@ -3670,6 +3669,7 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+   const char *oci_repository = flatpak_image_source_get_oci_repository (image_source);
+   const char *digest = flatpak_image_source_get_digest (image_source);
+   FlatpakOciManifest *manifest = flatpak_image_source_get_manifest (image_source);
++  const char *delta_url = flatpak_image_source_get_delta_url (image_source);
+   FlatpakOciImage *image_config = flatpak_image_source_get_image_config (image_source);
+   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
+   g_autoptr(FlatpakOciManifest) delta_manifest = NULL;
+@@ -3785,7 +3785,6 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry    *dst_registry,
+ char *
+ flatpak_pull_from_oci (OstreeRepo            *repo,
+                        FlatpakImageSource    *image_source,
+-                       const char            *delta_url,
+                        const char            *remote,
+                        const char            *ref,
+                        FlatpakPullFlags       flags,
+@@ -3798,6 +3797,7 @@ flatpak_pull_from_oci (OstreeRepo            *repo,
+   const char *oci_repository = flatpak_image_source_get_oci_repository (image_source);
+   const char *digest = flatpak_image_source_get_digest (image_source);
+   FlatpakOciManifest *manifest = flatpak_image_source_get_manifest (image_source);
++  const char *delta_url = flatpak_image_source_get_delta_url (image_source);
+   FlatpakOciImage *image_config = flatpak_image_source_get_image_config (image_source);
+   gboolean force_disable_deltas = (flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
+   g_autoptr(OstreeMutableTree) archive_mtree = NULL;
+diff --git a/system-helper/flatpak-system-helper.c b/system-helper/flatpak-system-helper.c
+index 2740b299..1f950b20 100644
+--- a/system-helper/flatpak-system-helper.c
++++ b/system-helper/flatpak-system-helper.c
+@@ -593,7 +593,7 @@ handle_deploy (FlatpakSystemHelper   *object,
+           return G_DBUS_METHOD_INVOCATION_HANDLED;
+         }
+ 
+-      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source, NULL,
++      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), image_source,
+                                         arg_origin, arg_ref, FLATPAK_PULL_FLAGS_NONE, NULL, NULL, NULL, &error);
+       if (checksum == NULL)
+         {
+-- 
+2.47.1
+

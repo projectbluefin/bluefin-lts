@@ -1,13 +1,13 @@
-name: Build Bluefin Nvidia Manifest
+name: Build Uranium Nvidia Manifest
 
-# Assembles bluefin-lts-nvidia's independently-built amd64 (build-nvidia.yml)
+# Assembles uranium-nvidia's independently-built amd64 (build-nvidia.yml)
 # and aarch64 (build-nvidia-aarch64.yml) images into one signed multi-arch
 # manifest index and publishes it as :testing.
 #
 # Both per-arch workflows publish immutable architecture-specific aliases
 # only (publish_stream_tag: 'false') — neither pushes :testing directly.
 # This workflow is the single place :testing is written for
-# bluefin-lts-nvidia, which removes the amd64/aarch64 publish race from
+# uranium-nvidia, which removes the amd64/aarch64 publish race from
 # issue #421 (":stable tag resolving to arm64-only manifest") without
 # making the amd64 build wait on the less reliable ARM build (see #455).
 #
@@ -24,8 +24,8 @@ name: Build Bluefin Nvidia Manifest
 on:
   workflow_run:
     workflows:
-      - "Build Bluefin Nvidia"
-      - "Build Bluefin Nvidia (aarch64)"
+      - "Build Uranium Nvidia"
+      - "Build Uranium Nvidia (aarch64)"
     types: [completed]
 
 permissions:
@@ -45,7 +45,7 @@ concurrency:
 
 jobs:
   assemble-manifest:
-    name: Assemble bluefin-lts-nvidia multi-arch manifest
+    name: Assemble uranium-nvidia multi-arch manifest
     if: |
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_branch == 'testing'
@@ -89,7 +89,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.find-runs.outputs.amd64_run }}
-          pattern: image-digest-testing-bluefin-lts-nvidia-*-x86_64
+          pattern: image-digest-testing-uranium-nvidia-*-x86_64
           merge-multiple: true
           path: /tmp/digests
 
@@ -99,7 +99,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.find-runs.outputs.arm64_run }}
-          pattern: image-digest-testing-bluefin-lts-nvidia-*-aarch64
+          pattern: image-digest-testing-uranium-nvidia-*-aarch64
           merge-multiple: true
           path: /tmp/digests
 
@@ -126,13 +126,13 @@ jobs:
           ')"
           echo "Merged digests: ${digests}"
 
-          archs="$(jq -r '.["bluefin-lts-nvidia"] // {} | keys | sort | join(",")' <<<"${digests}")"
+          archs="$(jq -r '.["uranium-nvidia"] // {} | keys | sort | join(",")' <<<"${digests}")"
           if [[ "${archs}" != "amd64,arm64" ]]; then
-            echo "::error::Expected amd64 and arm64 digests for bluefin-lts-nvidia, got: ${archs:-none}"
+            echo "::error::Expected amd64 and arm64 digests for uranium-nvidia, got: ${archs:-none}"
             exit 1
           fi
 
-          image_digests="$(jq -c '.["bluefin-lts-nvidia"]' <<<"${digests}")"
+          image_digests="$(jq -c '.["uranium-nvidia"]' <<<"${digests}")"
           echo "image_digests=${image_digests}" >> "$GITHUB_OUTPUT"
 
       - name: Prepare runner
@@ -162,7 +162,7 @@ jobs:
         id: manifest
         uses: projectbluefin/actions/bootc-build/create-manifest@v1
         with:
-          image-name: bluefin-lts-nvidia
+          image-name: uranium-nvidia
           digests-json: ${{ steps.merge.outputs.image_digests }}
           tags: testing
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -170,7 +170,7 @@ jobs:
       - name: Verify testing manifest
         if: steps.find-runs.outputs.ready == 'true'
         env:
-          IMAGE: ghcr.io/projectbluefin/bluefin-lts-nvidia
+          IMAGE: ghcr.io/thallium-suite/uranium-nvidia
           DIGEST: ${{ steps.manifest.outputs.digest }}
         shell: bash
         run: |
@@ -187,11 +187,16 @@ jobs:
         if: steps.find-runs.outputs.ready == 'true'
         uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
         with:
-          image: ghcr.io/projectbluefin/bluefin-lts-nvidia
+          image: ghcr.io/thallium-suite/uranium-nvidia
           digest: ${{ steps.manifest.outputs.digest }}
           generate-sbom: 'true'
           push-attestation: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # The action's default identity regex only covers the projectbluefin
+          # org, so cosign signs and then rejects its own signature. Keep in
+          # sync with build-regular.yml and execute-release.yml.
+          certificate-identity-regexp: >-
+            ^https://github\.com/thallium-suite/uranium/\.github/workflows/
 
       - name: Dispatch post-testing E2E for NVIDIA
         if: steps.find-runs.outputs.ready == 'true'
@@ -202,7 +207,7 @@ jobs:
           gh workflow run post-testing-e2e-nvidia.yml \
             --repo "${{ github.repository }}" \
             --ref testing \
-            -f image="ghcr.io/projectbluefin/bluefin-lts-nvidia:testing" \
+            -f image="ghcr.io/thallium-suite/uranium-nvidia:testing" \
             -f expected-digest="${TESTING_DIGEST}" \
             -f suites="smoke"
-          echo "Dispatched post-testing-e2e-nvidia for bluefin-lts-nvidia:testing (${TESTING_DIGEST})"
+          echo "Dispatched post-testing-e2e-nvidia for uranium-nvidia:testing (${TESTING_DIGEST})"

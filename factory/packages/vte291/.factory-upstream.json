@@ -1,0 +1,13 @@
+{
+  "imported_at": "2026-10-10T05:45:12+00:00",
+  "package": "vte291",
+  "schema": 1,
+  "source": {
+    "chroot": "epel-10-x86_64",
+    "kind": "srpm",
+    "repository": "https://download.copr.fedorainfracloud.org/results/jreilly1821/c10s-gnome-50",
+    "srpm_checksum": "2ab59ee1dec9630e68feff6bdc8ed0a5c5da99bf1b0ca68965d10b1ee08e9700",
+    "srpm_checksum_type": "sha256",
+    "tree": "476e79b04e5a3155ed3cdef2233f3c8689219654"
+  }
+}
