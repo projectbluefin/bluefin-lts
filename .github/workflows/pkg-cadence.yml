@@ -28,8 +28,8 @@ jobs:
       )
     uses: projectbluefin/actions/.github/workflows/reusable-pkg-cadence.yml@v1
     with:
-      image: ghcr.io/projectbluefin/bluefin-lts:stable
-      repo: projectbluefin/bluefin-lts
+      image: ghcr.io/thallium-suite/uranium:stable
+      repo: thallium-suite/uranium
       force_reclassify: ${{ inputs.force_reclassify || false }}
     secrets:
       app_id: ${{ secrets.MERGERAPTOR_APP_ID }}
