@@ -50,7 +50,7 @@ Run before every commit.
 LTS uses the Fedora CoreOS 44 akmods stream by default. Override it explicitly when validating another compatible stream:
 
 ```bash
-COREOS_STABLE_VERSION=44 COREOS_STABLE_KERNEL=7.1.8-200.fc44 \
+COREOS_STABLE_VERSION=44 COREOS_STABLE_KERNEL=7.2.5-200.fc44 \
   just build uranium-nvidia lts 0 1
 ```
 
@@ -64,7 +64,6 @@ COREOS_STABLE_VERSION=44 COREOS_STABLE_KERNEL=7.1.8-200.fc44 \
 | `uranium-nvidia` | NVIDIA drivers, CUDA toolkit, rootless Podman CDI configuration |
 
 NVIDIA overrides live in `build_scripts/overrides/nvidia/`, `system_files_overrides/nvidia/`, and arch-specific directories.
-
 ## VM / disk artifacts
 
 | Command | Purpose |
