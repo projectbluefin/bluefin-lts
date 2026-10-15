@@ -25,12 +25,14 @@ FROM scratch AS ctx
 COPY system_files /files
 COPY --from=brew /system_files /files
 COPY --from=common /system_files/shared /files
-# Bluefin-branded desktop payload (wallpapers, dconf, zsh/fish, just recipes,
-# the custom-command-list extension, icons). Owned by projectbluefin/common.
-# Removing this line breaks the build: 26-packages-post.sh and the nvidia
-# overrides sed -i /usr/share/ublue-os/fastfetch.jsonc and
-# .../zz0-bluefin-modifications.gschema.override, which exist only here.
-COPY --from=common /system_files/bluefin /files
+# Thallium-branded desktop payload (wallpapers, dconf, zsh/fish, just recipes,
+# fastfetch, the plymouth theme, the custom-command-list extension, icons).
+# Owned by thallium-suite/common. Removing this line breaks the build:
+# 26-packages-post.sh and the nvidia overrides sed -i
+# /usr/share/thallium-os/fastfetch.jsonc and
+# /usr/share/glib-2.0/schemas/zz0-thallium-modifications.gschema.override,
+# which exist only there.
+COPY --from=common /system_files/thallium /files
 COPY system_files_overrides /overrides
 COPY build_scripts /build_scripts
 COPY image-versions.yaml /image-versions.yaml

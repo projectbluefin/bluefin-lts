@@ -31,7 +31,7 @@ setup() {
     CMD_LOG="${TEST_ROOT}/cmd.log"
 
     SCHEMA_DIR="${TEST_ROOT}/usr/share/glib-2.0/schemas"
-    FASTFETCH="${TEST_ROOT}/usr/share/ublue-os/fastfetch.jsonc"
+    FASTFETCH="${TEST_ROOT}/usr/share/thallium-os/fastfetch.jsonc"
     ZRAM_CONF="${TEST_ROOT}/usr/lib/systemd/zram-generator.conf"
     FIREWALLD_ZONE="${TEST_ROOT}/usr/lib/firewalld/zones/FedoraWorkstation.xml"
     FIREWALLD_CONF="${TEST_ROOT}/etc/firewalld/firewalld.conf"
@@ -59,8 +59,8 @@ kernel-6.12.9-100.el10.x86_64"
     export STUB_GHCURL_EXIT=0
 
     printf '{\n  "logo": "\xf3\xb0\xa3\x9b CentOS"\n}\n' > "${FASTFETCH}"
-    printf "picture-uri='file:///usr/share/backgrounds/bluefin/12.jpg'\n" \
-        > "${SCHEMA_DIR}/zz0-bluefin-modifications.gschema.override"
+    printf "picture-uri='file:///usr/share/backgrounds/thallium/06-thallium.xml'\n" \
+        > "${SCHEMA_DIR}/zz0-thallium-modifications.gschema.override"
     printf 'Defaults secure_path = /usr/local/sbin:/usr/sbin:/usr/bin\n' > "${SUDOERS}"
     printf '[config]\nDefaultZone=public\nIPv6_rpfilter=yes\n' > "${FIREWALLD_CONF}"
 
@@ -165,22 +165,56 @@ teardown() {
 # Branding: fastfetch + wallpaper schema
 # ──────────────────────────────────────────────────────────────────────────────
 
-@test "packages-post: strips the CentOS glyph from fastfetch.jsonc" {
+@test "packages-post: leaves the fastfetch config alone" {
+    # The layout used to carry a Nerd Font glyph that rendered as a tofu box
+    # on stock terminals, and this script swapped it for one that does not. The
+    # current layout draws its own ASCII logo and carries no such glyph, so the
+    # swap was removed with it. This pins that the file is untouched rather
+    # than silently asserting a substitution that no longer happens.
     patch_and_run
     [ "$status" -eq 0 ]
-    run grep -c $'\uf08db' "${FASTFETCH}"
-    [ "$status" -ne 0 ]
     grep -q "CentOS" "${FASTFETCH}"
+}
+
+@test "packages-post: fails when the fastfetch config from common is missing" {
+    # The file ships in thallium-suite/common. Without an explicit check the
+    # script would either die later with an opaque sed "No such file", or --
+    # once the glyph swap was removed -- sail through and ship an image whose
+    # fastfetch silently falls back to fastfetch's own defaults.
+    rm -f "${FASTFETCH}"
+    patch_and_run
+    [ "$status" -ne 0 ]
+}
+
+@test "packages-post: fails when the GSettings override from common is missing" {
+    # Same reasoning, worse outcome: the wallpaper rewrite and the NVIDIA
+    # kms-modifiers rewrite are both applied to this file by later steps, and
+    # glib-compile-schemas would compile whatever is there instead.
+    rm -f "${SCHEMA_DIR}/zz0-thallium-modifications.gschema.override"
+    patch_and_run
+    [ "$status" -ne 0 ]
+}
+
+@test "packages-post: fails when the wallpaper month cannot be rewritten" {
+    # A rename in the branding repo would otherwise ship an image pointing at a
+    # wallpaper that does not exist -- a black desktop and no diagnostic. The
+    # check reads the month back out of the file, so a filename it does not
+    # recognise is exactly the case that must abort the build.
+    printf "picture-uri='file:///usr/share/backgrounds/thallium/spring-thallium.xml'\n" \
+        > "${SCHEMA_DIR}/zz0-thallium-modifications.gschema.override"
+    patch_and_run
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"wallpaper month"* ]]
 }
 
 @test "packages-post: rewrites the hardcoded wallpaper month to the current month" {
     patch_and_run
     [ "$status" -eq 0 ]
-    override="${SCHEMA_DIR}/zz0-bluefin-modifications.gschema.override"
-    grep -q "/$(date +%m).jpg" "${override}"
-    # December is the hardcoded value; it must be gone unless it IS December.
-    if [ "$(date +%m)" != "12" ]; then
-        run grep -q "/12.jpg" "${override}"
+    override="${SCHEMA_DIR}/zz0-thallium-modifications.gschema.override"
+    grep -q "^picture-uri='file:///usr/share/backgrounds/thallium/$(date +%m)-thallium.xml'" "${override}"
+    # June is the value the branding repo ships; it must be gone unless it IS June.
+    if [ "$(date +%m)" != "06" ]; then
+        run grep -q "06-thallium[.]xml" "${override}"
         [ "$status" -ne 0 ]
     fi
 }

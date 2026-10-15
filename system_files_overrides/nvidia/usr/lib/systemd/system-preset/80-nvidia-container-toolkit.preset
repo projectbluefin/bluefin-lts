@@ -5,6 +5,6 @@
 # and re-triggers nvidia-cdi-refresh.service whenever the driver or toolkit changes.
 # The service runs 'nvidia-ctk cdi generate' and writes /var/run/cdi/nvidia.yaml.
 #
-# Mirrors projectbluefin/dakota elements/bluefin-nvidia/nvidia-container-toolkit-preset.bst
+# Adapted from the upstream ublue-os preset of the same name.
 enable nvidia-cdi-refresh.path
 enable nvidia-cdi-refresh.service

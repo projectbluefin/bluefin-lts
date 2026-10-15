@@ -2,12 +2,45 @@
 
 set -xeuo pipefail
 
-# Fancy CentOS icon on the fastfetch
-sed -i "s/󰣛//g" /usr/share/ublue-os/fastfetch.jsonc
+FASTFETCH_CONFIG="/usr/share/thallium-os/fastfetch.jsonc"
+GSCHEMA_OVERRIDE="/usr/share/glib-2.0/schemas/zz0-thallium-modifications.gschema.override"
 
-# Automatic wallpaper changing by month
-HARDCODED_RPM_MONTH="12"
-sed -i "/picture-uri/ s/${HARDCODED_RPM_MONTH}/$(date +%m)/" "/usr/share/glib-2.0/schemas/zz0-bluefin-modifications.gschema.override"
+# Both paths are owned by thallium-suite/common. Assert them before touching
+# either: a missing file makes `sed -i` fail with an opaque "No such file",
+# and these two are the files the whole branding story hangs on.
+test -f "${FASTFETCH_CONFIG}"
+test -f "${GSCHEMA_OVERRIDE}"
+
+# The fastfetch layout used to carry a Nerd Font glyph that rendered as a tofu
+# box on stock terminals, so it was swapped for one that does not. The current
+# layout draws its own ASCII logo and carries no such glyph, so the swap went
+# away with it rather than staying as a sed that silently matched nothing.
+
+# Automatic wallpaper changing by month.
+#
+# The override ships pointing at the branding repo's 06-*.xml wallpaper. Swap
+# the two-digit month for the build month so a rebuild in, say, November ships
+# the November wallpaper. The previous form searched for a literal "12" and so
+# never matched the "06" actually present -- every build silently shipped June.
+BUILD_MONTH="$(date +%m)"
+sed -i -E "/^picture-uri/ s|0[0-9]-thallium\.xml|${BUILD_MONTH}-thallium.xml|" \
+    "${GSCHEMA_OVERRIDE}"
+# Fail loudly if the substitution did not happen: a rename in the branding repo
+# would otherwise ship an image pointing at a wallpaper that is not there, with
+# a black background and no diagnostic anywhere.
+#
+# The month is read back out of the file rather than grepped for as part of a
+# literal path. A pattern naming /usr/share/backgrounds/... would be rewritten
+# by any test that sandboxes absolute paths, which silently turns this
+# assertion into a test of the test harness. Comparing the two-digit month
+# keeps the check path-agnostic.
+WALLPAPER_MONTH="$(sed -nE "s|^picture-uri='.*/([0-9]{2})-thallium[.]xml'$|\\1|p" \
+    "${GSCHEMA_OVERRIDE}" | head -1)"
+if [ "${WALLPAPER_MONTH}" != "${BUILD_MONTH}" ]; then
+    echo "26-packages-post: wallpaper month is '${WALLPAPER_MONTH}', expected '${BUILD_MONTH}'." >&2
+    echo "  The branding repo must ship NN-thallium.xml wallpapers under the backgrounds dir." >&2
+    exit 1
+fi
 glib-compile-schemas /usr/share/glib-2.0/schemas
 
 # Rebuild gdk-pixbuf loader cache so all installed loaders are registered

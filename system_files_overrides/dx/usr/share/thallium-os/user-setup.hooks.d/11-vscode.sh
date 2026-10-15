@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-source /usr/lib/ublue/setup-services/libsetup.sh
+source /usr/lib/thallium/setup-services/libsetup.sh
 
 version-script vscode-lts user 1 || exit 1
 

@@ -3,10 +3,24 @@ images:
     image: quay.io/centos-bootc/centos-bootc
     tag: c10s
     digest: sha256:fe31b7a45259893485cfb37f3648e7da70140b16dcc5b06f493f69f11c19e04d
+  # The shared layer that owns ujust, the Homebrew preinstall lifecycle, the
+  # setup hooks, udev rules, dconf/GSettings defaults, fastfetch and the
+  # plymouth theme. Brought in-house from projectbluefin/common; the
+  # `/system_files/bluefin` payload it publishes was renamed to
+  # `/system_files/thallium` in the same change.
+  #
+  # PLACEHOLDER: the digest below is not a real published manifest. `just build`
+  # fails with "manifest unknown" until the first thallium-suite/common image
+  # exists and its digest is recorded here:
+  #
+  #   skopeo inspect --format '{{.Digest}}' docker://ghcr.io/thallium-suite/common:latest
+  #
+  # Renovate tracks this entry through the local customManagers regex in
+  # renovate.json, which needs image/tag/digest on consecutive lines.
   - name: common
-    image: ghcr.io/projectbluefin/common
+    image: ghcr.io/thallium-suite/common
     tag: latest
-    digest: sha256:c440159054188b10d11bbd448ff2e4763c90fd0facc3e2012a79ee4f38948556
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
   - name: brew
     image: ghcr.io/ublue-os/brew
     tag: latest

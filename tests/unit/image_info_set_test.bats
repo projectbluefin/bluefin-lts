@@ -2,7 +2,7 @@
 
 # Unit tests for build_scripts/scripts/image-info-set
 #
-# image-info-set rewrites /usr/share/ublue-os/image-info.json with the flavor
+# image-info-set rewrites /usr/share/thallium-os/image-info.json with the flavor
 # the variant build actually produced. Downstream consumers (ujust recipes,
 # fastfetch, update tooling, bug reports) read image-flavor/image-name/
 # image-ref from that file, so a wrong or blanked value ships in the image and

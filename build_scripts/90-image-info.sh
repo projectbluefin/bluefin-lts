@@ -3,7 +3,7 @@
 set -xeuo pipefail
 
 IMAGE_REF="ostree-image-signed:docker://ghcr.io/${IMAGE_VENDOR}/${IMAGE_NAME}"
-IMAGE_INFO="/usr/share/ublue-os/image-info.json"
+IMAGE_INFO="/usr/share/thallium-os/image-info.json"
 IMAGE_FLAVOR="main"
 IMAGE_TAG="stable/testing"
 
@@ -58,9 +58,9 @@ EOF
 # fastfetch.jsonc still runs `cat` on this path, so write a neutral
 # placeholder rather than letting it fail on every invocation.
 # Restore the real fetch once a Uranium endpoint is published upstream.
-printf 'N/A\n' > /usr/share/ublue-os/fastfetch-user-count
+printf 'N/A\n' > /usr/share/thallium-os/fastfetch-user-count
 
 # bazaar weekly downloads used for fastfetch
 curl -X 'GET' \
 'https://flathub.org/api/v2/stats/io.github.kolunmi.Bazaar?all=false&days=1' \
--H 'accept: application/json' | jq -r ".installs_last_7_days" | numfmt --to=si --round=nearest > /usr/share/ublue-os/bazaar-install-count
+-H 'accept: application/json' | jq -r ".installs_last_7_days" | numfmt --to=si --round=nearest > /usr/share/thallium-os/bazaar-install-count

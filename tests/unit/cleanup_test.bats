@@ -13,7 +13,7 @@ setup() {
     mkdir -p "${STUB_BIN}"
     mkdir -p "${TEST_ROOT}/var/somedir"
     mkdir -p "${TEST_ROOT}/boot/somedir"
-    mkdir -p "${TEST_ROOT}/usr/share/ublue-os"
+    mkdir -p "${TEST_ROOT}/usr/share/thallium-os"
     mkdir -p "${TEST_ROOT}/etc/yum.repos.d"
 
     # Stub commands that require a real system environment
@@ -28,8 +28,8 @@ EOF
     export PATH="${STUB_BIN}:${PATH}"
 
     # Create image-info.json with wide-open perms so chmod can be tested
-    touch "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
-    chmod 777 "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
+    touch "${TEST_ROOT}/usr/share/thallium-os/image-info.json"
+    chmod 777 "${TEST_ROOT}/usr/share/thallium-os/image-info.json"
 
     # Patch absolute paths to use TEST_ROOT
     PATCHED_SCRIPT="${TEST_ROOT}/cleanup-patched.sh"
@@ -38,7 +38,7 @@ EOF
         -e "s|find /boot |find ${TEST_ROOT}/boot |g" \
         -e "s|mkdir -p /var /boot|mkdir -p ${TEST_ROOT}/var ${TEST_ROOT}/boot|g" \
         -e "s|ln -s /var/usrlocal /usr/local|ln -s ${TEST_ROOT}/var/usrlocal ${TEST_ROOT}/usr/local|g" \
-        -e "s|chmod 644 /usr/share/ublue-os/image-info.json|chmod 644 ${TEST_ROOT}/usr/share/ublue-os/image-info.json|g" \
+        -e "s|chmod 644 /usr/share/thallium-os/image-info.json|chmod 644 ${TEST_ROOT}/usr/share/thallium-os/image-info.json|g" \
         -e "s|rm -rf /.gitkeep|rm -rf ${TEST_ROOT}/.gitkeep|g" \
         "${CLEANUP_SCRIPT}" > "${PATCHED_SCRIPT}"
     chmod +x "${PATCHED_SCRIPT}"
@@ -88,7 +88,7 @@ teardown() {
 @test "cleanup: image-info.json is set to 644" {
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
-    perms=$(stat -c "%a" "${TEST_ROOT}/usr/share/ublue-os/image-info.json")
+    perms=$(stat -c "%a" "${TEST_ROOT}/usr/share/thallium-os/image-info.json")
     [ "${perms}" = "644" ]
 }
 

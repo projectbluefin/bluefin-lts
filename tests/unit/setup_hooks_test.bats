@@ -1,25 +1,25 @@
 #!/usr/bin/env bats
 
 # Unit tests for the base first-boot setup hooks shipped in system_files/:
-#   system_files/usr/share/ublue-os/privileged-setup.hooks.d/10-tailscale.sh
-#   system_files/usr/share/ublue-os/privileged-setup.hooks.d/99-flatpaks.sh
-#   system_files/usr/share/ublue-os/user-setup.hooks.d/99-privileged.sh
+#   system_files/usr/share/thallium-os/privileged-setup.hooks.d/10-tailscale.sh
+#   system_files/usr/share/thallium-os/privileged-setup.hooks.d/99-flatpaks.sh
+#   system_files/usr/share/thallium-os/user-setup.hooks.d/99-privileged.sh
 #
 # Run with: bats tests/unit/setup_hooks_test.bats
 
 SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
 REPO_ROOT="${SCRIPT_DIR}/../.."
-TAILSCALE_HOOK="${REPO_ROOT}/system_files/usr/share/ublue-os/privileged-setup.hooks.d/10-tailscale.sh"
-FLATPAKS_HOOK="${REPO_ROOT}/system_files/usr/share/ublue-os/privileged-setup.hooks.d/99-flatpaks.sh"
-PRIVILEGED_HOOK="${REPO_ROOT}/system_files/usr/share/ublue-os/user-setup.hooks.d/99-privileged.sh"
+TAILSCALE_HOOK="${REPO_ROOT}/system_files/usr/share/thallium-os/privileged-setup.hooks.d/10-tailscale.sh"
+FLATPAKS_HOOK="${REPO_ROOT}/system_files/usr/share/thallium-os/privileged-setup.hooks.d/99-flatpaks.sh"
+PRIVILEGED_HOOK="${REPO_ROOT}/system_files/usr/share/thallium-os/user-setup.hooks.d/99-privileged.sh"
 
 setup() {
     TEST_ROOT="${BATS_TEST_TMPDIR}/sandbox"
     STUB_BIN="${TEST_ROOT}/stub-bin"
     CMD_LOG="${TEST_ROOT}/cmd.log"
-    LIBSETUP="${TEST_ROOT}/usr/lib/ublue/setup-services/libsetup.sh"
+    LIBSETUP="${TEST_ROOT}/usr/lib/thallium/setup-services/libsetup.sh"
 
-    mkdir -p "${STUB_BIN}" "${TEST_ROOT}/usr/lib/ublue/setup-services"
+    mkdir -p "${STUB_BIN}" "${TEST_ROOT}/usr/lib/thallium/setup-services"
     : > "${CMD_LOG}"
 
     # Stand-in for libsetup.sh. version-script is the real gate the hooks use to
@@ -52,7 +52,7 @@ _patch() {
     local src="$1" out="${TEST_ROOT}/patched-$(basename "$1")"
     shift
     sed "$@" \
-        -e "s|/usr/lib/ublue/setup-services/libsetup.sh|${LIBSETUP}|g" \
+        -e "s|/usr/lib/thallium/setup-services/libsetup.sh|${LIBSETUP}|g" \
         "${src}" > "${out}"
     chmod +x "${out}"
     echo "${out}"
@@ -74,11 +74,11 @@ EOF
     _patch "${TAILSCALE_HOOK}"
 }
 
-@test "tailscale hook: gates on version-script tailscale-lts privileged 1" {
+@test "tailscale hook: gates on version-script tailscale privileged 1" {
     script="$(_patch_tailscale)"
     PKEXEC_UID=1000 run bash "${script}"
     [ "$status" -eq 0 ]
-    grep -qx "version-script tailscale-lts privileged 1" "${CMD_LOG}"
+    grep -qx "version-script tailscale privileged 1" "${CMD_LOG}"
 }
 
 @test "tailscale hook: sets the operator to the PKEXEC_UID account name" {
@@ -124,19 +124,19 @@ _flatpak_pref_dir() {
 
 _patch_flatpaks() {
     _stub arch "echo \"${1:-x86_64}\""
-    mkdir -p "${TEST_ROOT}/usr/share/ublue-os/firefox-config"
+    mkdir -p "${TEST_ROOT}/usr/share/thallium-os/firefox-config"
     echo 'pref("bluefin.configured", true);' \
-        > "${TEST_ROOT}/usr/share/ublue-os/firefox-config/bluefin-prefs.js"
+        > "${TEST_ROOT}/usr/share/thallium-os/firefox-config/bluefin-prefs.js"
     _patch "${FLATPAKS_HOOK}" \
         -e "s|/var/lib/flatpak|${TEST_ROOT}/var/lib/flatpak|g" \
-        -e "s|/usr/share/ublue-os/firefox-config|${TEST_ROOT}/usr/share/ublue-os/firefox-config|g"
+        -e "s|/usr/share/thallium-os/firefox-config|${TEST_ROOT}/usr/share/thallium-os/firefox-config|g"
 }
 
-@test "flatpaks hook: gates on version-script flatpaks-lts privileged 1" {
+@test "flatpaks hook: gates on version-script flatpaks privileged 1" {
     script="$(_patch_flatpaks)"
     run bash "${script}"
     [ "$status" -eq 0 ]
-    grep -qx "version-script flatpaks-lts privileged 1" "${CMD_LOG}"
+    grep -qx "version-script flatpaks privileged 1" "${CMD_LOG}"
 }
 
 @test "flatpaks hook: creates the arch-specific Firefox pref directory" {
@@ -194,11 +194,11 @@ _patch_privileged() {
     _patch "${PRIVILEGED_HOOK}"
 }
 
-@test "privileged hook: escalates to ublue-privileged-setup through pkexec" {
+@test "privileged hook: escalates to thallium-privileged-setup through pkexec" {
     script="$(_patch_privileged)"
     run bash "${script}"
     [ "$status" -eq 0 ]
-    grep -qx "pkexec /usr/bin/ublue-privileged-setup" "${CMD_LOG}"
+    grep -qx "pkexec /usr/bin/thallium-privileged-setup" "${CMD_LOG}"
 }
 
 @test "privileged hook: announces the run so setup logs are attributable" {

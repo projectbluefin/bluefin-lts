@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source /usr/lib/ublue/setup-services/libsetup.sh
+source /usr/lib/thallium/setup-services/libsetup.sh
 
 version-script dx-usergroups-lts privileged 1 || exit 0
 

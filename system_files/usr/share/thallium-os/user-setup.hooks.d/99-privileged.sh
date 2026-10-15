@@ -4,4 +4,4 @@ set -euo pipefail
 
 echo "Running all privileged units"
 
-pkexec /usr/bin/ublue-privileged-setup
+pkexec /usr/bin/thallium-privileged-setup

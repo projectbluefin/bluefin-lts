@@ -13,7 +13,7 @@ setup() {
     STUB_BIN="${TEST_ROOT}/stub-bin"
 
     mkdir -p "${STUB_BIN}"
-    mkdir -p "${TEST_ROOT}/usr/share/ublue-os"
+    mkdir -p "${TEST_ROOT}/usr/share/thallium-os"
     mkdir -p "${TEST_ROOT}/usr/lib"
 
     # Minimal os-release for sed patching
@@ -51,10 +51,10 @@ EOF
     # Patch absolute paths to use TEST_ROOT
     PATCHED_SCRIPT="${TEST_ROOT}/image-info-patched.sh"
     sed \
-        -e "s|/usr/share/ublue-os/image-info.json|${TEST_ROOT}/usr/share/ublue-os/image-info.json|g" \
+        -e "s|/usr/share/thallium-os/image-info.json|${TEST_ROOT}/usr/share/thallium-os/image-info.json|g" \
         -e "s|/usr/lib/os-release|${TEST_ROOT}/usr/lib/os-release|g" \
-        -e "s|/usr/share/ublue-os/fastfetch-user-count|${TEST_ROOT}/usr/share/ublue-os/fastfetch-user-count|g" \
-        -e "s|/usr/share/ublue-os/bazaar-install-count|${TEST_ROOT}/usr/share/ublue-os/bazaar-install-count|g" \
+        -e "s|/usr/share/thallium-os/fastfetch-user-count|${TEST_ROOT}/usr/share/thallium-os/fastfetch-user-count|g" \
+        -e "s|/usr/share/thallium-os/bazaar-install-count|${TEST_ROOT}/usr/share/thallium-os/bazaar-install-count|g" \
         "${IMAGE_INFO_SCRIPT}" > "${PATCHED_SCRIPT}"
     chmod +x "${PATCHED_SCRIPT}"
     # The badge-fetching lines (ghcurl + curl/flathub) call external APIs and
@@ -100,31 +100,31 @@ _run_image_info() {
 @test "image-info: image-info.json is created" {
     _run_image_info
     [ "$status" -eq 0 ]
-    [ -f "${TEST_ROOT}/usr/share/ublue-os/image-info.json" ]
+    [ -f "${TEST_ROOT}/usr/share/thallium-os/image-info.json" ]
 }
 
 @test "image-info: image-info.json contains image-name" {
     _run_image_info uranium
     [ "$status" -eq 0 ]
-    grep -q '"image-name": "uranium"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
+    grep -q '"image-name": "uranium"' "${TEST_ROOT}/usr/share/thallium-os/image-info.json"
 }
 
 @test "image-info: image-info.json contains image-vendor" {
     _run_image_info uranium thallium-suite
     [ "$status" -eq 0 ]
-    grep -q '"image-vendor": "thallium-suite"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
+    grep -q '"image-vendor": "thallium-suite"' "${TEST_ROOT}/usr/share/thallium-os/image-info.json"
 }
 
 @test "image-info: image-info.json contains centos-version" {
     _run_image_info uranium thallium-suite 10
     [ "$status" -eq 0 ]
-    grep -q '"centos-version": "10"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
+    grep -q '"centos-version": "10"' "${TEST_ROOT}/usr/share/thallium-os/image-info.json"
 }
 
 @test "image-info: image-tag reflects the release stream" {
     _run_image_info uranium thallium-suite 10
     [ "$status" -eq 0 ]
-    grep -q '"image-tag": "stable/testing"' "${TEST_ROOT}/usr/share/ublue-os/image-info.json"
+    grep -q '"image-tag": "stable/testing"' "${TEST_ROOT}/usr/share/thallium-os/image-info.json"
 }
 
 # ──────────────────────────────────────────────────────────────────────────────

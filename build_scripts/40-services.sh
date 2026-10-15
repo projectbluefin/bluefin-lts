@@ -21,8 +21,8 @@ systemctl enable dconf-update.service
 systemctl disable mcelog.service
 systemctl enable tailscaled.service
 systemctl enable uupd.timer
-systemctl enable ublue-system-setup.service
-systemctl --global enable ublue-user-setup.service
+systemctl enable thallium-system-setup.service
+systemctl --global enable thallium-user-setup.service
 systemctl mask bootc-fetch-apply-updates.timer bootc-fetch-apply-updates.service
 # Count me reporting was removed with the Bluefin branding: the weekly
 # rpm-ostree-countme ping had no Uranium endpoint to report to. The inherited
