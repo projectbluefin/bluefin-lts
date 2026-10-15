@@ -73,6 +73,8 @@ packages = [
     "ibus-chewing",
     "jxl-pixbuf-loader",
     "just",
+    "lm_sensors",
+    "nethogs",
     "nss-mdns",
     "ntfs-3g",
     "papers-thumbnailer",
