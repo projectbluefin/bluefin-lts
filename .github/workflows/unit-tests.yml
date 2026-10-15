@@ -10,6 +10,7 @@ on:
       - testing
     paths:
       - build_scripts/**
+      - system_files/**
       - tests/**
   push:
     branches:
