@@ -9,31 +9,41 @@ images:
   # `/system_files/bluefin` payload it publishes was renamed to
   # `/system_files/thallium` in the same change.
   #
-  # PLACEHOLDER: the digest below is not a real published manifest. `just build`
-  # fails with "manifest unknown" until the first thallium-suite/common image
-  # exists and its digest is recorded here:
+  # Per-arch, not a single digest: thallium-suite/common publishes per-arch
+  # tags (`<sha>-amd64`, `<sha>-arm64`) and a multi-arch `:latest`, and the
+  # `:latest` manifest list is currently broken (empty digests). Pinning the
+  # per-arch digests directly is correct anyway -- a multi-arch index digest
+  # is not the digest of either image, so it cannot be used as a single
+  # `COPY --from=` reference.
   #
-  #   skopeo inspect --format '{{.Digest}}' docker://ghcr.io/thallium-suite/common:latest
-  #
-  # Renovate tracks this entry through the local customManagers regex in
-  # renovate.json, which needs image/tag/digest on consecutive lines.
+  # Renovate tracks `tag` + `digest` here; the per-arch digests move
+  # independently as each arch rebuilds, so both are kept current.
   - name: common
     image: ghcr.io/thallium-suite/common
     tag: latest
-    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    x86_64:
+      digest: sha256:f335aca1f9563b669966a3c464832b3ae65e80cfa3a558adf5f5d1e85e1d6700
+    aarch64:
+      digest: sha256:a26aee3cf6b97f8b991c87d5cd0b5fdf4b504ada57f439e2127e29076423a181
   - name: brew
     image: ghcr.io/ublue-os/brew
     tag: latest
     digest: sha256:5bdf54dc7c21c22db29df6550e3711788719c5123549ea6dc5645d5af47795e3
   # The GNOME stack, built by factory/ against this same CentOS Stream base
-  # and published as an OCI repository image. Empty until the first factory
-  # publication; an empty digest makes the image build fall back to the base
-  # image's GNOME rather than failing. Pinned by digest once populated, so a
-  # rebuild cannot silently pick up different packages.
+  # and published as an OCI repository image. Pinned by digest so a rebuild
+  # cannot silently pick up different packages; Renovate keeps it current as
+  # the :latest tag moves.
+  #
+  # amd64 only today. The factory is amd64 for v1 (see factory/README.md,
+  # "Architectures"); arm64 recipes follow once the amd64 set is green. The
+  # image build runs for x86_64 and aarch64, so the Justfile build recipe only
+  # passes this reference on amd64 and arm64 falls back to the base image's
+  # GNOME. The split is one line in the Justfile -- match the architecture
+  # there to enable GNOME 51 on arm64 once the factory publishes it.
   - name: gnome_packages
     image: ghcr.io/thallium-suite/uranium-packages
     tag: latest
-    digest: ""
+    digest: sha256:0e5efbacf20d811d5a696fd360bd96765206d742476838bf50dc15798958cb66
 
 # Pinned binary downloads (managed by Renovate)
 downloads:

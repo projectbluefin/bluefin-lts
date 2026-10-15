@@ -7,6 +7,11 @@ export bib_image := env("BIB_IMAGE", "quay.io/centos-bootc/bootc-image-builder:l
 export coreos_stable_version := env("COREOS_STABLE_VERSION", "44")
 export coreos_stable_kernel := env("COREOS_STABLE_KERNEL", "7.2.5-200.fc44")
 export HOME := env("HOME", "")
+# The shared layer is pinned by per-arch digest in image-versions.yaml, so the
+# tag here is never used to resolve the image -- it only supplies the registry
+# path. Kept as `:latest` for the same reason the other entries carry one:
+# Renovate matches the image/tag/digest shape. The build always appends
+# `@<digest>`, so a broken `:latest` manifest list is harmless.
 export common_image := env("COMMON_IMAGE", "ghcr.io/thallium-suite/common:latest")
 export brew_image := env("BREW_IMAGE", "ghcr.io/ublue-os/brew:latest")
 export gnome_packages_image := env("GNOME_PACKAGES_IMAGE", "ghcr.io/thallium-suite/uranium-packages:latest")
@@ -114,8 +119,9 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
 
     # Get Version
     ver="${tag}-${centos_version}.$(date +%Y%m%d)"
+    ARCH=$(uname -m)
 
-    common_image_sha=$(yq -r '.images[] | select(.name == "common") | .digest' image-versions.yaml)
+    common_image_sha=$(yq -r '.images[] | select(.name == "common") | .'"${ARCH}"'.digest // ""' image-versions.yaml)
     common_image_ref="${common_image}@${common_image_sha}"
     brew_image_sha=$(yq -r '.images[] | select(.name == "brew") | .digest' image-versions.yaml)
     brew_image_ref="${brew_image}@${brew_image_sha}"
@@ -129,20 +135,21 @@ build $target_image=image_name $tag=default_tag $dx="0" $nvidia="0" $kernel_pin=
     BUILD_ARGS+=("--build-arg" "ENABLE_DX=${dx}")
     BUILD_ARGS+=("--build-arg" "ENABLE_NVIDIA=${nvidia}")
 
-    # The GNOME factory image is optional. An empty digest means the factory
-    # has not published yet, and the build must still work using the base
-    # image's GNOME -- so the arg is omitted entirely rather than passed empty,
-    # because "FROM ''" is a parse error rather than a fallback.
+    # Per-arch images. thallium-suite/common publishes per-arch tags and a
+    # multi-arch :latest, and the :latest manifest list is currently broken
+    # (empty digests), so the common entry above carries per-arch digests and
+    # this reads the one for the build's architecture. The same applies to any
+    # other image that is per-arch only: read `.<ARCH>.digest`, never a single
+    # `digest` that is really an index.
+    gnome_packages_arches=("x86_64")
     gnome_packages_sha=$(yq -r '.images[] | select(.name == "gnome_packages") | .digest // ""' image-versions.yaml)
-    if [[ -n "${gnome_packages_sha}" ]]; then
+    if [[ -n "${gnome_packages_sha}" && " ${gnome_packages_arches[*]} " == *" ${ARCH} "* ]]; then
         BUILD_ARGS+=("--build-arg" "GNOME_PACKAGES_IMAGE_REF=${gnome_packages_image}@${gnome_packages_sha}")
         echo "GNOME packages from ${gnome_packages_image}@${gnome_packages_sha}"
     else
-        echo "WARNING: no GNOME factory digest in image-versions.yaml; using the base image's GNOME"
-        echo "         expected until the factory publishes its first image"
+        echo "GNOME packages: factory not available for ${ARCH}; using the base image's GNOME"
     fi
     # Select the pinned CoreOS akmods stream for mounted ZFS/NVIDIA images.
-    ARCH=$(uname -m)
     coreos_fedora_ver="${coreos_stable_version}"
     if ! [[ "${coreos_fedora_ver}" =~ ^[0-9]+$ ]]; then
         echo "ERROR: COREOS_STABLE_VERSION must be a numeric Fedora CoreOS major version" >&2
