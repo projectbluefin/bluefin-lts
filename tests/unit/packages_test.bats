@@ -128,6 +128,17 @@ teardown() {
     grep -q "dnf.*install" "${DNF_LOG}"
 }
 
+# Regression test for https://github.com/projectbluefin/bluefin-lts/issues/492:
+# the centos-bootc base image already ships bootupd and a complete update
+# payload under /usr/lib/bootupd/updates; we must not delete or "reinstall"
+# it at build time. Assert nothing in the build scripts removes the payload
+# or re-runs `bootupctl backend generate-update-metadata` (a compose-time
+# one-shot that derived builds cannot re-run).
+@test "packages: build scripts preserve the base image bootupd payload" {
+    ! grep -Rq "rm -rf /usr/lib/bootupd/updates" "${SCRIPT_DIR}/../../build_scripts/"
+    ! grep -Rq "generate-update-metadata" "${SCRIPT_DIR}/../../build_scripts/"
+}
+
 @test "packages: passes -x exclusion flags for excluded packages" {
     run bash "${PATCHED_SCRIPT}"
     [ "$status" -eq 0 ]
