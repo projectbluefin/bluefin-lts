@@ -11,11 +11,13 @@ on:
     paths:
       - build_scripts/**
       - tests/**
+      - .github/workflows/unit-tests.yml
   push:
     branches:
       - main
       - testing
   workflow_dispatch:
+  merge_group:
 
 permissions: {}
 
